@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Hilal Al-Sharq — Accounting Tools</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --purple: #5B5EA6;
+    --purple-dark: #3f4282;
+    --purple-deep: #2a2c5c;
+    --yellow: #F5D800;
+    --yellow-bright: #FFE600;
+    --yellow-dark: #c9b000;
+    --bg: #ffffff;
+    --bg2: #f7f7fb;
+    --bg3: #eeeef8;
+    --text: #1a1b3a;
+    --text2: #4a4c7a;
+    --text3: #8a8cb0;
+    --card-bg: #ffffff;
+    --card-border: rgba(91,94,166,0.15);
+    --shadow: 0 8px 40px rgba(91,94,166,0.18);
+    --shadow-hover: 0 20px 60px rgba(91,94,166,0.28);
+  }
+  [data-theme="dark"] {
+    --bg: #0f0f1e;
+    --bg2: #15152a;
+    --bg3: #1e1e38;
+    --text: #eeeef8;
+    --text2: #b0b2d8;
+    --text3: #6668a0;
+    --card-bg: #1a1a32;
+    --card-border: rgba(245,216,0,0.12);
+    --shadow: 0 8px 40px rgba(0,0,0,0.5);
+    --shadow-hover: 0 20px 60px rgba(245,216,0,0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background 0.4s, color 0.4s;
+    overflow-x: hidden;
+  }
+
+  /* Background geometric decoration */
+  .bg-deco {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+  }
+  .bg-deco::before {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    border: 80px solid var(--purple);
+    opacity: 0.04;
+    top: -200px; left: -200px;
+  }
+  .bg-deco::after {
+    content: '';
+    position: absolute;
+    width: 400px; height: 400px;
+    background: var(--yellow);
+    opacity: 0.04;
+    bottom: -100px; right: -100px;
+    clip-path: polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+  }
+  [data-theme="dark"] .bg-deco::before { opacity: 0.07; }
+  [data-theme="dark"] .bg-deco::after { opacity: 0.06; }
+
+  /* Header */
+  header {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 40px;
+    border-bottom: 1px solid var(--card-border);
+    background: var(--bg);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  /* SVG logo recreation */
+  .logo-mark {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+  }
+
+  .brand-name {
+    line-height: 1.2;
+  }
+  .brand-en {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--purple);
+    letter-spacing: 0.5px;
+  }
+  .brand-ar {
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--yellow-dark);
+  }
+  [data-theme="dark"] .brand-ar { color: var(--yellow); }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .btn-toggle {
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 8px;
+    border: 1.5px solid var(--card-border);
+    background: var(--bg2);
+    color: var(--text2);
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-toggle:hover {
+    border-color: var(--purple);
+    color: var(--purple);
+    background: var(--bg3);
+  }
+
+  /* Main content */
+  main {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 73px);
+    padding: 60px 24px;
+  }
+
+  /* Hero section */
+  .hero {
+    text-align: center;
+    margin-bottom: 64px;
+    animation: fadeUp 0.7s ease both;
+  }
+
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg3);
+    border: 1px solid var(--card-border);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--purple);
+    margin-bottom: 24px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  [data-theme="dark"] .hero-tag { color: var(--yellow); border-color: rgba(245,216,0,0.2); background: rgba(245,216,0,0.06); }
+
+  .hero-tag::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--yellow);
+    box-shadow: 0 0 6px var(--yellow);
+    animation: pulse 2s ease infinite;
+  }
+
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(32px, 5vw, 56px);
+    font-weight: 900;
+    line-height: 1.15;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+  .hero h1 span {
+    color: var(--purple);
+    position: relative;
+  }
+  [data-theme="dark"] .hero h1 span { color: var(--yellow); }
+
+  .hero h1 span::after {
+    content: '';
+    position: absolute;
+    bottom: 2px; left: 0; right: 0;
+    height: 4px;
+    background: var(--yellow);
+    border-radius: 2px;
+    opacity: 0.7;
+  }
+
+  .hero-subtitle {
+    font-size: 16px;
+    color: var(--text2);
+    margin-top: 16px;
+    font-weight: 400;
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.7;
+  }
+
+  /* Tool cards */
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    width: 100%;
+    max-width: 760px;
+  }
+
+  .tool-card {
+    background: var(--card-bg);
+    border: 1.5px solid var(--card-border);
+    border-radius: 20px;
+    padding: 36px 32px;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    box-shadow: var(--shadow);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.7s ease both;
+  }
+  .tool-card:nth-child(2) { animation-delay: 0.12s; }
+
+  .tool-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--purple);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+  }
+  .tool-card:hover::before { transform: scaleX(1); }
+  .tool-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--purple);
+  }
+  [data-theme="dark"] .tool-card:hover { border-color: var(--yellow); }
+  [data-theme="dark"] .tool-card::before { background: var(--yellow); }
+
+  .tool-icon {
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    background: var(--bg3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    flex-shrink: 0;
+    transition: transform 0.3s ease, background 0.3s;
+  }
+  .tool-card:hover .tool-icon {
+    background: var(--purple);
+    transform: scale(1.1) rotate(-5deg);
+  }
+  [data-theme="dark"] .tool-card:hover .tool-icon { background: var(--yellow-dark); }
+
+  .tool-body { flex: 1; }
+
+  .tool-name {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+    line-height: 1.3;
+  }
+
+  .tool-name-ar {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text3);
+    margin-bottom: 10px;
+  }
+
+  .tool-desc {
+    font-size: 13.5px;
+    color: var(--text2);
+    line-height: 1.65;
+  }
+
+  .tool-arrow {
+    margin-top: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--purple);
+    letter-spacing: 0.3px;
+    transition: gap 0.2s ease;
+  }
+  [data-theme="dark"] .tool-arrow { color: var(--yellow); }
+  .tool-card:hover .tool-arrow { gap: 14px; }
+
+  /* Footer */
+  footer {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 24px;
+    font-size: 12px;
+    color: var(--text3);
+    border-top: 1px solid var(--card-border);
+  }
+  footer span { color: var(--purple); font-weight: 600; }
+  [data-theme="dark"] footer span { color: var(--yellow); }
+
+  /* Decorative crescent shape on card */
+  .card-deco {
+    position: absolute;
+    top: -20px; right: -20px;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    border: 16px solid var(--purple);
+    opacity: 0.06;
+    pointer-events: none;
+  }
+  [data-theme="dark"] .card-deco { border-color: var(--yellow); opacity: 0.08; }
+
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.5; transform: scale(1.4); }
+  }
+
+  /* RTL */
+  body.rtl { font-family: 'Cairo', sans-serif; }
+  body.rtl .tool-card::before { transform-origin: right; }
+  body.rtl .tool-arrow { flex-direction: row-reverse; }
+  body.rtl .card-deco { right: auto; left: -20px; }
+  body.rtl .hero h1 span::after { }
+
+  @media (max-width: 600px) {
+    header { padding: 14px 20px; }
+    .tools-grid { grid-template-columns: 1fr; }
+    .tool-card { padding: 28px 24px; }
+    .hero h1 { font-size: 28px; }
+  }
+</style>
+</head>
+<body data-theme="light">
+
+<div class="bg-deco"></div>
+
+<header>
+  <div class="header-left">
+    <!-- Logo SVG recreation using brand colors -->
+    <svg class="logo-mark" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Sun rays (yellow) -->
+      <circle cx="30" cy="24" r="11" fill="#F5D800"/>
+      <!-- Sun star points -->
+      <polygon points="30,10 31.5,14 33,10" fill="#F5D800"/>
+      <polygon points="30,38 31.5,34 28.5,34" fill="#F5D800"/>
+      <polygon points="44,24 40,25.5 40,22.5" fill="#F5D800"/>
+      <polygon points="19,13 21.5,16 23,13.5" fill="#F5D800"/>
+      <polygon points="19,35 21.5,32 23,34.5" fill="#F5D800"/>
+      <polygon points="43,15 40,17 41.5,14" fill="#F5D800"/>
+      <polygon points="43,33 40,31 41.5,34" fill="#F5D800"/>
+      <!-- Crescent (purple) -->
+      <path d="M24 8 A16 16 0 1 0 24 40 A10 10 0 1 1 24 8Z" fill="#5B5EA6"/>
+    </svg>
+    <div class="brand-name">
+      <div class="brand-en">Hilal Al-Sharq</div>
+      <div class="brand-ar">هلال الشرق</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="btn-toggle" onclick="toggleLang()" id="lang-btn">🌐 العربية</button>
+    <button class="btn-toggle" onclick="toggleTheme()" id="theme-btn">🌙 Dark</button>
+  </div>
+</header>
+
+<main>
+  <div class="hero">
+    <div class="hero-tag" id="hero-tag">Accounting Tools Suite</div>
+    <h1 id="hero-h1">Smart Tools for <span id="hero-span">Modern Accounting</span></h1>
+    <p class="hero-subtitle" id="hero-sub">Professional financial analysis tools built for your business — fast, accurate, and bilingual.</p>
+  </div>
+
+  <div class="tools-grid">
+    <!-- Card 1: Customer Analyzer -->
+    <a href="ledger_analyzer.html" class="tool-card">
+      <div class="card-deco"></div>
+      <div class="tool-icon">📊</div>
+      <div class="tool-body">
+        <div class="tool-name" id="c1-name">Customer Analyzer</div>
+        <div class="tool-name-ar" id="c1-ar">محلل العملاء</div>
+        <div class="tool-desc" id="c1-desc">Upload your general ledger and instantly see every customer's balance, last invoice, and last payment — with full sorting, filtering, and print support.</div>
+      </div>
+      <div class="tool-arrow" id="c1-arrow">Open tool →</div>
+    </a>
+
+    <!-- Card 2: Account Statement -->
+    <a href="account_statement.html" class="tool-card">
+      <div class="card-deco"></div>
+      <div class="tool-icon">📄</div>
+      <div class="tool-body">
+        <div class="tool-name" id="c2-name">Account Statement</div>
+        <div class="tool-name-ar" id="c2-ar">كشف الحساب</div>
+        <div class="tool-desc" id="c2-desc">Generate detailed account statements for any customer — showing all transactions, running balances, and exportable summaries.</div>
+      </div>
+      <div class="tool-arrow" id="c2-arrow">Open tool →</div>
+    </a>
+  </div>
+</main>
+
+<footer>
+  <span id="footer-brand">Hilal Al-Sharq</span> &nbsp;·&nbsp; <span id="footer-copy">Accounting Tools Suite</span>
+</footer>
+
+<script>
+let lang = 'en';
+let isDark = false;
+
+const content = {
+  en: {
+    langBtn: '🌐 العربية',
+    themeBtn: ['🌙 Dark', '☀️ Light'],
+    heroTag: 'Accounting Tools Suite',
+    heroH1: 'Smart Tools for ',
+    heroSpan: 'Modern Accounting',
+    heroSub: 'Professional financial analysis tools built for your business — fast, accurate, and bilingual.',
+    c1Name: 'Customer Analyzer',
+    c1Ar: 'محلل العملاء',
+    c1Desc: 'Upload your general ledger and instantly see every customer\'s balance, last invoice, and last payment — with full sorting, filtering, and print support.',
+    c1Arrow: 'Open tool →',
+    c2Name: 'Account Statement',
+    c2Ar: 'كشف الحساب',
+    c2Desc: 'Generate detailed account statements for any customer — showing all transactions, running balances, and exportable summaries.',
+    c2Arrow: 'Open tool →',
+    footerBrand: 'Hilal Al-Sharq',
+    footerCopy: 'Accounting Tools Suite',
+  },
+  ar: {
+    langBtn: '🌐 English',
+    themeBtn: ['🌙 داكن', '☀️ فاتح'],
+    heroTag: 'مجموعة أدوات المحاسبة',
+    heroH1: 'أدوات ذكية لـ',
+    heroSpan: 'المحاسبة الحديثة',
+    heroSub: 'أدوات تحليل مالي احترافية مصممة لعملك — سريعة ودقيقة وثنائية اللغة.',
+    c1Name: 'محلل العملاء',
+    c1Ar: 'Customer Analyzer',
+    c1Desc: 'ارفع دفتر الأستاذ العام وشاهد فوراً رصيد كل عميل وآخر فاتورة وآخر دفعة — مع دعم كامل للترتيب والتصفية والطباعة.',
+    c1Arrow: '← فتح الأداة',
+    c2Name: 'كشف الحساب',
+    c2Ar: 'Account Statement',
+    c2Desc: 'أنشئ كشوف حساب تفصيلية لأي عميل — تعرض جميع الحركات والأرصدة الجارية وملخصات قابلة للتصدير.',
+    c2Arrow: '← فتح الأداة',
+    footerBrand: 'هلال الشرق',
+    footerCopy: 'مجموعة أدوات المحاسبة',
+  }
+};
+
+function applyLang() {
+  const c = content[lang];
+  const isAr = lang === 'ar';
+  document.body.classList.toggle('rtl', isAr);
+  document.documentElement.setAttribute('dir', isAr ? 'rtl' : 'ltr');
+  document.documentElement.setAttribute('lang', lang);
+
+  document.getElementById('lang-btn').textContent = c.langBtn;
+  document.getElementById('hero-tag').textContent = c.heroTag;
+  document.getElementById('hero-h1').innerHTML = c.heroH1 + ' <span id="hero-span">' + c.heroSpan + '</span>';
+  document.getElementById('hero-sub').textContent = c.heroSub;
+  document.getElementById('c1-name').textContent = c.c1Name;
+  document.getElementById('c1-ar').textContent = c.c1Ar;
+  document.getElementById('c1-desc').textContent = c.c1Desc;
+  document.getElementById('c1-arrow').textContent = c.c1Arrow;
+  document.getElementById('c2-name').textContent = c.c2Name;
+  document.getElementById('c2-ar').textContent = c.c2Ar;
+  document.getElementById('c2-desc').textContent = c.c2Desc;
+  document.getElementById('c2-arrow').textContent = c.c2Arrow;
+  document.getElementById('footer-brand').textContent = c.footerBrand;
+  document.getElementById('footer-copy').textContent = c.footerCopy;
+  updateThemeBtn();
+}
+
+function updateThemeBtn() {
+  const c = content[lang];
+  document.getElementById('theme-btn').textContent = isDark ? c.themeBtn[1] : c.themeBtn[0];
+}
+
+function toggleLang() {
+  lang = lang === 'en' ? 'ar' : 'en';
+  applyLang();
+}
+
+function toggleTheme() {
+  isDark = !isDark;
+  document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  updateThemeBtn();
+}
+</script>
+</body>
+</html>
