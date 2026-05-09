@@ -393,6 +393,7 @@
     <span id="app-title">Ledger Analyzer</span>
   </div>
   <div class="header-actions">
+    <a href="index.html" class="btn-lang" style="text-decoration:none;" id="btn-home">🏠 الرئيسية</a>
     <button class="btn-lang" onclick="toggleLang()" id="lang-btn">AR / عر</button>
     <button class="btn-icon" onclick="toggleTheme()" id="theme-btn" title="Toggle theme">🌙</button>
   </div>
@@ -527,6 +528,7 @@ function applyLang() {
   document.getElementById('f-all').textContent = t('all');
   document.getElementById('f-balance').textContent = t('hasBalance');
   document.getElementById('f-zero').textContent = t('zeroBalance');
+  document.getElementById('btn-home').textContent = lang === 'ar' ? '🏠 الرئيسية' : '🏠 Home';
   document.getElementById('btn-upload-new').textContent = t('newFile');
   document.getElementById('btn-print').textContent = lang === 'ar' ? '🖨 طباعة' : '🖨 Print';
   if (customers.length > 0) { renderStats(); renderTable(); }
