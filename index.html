@@ -385,7 +385,7 @@
   }
 </style>
 </head>
-<body data-theme="light">
+<body data-theme="dark">
 
 <div class="bg-deco"></div>
 
@@ -457,7 +457,7 @@
 
 <script>
 let lang = 'ar';
-let isDark = Trrue;
+let isDark = true;
 
 const content = {
   en: {
@@ -537,6 +537,8 @@ function toggleTheme() {
   document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
   updateThemeBtn();
 }
+
+applyLang();
 </script>
 </body>
 </html>
