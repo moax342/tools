@@ -323,6 +323,66 @@
     td:nth-child(n+4) { display: none; }
     th:nth-child(n+4) { display: none; }
   }
+
+  /* Print overlay */
+  #print-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  #print-overlay.show { display: flex; }
+  #print-frame {
+    background: #fff;
+    color: #111;
+    border-radius: var(--radius);
+    padding: 32px;
+    width: 92vw;
+    max-width: 960px;
+    max-height: 88vh;
+    overflow-y: auto;
+    position: relative;
+  }
+  #print-frame h2 { font-size: 18px; font-weight: 700; margin-bottom: 6px; color: #111; }
+  #print-frame .print-meta { font-size: 12px; color: #666; margin-bottom: 20px; }
+  #print-frame table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  #print-frame thead th {
+    background: #1a1d27; color: #e8eaf6;
+    padding: 10px 12px; text-align: left; font-size: 11px;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  #print-frame.rtl thead th { text-align: right; }
+  #print-frame tbody tr:nth-child(even) { background: #f5f6fc; }
+  #print-frame tbody td { padding: 9px 12px; border-bottom: 1px solid #e0e2ef; color: #222; }
+  #print-frame .rtl td { text-align: right; }
+  #print-frame .bal-pos { color: #d03030; font-weight: 700; }
+  #print-frame .bal-zero { color: #1a9951; font-weight: 700; }
+  #print-frame .print-actions { display: flex; gap: 10px; margin-bottom: 20px; }
+  #print-frame .print-actions button {
+    height: 36px; padding: 0 16px; border-radius: 6px; border: 1px solid #ccd;
+    background: #f0f2f9; cursor: pointer; font-size: 13px; font-weight: 600; color: #333;
+  }
+  #print-frame .print-actions .btn-doit { background: #4263d0; color: #fff; border-color: #4263d0; }
+  #print-frame .print-actions .btn-doit:hover { background: #3352b0; }
+  #print-frame .print-actions button:hover { background: #e0e2ef; }
+  #print-frame .print-summary {
+    display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap;
+  }
+  #print-frame .ps-card {
+    background: #f0f2f9; border-radius: 8px; padding: 10px 16px; min-width: 120px;
+  }
+  #print-frame .ps-label { font-size: 10px; color: #777; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 3px; }
+  #print-frame .ps-val { font-size: 18px; font-weight: 700; color: #111; }
+
+  @media print {
+    body > * { display: none !important; }
+    #print-overlay { display: block !important; position: static !important; background: none !important; }
+    #print-frame { max-height: none; overflow: visible; box-shadow: none; width: 100%; border-radius: 0; padding: 0; }
+    #print-frame .print-actions { display: none !important; }
+  }
 </style>
 </head>
 <body data-theme="dark">
@@ -361,6 +421,7 @@
       <button class="filter-btn" id="f-balance" onclick="setFilter('balance')" data-ar="لديه رصيد" data-en="Has balance">Has balance</button>
       <button class="filter-btn" id="f-zero" onclick="setFilter('zero')" data-ar="لا رصيد" data-en="Zero balance">Zero balance</button>
       <button class="filter-btn" id="btn-upload-new" onclick="resetUpload()" data-ar="ملف جديد" data-en="New file">New file</button>
+      <button class="filter-btn" id="btn-print" onclick="printTable()">🖨 Print</button>
     </div>
 
     <div class="table-wrap">
@@ -374,6 +435,22 @@
     </div>
   </div>
 </main>
+
+<div id="print-overlay">
+  <div id="print-frame">
+    <div class="print-actions">
+      <button class="btn-doit" onclick="window.print()">🖨 Print / Save PDF</button>
+      <button onclick="closePrint()">✕ Close</button>
+    </div>
+    <h2 id="print-title">General Ledger — Customer Analysis</h2>
+    <div class="print-meta" id="print-meta"></div>
+    <div class="print-summary" id="print-summary"></div>
+    <table id="print-table">
+      <thead id="print-thead"></thead>
+      <tbody id="print-tbody"></tbody>
+    </table>
+  </div>
+</div>
 
 <script>
 let customers = [];
@@ -451,6 +528,7 @@ function applyLang() {
   document.getElementById('f-balance').textContent = t('hasBalance');
   document.getElementById('f-zero').textContent = t('zeroBalance');
   document.getElementById('btn-upload-new').textContent = t('newFile');
+  document.getElementById('btn-print').textContent = lang === 'ar' ? '🖨 طباعة' : '🖨 Print';
   if (customers.length > 0) { renderStats(); renderTable(); }
 }
 
@@ -613,6 +691,69 @@ function setFilter(f) {
     document.getElementById(id).classList.toggle('active', filter === k);
   });
   renderTable();
+}
+
+function closePrint() {
+  document.getElementById('print-overlay').classList.remove('show');
+}
+
+function printTable() {
+  const isRtl = lang === 'ar';
+  const cols = t('cols');
+  const search = document.getElementById('search').value.toLowerCase();
+
+  let data = customers.filter(c => {
+    if (filter === 'balance' && c.balance <= 0) return false;
+    if (filter === 'zero' && c.balance > 0) return false;
+    if (search && !c.name.toLowerCase().includes(search) && !c.id.includes(search)) return false;
+    return true;
+  });
+
+  if (sortField) {
+    data.sort((a, b) => {
+      const av = getSortValue(a, sortField), bv = getSortValue(b, sortField);
+      if (av < bv) return -1 * sortDir;
+      if (av > bv) return 1 * sortDir;
+      return 0;
+    });
+  }
+
+  const frame = document.getElementById('print-frame');
+  frame.classList.toggle('rtl', isRtl);
+  frame.style.direction = isRtl ? 'rtl' : 'ltr';
+
+  document.getElementById('print-title').textContent = isRtl ? 'دفتر الأستاذ العام — تحليل العملاء' : 'General Ledger — Customer Analysis';
+
+  const now = new Date();
+  const dateStr = `${now.getDate()}-${now.getMonth()+1}-${now.getFullYear()}`;
+  const filterLabel = filter === 'balance' ? (isRtl ? 'لديه رصيد' : 'With balance') : filter === 'zero' ? (isRtl ? 'لا رصيد' : 'Zero balance') : (isRtl ? 'الكل' : 'All');
+  document.getElementById('print-meta').textContent = (isRtl ? 'تاريخ الطباعة: ' : 'Printed: ') + dateStr + '  |  ' + (isRtl ? 'الفلتر: ' : 'Filter: ') + filterLabel + '  |  ' + (isRtl ? 'العدد: ' : 'Count: ') + data.length;
+
+  const total = data.length;
+  const withBal = data.filter(c => c.balance > 0).length;
+  const totalBal = data.reduce((s, c) => s + (c.balance || 0), 0);
+  document.getElementById('print-summary').innerHTML = `
+    <div class="ps-card"><div class="ps-label">${isRtl ? 'العملاء' : 'Customers'}</div><div class="ps-val">${total}</div></div>
+    <div class="ps-card"><div class="ps-label">${isRtl ? 'لديهم رصيد' : 'With balance'}</div><div class="ps-val" style="color:#d03030">${withBal}</div></div>
+    <div class="ps-card"><div class="ps-label">${isRtl ? 'مسدد' : 'Cleared'}</div><div class="ps-val" style="color:#1a9951">${total - withBal}</div></div>
+    <div class="ps-card"><div class="ps-label">${isRtl ? 'إجمالي الأرصدة' : 'Total balance'}</div><div class="ps-val">${fmtNum(totalBal)}</div></div>
+  `;
+
+  document.getElementById('print-thead').innerHTML = `<tr>${cols.map(c => `<th>${c}</th>`).join('')}</tr>`;
+
+  document.getElementById('print-tbody').innerHTML = data.map((c, i) => {
+    const balCls = c.balance > 0 ? 'bal-pos' : 'bal-zero';
+    return `<tr>
+      <td>${c.name}${c.id ? ` <span style="font-size:11px;color:#888">(${c.id})</span>` : ''}</td>
+      <td class="${balCls}">${fmtNum(c.balance)}</td>
+      <td>${fmtNum(c.lastInvoice)}</td>
+      <td>${fmtDate(c.lastInvoiceDate)}</td>
+      <td>${fmtNum(c.lastPayment)}</td>
+      <td>${fmtDate(c.lastPaymentDate)}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('print-overlay').classList.add('show');
 }
 
 function renderStats() {
