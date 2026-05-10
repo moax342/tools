@@ -6,7 +6,7 @@
     <title>Hilal Al-Sharq — Operations Calculators</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <link rel="icon" type="image/x-icon" href="icon.ico">
@@ -15,10 +15,11 @@
     <link rel="stylesheet" href="operations_tools.css" />
 </head>
 <body class="min-h-screen">
+    <div class="bg-deco" aria-hidden="true"></div>
     <div class="page-shell">
         <header class="topbar">
             <div class="brand-lockup">
-                <img src="ec-iq.com.png" alt="Hilal Al-Sharq icon" class="site-logo" width="44" height="44" />
+                <img src="icon.ico" alt="Hilal Al-Sharq icon" class="site-logo" width="44" height="44" />
                 <div class="brand-block" id="header-text">
                     <h1 class="brand-title" data-en="Hilal Al-Sharq Tools" data-ar="هلال الشرق">هلال الشرق</h1>
                     <p class="brand-subtitle" data-en="Operations Calculators" data-ar="حاسبات العمليات">حاسبات العمليات</p>
@@ -30,7 +31,13 @@
             </div>
         </header>
 
-        <nav class="tabbar">
+        <section class="suite-hero">
+            <div class="suite-badge" data-en="Operations Calculators" data-ar="حاسبات العمليات">حاسبات العمليات</div>
+            <h2 data-en="Fast tools for daily sales operations" data-ar="أدوات سريعة للعمليات اليومية">أدوات سريعة للعمليات اليومية</h2>
+            <p data-en="Convert cake packages, calculate returns, and build paid/free gift offers in a polished workspace matching the rest of Hilal Al-Sharq tools." data-ar="حوّل البالات والكارتونات، احسب المردود، وأنشئ عروض الهدايا المدفوعة والمجانية داخل واجهة أنيقة موحدة مع باقي أدوات هلال الشرق.">حوّل البالات والكارتونات، احسب المردود، وأنشئ عروض الهدايا المدفوعة والمجانية داخل واجهة أنيقة موحدة مع باقي أدوات هلال الشرق.</p>
+        </section>
+
+        <nav class="tabbar" aria-label="Operations calculator sections">
             <button onclick="switchTab('cakeTab')" id="btn-cakeTab" class="tab-btn active" data-en="Cake Converter" data-ar="حاسبة الكيك">حاسبة الكيك</button>
             <button onclick="switchTab('returnTab')" id="btn-returnTab" class="tab-btn" data-en="Return Calculator" data-ar="حاسبة المردود">حاسبة المردود</button>
             <button onclick="switchTab('giftTab')" id="btn-giftTab" class="tab-btn" data-en="Gifts Calculator" data-ar="حاسبة الهدايا">حاسبة الهدايا</button>
@@ -223,7 +230,7 @@
 
     <div id="errorModal" class="modal hidden">
         <div class="modal-card">
-            <div class="modal-icon">⚠️</div>
+            <div class="modal-icon"></div>
             <h4 data-en="Alert" data-ar="تنبيه">تنبيه</h4>
             <p id="errorText"></p>
             <button onclick="hideError()" class="modal-btn" data-en="Understand" data-ar="فهمت">فهمت</button>
@@ -251,8 +258,8 @@
 
                 <div class="settings-row">
                     <div class="settings-copy">
-                        <strong data-en="White mode" data-ar="الوضع الأبيض">الوضع الأبيض</strong>
-                        <span data-en="Switch between dark and white display modes." data-ar="التبديل بين الوضع الداكن والوضع الأبيض.">التبديل بين الوضع الداكن والوضع الأبيض.</span>
+                        <strong data-en="Theme" data-ar="المظهر">الوضع الأبيض</strong>
+                        <span data-en="Switch between dark and light display modes." data-ar="التبديل بين الوضع الداكن والوضع الفاتح.">التبديل بين الوضع الداكن والوضع الأبيض.</span>
                     </div>
                     <button id="theme-toggle" type="button" class="option-btn" onclick="toggleTheme()">الوضع الأبيض</button>
                 </div>
