@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hilal Al-Sharq — Inventory Manager</title>
+  <link rel="icon" type="image/png" href="icon.svg">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="inventory_manager.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-title">
+      <strong id="appTitle" class="app-title-brand"><img src="icon.svg" alt="" class="app-title-icon"><span data-i18n="appTitle">لوحة مراقبة المخزون — هلال الشرق</span></strong>
+      <span id="lastUpdated">آخر تحديث: لم يتم الاستيراد بعد</span>
+    </div>
+    <div class="topbar-actions">
+      <a href="index.html" class="pill-btn home-link" data-i18n="home">الرئيسية</a>
+      <input id="fileInput" class="file-input-hidden" type="file" accept=".xlsx,.xls,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+      <input id="compareFileInput" class="file-input-hidden" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+      <div class="settings-wrap">
+        <button id="settingsBtn" class="pill-btn settings-btn" type="button" aria-haspopup="true" aria-expanded="false">
+          <span>⚙️</span><span data-i18n="settings">الإعدادات</span>
+        </button>
+        <div id="settingsPanel" class="settings-panel" hidden>
+          <div class="settings-panel-header" data-i18n="settings">الإعدادات</div>
+          <div class="settings-row">
+            <span data-i18n="appearance">المظهر</span>
+            <div class="segmented-control" role="group" aria-label="Appearance">
+              <button id="themeLightBtn" type="button" data-i18n="lightMode">☀️ فاتح</button>
+              <button id="themeDarkBtn" type="button" data-i18n="darkMode">🌙 داكن</button>
+            </div>
+          </div>
+          <div class="settings-row">
+            <span data-i18n="language">اللغة</span>
+            <div class="segmented-control" role="group" aria-label="Language">
+              <button id="langArBtn" type="button">العربية</button>
+              <button id="langEnBtn" type="button">English</button>
+            </div>
+          </div>
+          <div class="settings-row settings-actions-row">
+            <span data-i18n="dataActions">الملفات</span>
+            <div class="settings-action-grid">
+              <button id="importBtn" class="pill-btn primary" type="button" data-i18n="importFile">📁 استيراد ملف</button>
+              <label id="compareImportBtn" class="pill-btn file-pick-label" for="compareFileInput" role="button" tabindex="0" data-i18n="importCompareFile">📊 استيراد ملف مقارنة XLSX</label>
+              <button id="templateXlsxBtn" class="pill-btn" type="button" data-i18n="templateXlsx">⬇ قالب XLSX</button>
+              <button id="templateCsvBtn" class="pill-btn" type="button" data-i18n="templateCsv">⬇ قالب CSV</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="app-shell">
+    <section id="messageBox" class="message-box" hidden></section>
+
+    <section id="emptyState" class="empty-state">
+      <div class="empty-card">
+        <div class="empty-icon">📦</div>
+        <h1>Inventory Manager</h1>
+        <p data-i18n="emptySubtitle">استورد ملف المخزون لعرض لوحة تحليل تفاعلية.</p>
+        <div class="empty-actions">
+          <button class="pill-btn primary" type="button" onclick="document.querySelector('#fileInput').click()" data-i18n="importXlsxCsv">استيراد XLSX / CSV</button>
+          <button class="pill-btn" type="button" onclick="document.querySelector('#templateXlsxBtn').click()" data-i18n="downloadTemplate">تنزيل القالب</button>
+        </div>
+      </div>
+    </section>
+
+    <main id="dashboard" class="dashboard" hidden>
+      <section class="filters-card">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input id="searchInput" type="search" autocomplete="off" data-i18n-placeholder="searchPlaceholder" placeholder="بحث عن منتج أو موقع أو رقم دفعة أو فئة...">
+          <div id="searchSuggestions" class="search-suggestions" hidden></div>
+          <div id="searchTags" class="search-tags" aria-live="polite"></div>
+        </div>
+        <select id="locationFilter" aria-label="كل الفروع / المواقع"></select>
+        <select id="categoryFilter" aria-label="كل الفئات"></select>
+        <select id="statusFilter" aria-label="كل الحالات"></select>
+        <select id="removalDateFilter" aria-label="تصفية تاريخ الإزالة"></select>
+        <select id="uomFilter" aria-label="كل وحدات القياس"></select>
+        <button id="productTotalsToggle" class="pill-btn toggle-filter" type="button" aria-pressed="false" data-i18n="productTotals">🧮 إجمالي كل منتج</button>
+        <button id="exportCsvBtn" class="pill-btn primary" type="button" data-i18n="exportCsv">⬇ تصدير CSV</button>
+        <button id="exportXlsxBtn" class="pill-btn" type="button" data-i18n="exportXlsx">⬇ تصدير XLSX</button>
+        <button id="resetFiltersBtn" class="pill-btn" type="button" data-i18n="resetFilters">إعادة التصفية</button>
+        <details class="advanced-filters">
+          <summary data-i18n="advancedOptions">خيارات إضافية</summary>
+          <div class="advanced-grid">
+            <label><span data-i18n="lowStockThreshold">حد المخزون المنخفض</span><input id="lowStockThreshold" type="number" min="0" step="1" value="5"></label>
+            <button id="clearBtn" class="pill-btn danger" type="button" data-i18n="clearData">مسح البيانات</button>
+            <div class="optional-kpi-panel">
+              <div class="optional-kpi-title" data-i18n="optionalKpis">مؤشرات إضافية</div>
+              <div id="optionalKpiToggles" class="optional-kpi-toggles"></div>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <section id="quickViewBar" class="quick-view-bar" hidden>
+        <strong id="quickViewLabel"></strong>
+        <button id="clearQuickViewBtn" class="pill-btn" type="button" data-i18n="clearQuickView">إلغاء العرض</button>
+      </section>
+
+      <section class="kpi-grid" aria-label="Inventory KPIs">
+        <article id="kpiProductsCard" class="kpi-card blue clickable-kpi" role="button" tabindex="0" data-kpi-view="products"><span data-i18n="kpiProducts">إجمالي المنتجات</span><strong id="kpiProducts">0</strong><small id="kpiRowsSub">0 سجل</small></article>
+        <article id="kpiOutCard" class="kpi-card red clickable-kpi" role="button" tabindex="0" data-kpi-view="out"><span data-i18n="kpiOut">نفاد المخزون</span><strong id="kpiOut">0</strong><small data-i18n="kpiOutSub">كمية متاحة = 0</small></article>
+        <article id="kpiNegativeCard" class="kpi-card rose clickable-kpi" role="button" tabindex="0" data-kpi-view="negative"><span data-i18n="kpiNegative">مخزون سالب</span><strong id="kpiNegative">0</strong><small data-i18n="kpiNegativeSub">كمية أقل من 0</small></article>
+        <article id="kpiLowCard" class="kpi-card amber clickable-kpi" role="button" tabindex="0" data-kpi-view="low"><span data-i18n="kpiLow">مخزون منخفض</span><strong id="kpiLow">0</strong><small data-i18n="kpiLowSub">حسب الحد المحدد</small></article>
+        <article id="kpiOnHandCard" class="kpi-card green clickable-kpi" role="button" tabindex="0" data-kpi-view="onHand"><span data-i18n="kpiOnHand">إجمالي الكميات</span><strong id="kpiOnHand">0</strong><small data-i18n="kpiOnHandSub">وحدات موجودة</small></article>
+        <article id="kpiValueCard" class="kpi-card purple clickable-kpi" role="button" tabindex="0" data-kpi-view="value"><span data-i18n="kpiValue">إجمالي القيمة</span><strong id="kpiValue">0</strong><small data-i18n="kpiValueSub">القيمة الإجمالية</small></article>
+        <article id="kpiLocationsCard" class="kpi-card slate clickable-kpi" role="button" tabindex="0" data-kpi-view="locations"><span data-i18n="kpiLocations">عدد الفروع</span><strong id="kpiLocations">0</strong><small data-i18n="kpiLocationsSub">فرع / موقع مخزن</small></article>
+        <article id="kpiRowsCard" class="kpi-card cyan optional-kpi clickable-kpi" data-kpi-card="rows" hidden role="button" tabindex="0" data-kpi-view="rows"><span data-i18n="kpiRowsOptional">السجلات المعروضة</span><strong id="kpiRows">0</strong><small data-i18n="kpiRowsOptionalSub">بعد التصفية</small></article>
+        <article id="kpiAvailableCard" class="kpi-card teal optional-kpi clickable-kpi" data-kpi-card="available" hidden role="button" tabindex="0" data-kpi-view="available"><span data-i18n="kpiAvailable">إجمالي المتاح</span><strong id="kpiAvailable">0</strong><small data-i18n="kpiAvailableSub">كمية متاحة</small></article>
+        <article id="kpiReservedCard" class="kpi-card indigo optional-kpi clickable-kpi" data-kpi-card="reserved" hidden role="button" tabindex="0" data-kpi-view="reserved"><span data-i18n="kpiReserved">إجمالي المحجوز</span><strong id="kpiReserved">0</strong><small data-i18n="kpiReservedSub">غير متاح / محجوز</small></article>
+        <article id="kpiCategoriesCard" class="kpi-card blue optional-kpi clickable-kpi" data-kpi-card="categories" hidden role="button" tabindex="0" data-kpi-view="categories"><span data-i18n="kpiCategories">عدد الفئات</span><strong id="kpiCategories">0</strong><small data-i18n="kpiCategoriesSub">فئات ضمن العرض</small></article>
+        <article id="kpiUomsCard" class="kpi-card slate optional-kpi clickable-kpi" data-kpi-card="uoms" hidden role="button" tabindex="0" data-kpi-view="uoms"><span data-i18n="kpiUoms">وحدات القياس</span><strong id="kpiUoms">0</strong><small data-i18n="kpiUomsSub">أنواع وحدات</small></article>
+        <article id="kpiBatchesCard" class="kpi-card purple optional-kpi clickable-kpi" data-kpi-card="batches" hidden role="button" tabindex="0" data-kpi-view="batches"><span data-i18n="kpiBatches">الدُفعات</span><strong id="kpiBatches">0</strong><small data-i18n="kpiBatchesSub">دفعات / أرقام تسلسل</small></article>
+        <article id="kpiDatedCard" class="kpi-card amber optional-kpi clickable-kpi" data-kpi-card="dated" hidden role="button" tabindex="0" data-kpi-view="dated"><span data-i18n="kpiDated">بتاريخ إزالة</span><strong id="kpiDated">0</strong><small data-i18n="kpiDatedSub">صفوف لها تاريخ</small></article>
+        <article id="kpiAvgUnitValueCard" class="kpi-card green optional-kpi clickable-kpi" data-kpi-card="avgUnitValue" hidden role="button" tabindex="0" data-kpi-view="avgUnitValue"><span data-i18n="kpiAvgUnitValue">متوسط قيمة الوحدة</span><strong id="kpiAvgUnitValue">0</strong><small data-i18n="kpiAvgUnitValueSub">القيمة ÷ الكمية</small></article>
+        <article id="kpiReservedValueCard" class="kpi-card rose optional-kpi clickable-kpi" data-kpi-card="reservedValue" hidden role="button" tabindex="0" data-kpi-view="reservedValue"><span data-i18n="kpiReservedValue">قيمة المحجوز</span><strong id="kpiReservedValue">0</strong><small data-i18n="kpiReservedValueSub">قيمة صفوف محجوزة</small></article>
+      </section>
+
+      <section id="comparisonPanel" class="comparison-section" hidden aria-label="Inventory comparison">
+        <div class="comparison-header">
+          <div>
+            <h2 data-i18n="comparisonTitle">مقارنة بيانات المخزون</h2>
+            <p id="comparisonInfo" data-i18n="comparisonEmptyHint">استورد ملف XLSX آخر من الإعدادات لمقارنته مع البيانات الحالية.</p>
+          </div>
+          <div class="comparison-actions">
+            <details id="comparisonKpiSelectorMenu" class="chart-selector comparison-selector">
+              <summary><span aria-hidden="true">🧮</span><span data-i18n="comparisonMetricSelectors">مؤشرات المقارنة</span></summary>
+              <div id="comparisonKpiSelectorOptions" class="chart-selector-options comparison-selector-options"></div>
+            </details>
+            <details id="comparisonChartSelectorMenu" class="chart-selector comparison-selector">
+              <summary><span aria-hidden="true">📈</span><span data-i18n="comparisonChartSelectors">رسوم المقارنة</span></summary>
+              <div id="comparisonChartSelectorOptions" class="chart-selector-options comparison-selector-options"></div>
+            </details>
+            <button id="exportComparisonCsvBtn" class="pill-btn primary" type="button" data-i18n="exportComparisonCsv">⬇ تصدير CSV</button>
+            <button id="exportComparisonXlsxBtn" class="pill-btn" type="button" data-i18n="exportComparisonXlsx">⬇ تصدير XLSX</button>
+            <button id="clearComparisonBtn" class="pill-btn danger" type="button" data-i18n="clearComparison">مسح المقارنة</button>
+          </div>
+        </div>
+        <div id="comparisonSummary" class="comparison-summary"></div>
+        <div class="comparison-charts-block">
+          <div class="comparison-charts-header">
+            <h3 data-i18n="comparisonChartsTitle">رسوم المقارنة</h3>
+            <p id="comparisonChartsEmpty" class="comparison-note" data-i18n="comparisonChartsEmpty">اختر رسوم المقارنة من القائمة لعرضها.</p>
+          </div>
+          <div id="comparisonChartsGrid" class="charts-grid comparison-charts-grid"></div>
+        </div>
+        <div id="comparisonViewBar" class="comparison-view-bar" hidden>
+          <strong id="comparisonViewLabel"></strong>
+          <button id="clearComparisonViewBtn" class="pill-btn" type="button" data-i18n="clearComparisonView">عرض كل المقارنة</button>
+        </div>
+        <div class="comparison-table-wrap">
+          <table id="comparisonTable" class="comparison-table"></table>
+        </div>
+        <p id="comparisonTableNote" class="comparison-note"></p>
+      </section>
+
+      <section class="charts-section" aria-label="Inventory charts">
+        <div class="charts-toolbar">
+          <div>
+            <h2 data-i18n="chartsTitle">الرسوم البيانية</h2>
+            <p id="chartsInfo" data-i18n="chartsInfo">الرسمان الأساسيان ظاهران دائمًا. اختر الرسوم الإضافية من القائمة.</p>
+          </div>
+          <details id="chartSelectorMenu" class="chart-selector">
+            <summary><span aria-hidden="true">📊</span><span data-i18n="selectCharts">اختيار الرسوم</span></summary>
+            <div id="chartSelectorOptions" class="chart-selector-options"></div>
+          </details>
+        </div>
+        <div id="chartsGrid" class="charts-grid">
+          <article class="chart-card" data-chart-id="valueCategoryChart" data-default-chart="true"><canvas id="valueCategoryChart"></canvas></article>
+          <article class="chart-card" data-chart-id="categoryCountChart" data-default-chart="true"><canvas id="categoryCountChart"></canvas></article>
+          <article class="chart-card optional-chart" data-chart-id="locationQtyChart" hidden><canvas id="locationQtyChart"></canvas></article>
+          <article class="chart-card optional-chart" data-chart-id="topProductsChart" hidden><canvas id="topProductsChart"></canvas></article>
+          <article class="chart-card optional-chart" data-chart-id="stockStatusChart" hidden><canvas id="stockStatusChart"></canvas></article>
+          <article class="chart-card optional-chart" data-chart-id="valueLocationChart" hidden><canvas id="valueLocationChart"></canvas></article>
+          <article class="chart-card optional-chart" data-chart-id="availableReservedCategoryChart" hidden><canvas id="availableReservedCategoryChart"></canvas></article>
+          <article class="chart-card optional-chart" data-chart-id="skuCategoryChart" hidden><canvas id="skuCategoryChart"></canvas></article>
+          <article class="chart-card optional-chart" data-chart-id="uomChart" hidden><canvas id="uomChart"></canvas></article>
+          <article class="chart-card optional-chart" data-chart-id="reservedLocationChart" hidden><canvas id="reservedLocationChart"></canvas></article>
+          <article class="chart-card optional-chart" data-chart-id="lowStockProductsChart" hidden><canvas id="lowStockProductsChart"></canvas></article>
+          <article class="chart-card optional-chart" data-chart-id="unitValueChart" hidden><canvas id="unitValueChart"></canvas></article>
+        </div>
+      </section>
+
+      <section class="table-panel">
+        <div class="table-header">
+          <div>
+            <h2 data-i18n="productDetails">تفاصيل المنتجات</h2>
+            <p id="tableInfo">0 سجل</p>
+          </div>
+          <div class="table-tools">
+            <label><span data-i18n="rowsPerPage">عدد الصفوف</span><select id="pageSizeSelect"><option>10</option><option selected>25</option><option>50</option><option>100</option></select></label>
+            <details class="columns-menu">
+              <summary data-i18n="columns">الأعمدة</summary>
+              <div id="columnToggles"></div>
+            </details>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table id="inventoryTable"></table>
+        </div>
+        <div class="pagination">
+          <button id="nextPageBtn" class="pill-btn" type="button" data-i18n="next">التالي</button>
+          <span id="pageInfo">صفحة 1 من 1</span>
+          <button id="prevPageBtn" class="pill-btn" type="button" data-i18n="previous">السابق</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="chartModal" class="chart-modal" hidden role="dialog" aria-modal="true" aria-labelledby="chartModalTitle">
+    <div class="chart-modal-panel">
+      <div class="chart-modal-header">
+        <h2 id="chartModalTitle">Chart</h2>
+        <button id="chartModalClose" class="pill-btn" type="button" data-i18n="closeExpanded">إغلاق</button>
+      </div>
+      <canvas id="expandedChartCanvas"></canvas>
+    </div>
+  </div>
+  <div id="tooltip" class="tooltip" hidden></div>
+  <script src="inventory_manager.js"></script>
+</body>
+</html>
