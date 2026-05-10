@@ -239,7 +239,7 @@
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 24px;
     width: 100%;
-    max-width: 760px;
+    max-width: 1100px;
   }
 
   .tool-card {
@@ -261,6 +261,7 @@
     animation: fadeUp 0.7s ease both;
   }
   .tool-card:nth-child(2) { animation-delay: 0.12s; }
+  .tool-card:nth-child(3) { animation-delay: 0.24s; }
 
   .tool-card::before {
     content: '';
@@ -391,7 +392,7 @@
 
 <header>
   <div class="header-left">
-    <img id="site-logo" class="logo-mark" src="ec-iq.com.png" alt="Hilal Al-Sharq Logo" style="object-fit:contain;"/>
+    <img id="site-logo" class="logo-mark" src="https://raw.githubusercontent.com/moax342/tools/main/ec-iq.com.png" alt="Hilal Al-Sharq Logo" style="object-fit:contain;"/>
     <div class="brand-name">
       <div class="brand-en">Hilal Al-Sharq</div>
       <div class="brand-ar">هلال الشرق</div>
@@ -434,6 +435,18 @@
       </div>
       <div class="tool-arrow" id="c2-arrow">Open tool →</div>
     </a>
+
+    <!-- Card 3: Accounting Calculator -->
+    <a href="accounting_calculator.html" class="tool-card">
+      <div class="card-deco"></div>
+      <div class="tool-icon">🧮</div>
+      <div class="tool-body">
+        <div class="tool-name" id="c3-name">Accounting Calculator</div>
+        <div class="tool-name-ar" id="c3-ar">الآلة الحاسبة المحاسبية</div>
+        <div class="tool-desc" id="c3-desc">Calculate VAT, discounts, profit margins, markup, and currency conversions — all in one fast and easy tool.</div>
+      </div>
+      <div class="tool-arrow" id="c3-arrow">Open tool →</div>
+    </a>
   </div>
 </main>
 
@@ -461,6 +474,10 @@ const content = {
     c2Ar: 'كشف الحساب',
     c2Desc: 'Generate detailed account statements for any customer — showing all transactions, running balances, and exportable summaries.',
     c2Arrow: 'Open tool →',
+    c3Name: 'Accounting Calculator',
+    c3Ar: 'الآلة الحاسبة المحاسبية',
+    c3Desc: 'Calculate VAT, discounts, profit margins, markup, and currency conversions — all in one fast and easy tool.',
+    c3Arrow: 'Open tool →',
     footerBrand: 'Hilal Al-Sharq',
     footerCopy: 'Accounting Tools Suite',
   },
@@ -479,6 +496,10 @@ const content = {
     c2Ar: 'Account Statement',
     c2Desc: 'أنشئ كشوف حساب تفصيلية لأي عميل — تعرض جميع الحركات والأرصدة الجارية وملخصات قابلة للتصدير.',
     c2Arrow: '← فتح الأداة',
+    c3Name: 'الآلة الحاسبة المحاسبية',
+    c3Ar: 'Accounting Calculator',
+    c3Desc: 'احسب ضريبة القيمة المضافة والخصومات وهوامش الربح والترميز وتحويل العملات — كل ذلك في أداة واحدة سريعة وسهلة.',
+    c3Arrow: '← فتح الأداة',
     footerBrand: 'هلال الشرق',
     footerCopy: 'مجموعة أدوات المحاسبة',
   }
@@ -503,6 +524,10 @@ function applyLang() {
   document.getElementById('c2-ar').textContent = c.c2Ar;
   document.getElementById('c2-desc').textContent = c.c2Desc;
   document.getElementById('c2-arrow').textContent = c.c2Arrow;
+  document.getElementById('c3-name').textContent = c.c3Name;
+  document.getElementById('c3-ar').textContent = c.c3Ar;
+  document.getElementById('c3-desc').textContent = c.c3Desc;
+  document.getElementById('c3-arrow').textContent = c.c3Arrow;
   document.getElementById('footer-brand').textContent = c.footerBrand;
   document.getElementById('footer-copy').textContent = c.footerCopy;
   updateThemeBtn();
