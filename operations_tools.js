@@ -1,7 +1,7 @@
 
 
-let currentLang = localStorage.getItem('eastCrescentLang') || 'ar';
-let currentTheme = localStorage.getItem('eastCrescentTheme') || 'dark';
+let currentLang = localStorage.getItem('eastCrescentLang') || localStorage.getItem('hilalUnifiedLang') || 'ar';
+let currentTheme = localStorage.getItem('eastCrescentTheme') || localStorage.getItem('hilalUnifiedTheme') || localStorage.getItem('agedReceivableTheme') || 'dark';
 const MONEY_INPUT_IDS = ['priceInput', 'editOrig', 'editTarget', 'editCost'];
 
 const arabicDigitMap = {
@@ -96,6 +96,8 @@ function applyTheme(theme) {
     currentTheme = theme === 'light' ? 'light' : 'dark';
     document.body.setAttribute('data-theme', currentTheme);
     localStorage.setItem('eastCrescentTheme', currentTheme);
+    localStorage.setItem('hilalUnifiedTheme', currentTheme);
+    localStorage.setItem('agedReceivableTheme', currentTheme);
     updateSettingsControls();
 }
 
@@ -106,6 +108,7 @@ function toggleTheme() {
 function toggleLanguage() {
     currentLang = currentLang === 'ar' ? 'en' : 'ar';
     localStorage.setItem('eastCrescentLang', currentLang);
+    localStorage.setItem('hilalUnifiedLang', currentLang);
     applyLanguage();
 }
 
@@ -123,7 +126,7 @@ function applyLanguage() {
         el.placeholder = el.getAttribute(`data-placeholder-${currentLang}`);
     });
 
-    document.title = currentLang === 'ar' ? 'East Crescent Tools - هلال الشرق' : 'East Crescent Tools - Management & Operations Tools';
+    document.title = currentLang === 'ar' ? 'هلال الشرق - حاسبات العمليات' : 'Hilal Al-Sharq — Operations Calculators';
     updateSettingsControls();
     if (document.getElementById('giftPageInfo')) renderGiftPagination();
 }
