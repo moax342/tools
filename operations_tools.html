@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hilal Al-Sharq — Operations Calculators</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <link rel="icon" type="image/x-icon" href="icon.ico">
+    <link rel="shortcut icon" type="image/x-icon" href="icon.ico">
+    <link rel="apple-touch-icon" href="icon.ico">
+    <link rel="stylesheet" href="operations_tools.css" />
+</head>
+<body class="min-h-screen">
+    <div class="page-shell">
+        <header class="topbar">
+            <div class="brand-lockup">
+                <img src="icon.ico" alt="Hilal Al-Sharq icon" class="site-logo" width="44" height="44" />
+                <div class="brand-block" id="header-text">
+                    <h1 class="brand-title" data-en="Hilal Al-Sharq Tools" data-ar="هلال الشرق">هلال الشرق</h1>
+                    <p class="brand-subtitle" data-en="Operations Calculators" data-ar="حاسبات العمليات">حاسبات العمليات</p>
+                </div>
+            </div>
+            <div class="topbar-actions">
+                <a href="index.html" class="ghost-btn home-link" data-en="Home" data-ar="الرئيسية">الرئيسية</a>
+                <button id="settingsButton" class="ghost-btn" onclick="openSettings()" data-en="Settings" data-ar="الإعدادات">الإعدادات</button>
+            </div>
+        </header>
+
+        <nav class="tabbar">
+            <button onclick="switchTab('cakeTab')" id="btn-cakeTab" class="tab-btn active" data-en="Cake Converter" data-ar="حاسبة الكيك">حاسبة الكيك</button>
+            <button onclick="switchTab('returnTab')" id="btn-returnTab" class="tab-btn" data-en="Return Calculator" data-ar="حاسبة المردود">حاسبة المردود</button>
+            <button onclick="switchTab('giftTab')" id="btn-giftTab" class="tab-btn" data-en="Gifts Calculator" data-ar="حاسبة الهدايا">حاسبة الهدايا</button>
+        </nav>
+
+        <!-- Cake Converter -->
+        <section id="cakeTab" class="tool-tab app-card compact-card narrow-tab">
+            <div class="hero hero-cake">
+                <h2 data-en="Cake Converter" data-ar="حاسبة الكيك">حاسبة الكيك</h2>
+                <p data-en="Convert distribution to units" data-ar="تحويل التوزيع إلى وحدات">تحويل التوزيع إلى وحدات</p>
+            </div>
+            <div class="content">
+                <div class="grid grid-cols-1 lg:grid-cols-1 gap-4">
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <label data-en="Packages" data-ar="بالة">بالة</label>
+                            <input type="number" id="inputPkg" placeholder="0" data-placeholder-en="0" data-placeholder-ar="0" class="cake-input" />
+                        </div>
+                        <div>
+                            <label data-en="Boxes" data-ar="كرتونة">كرتونة</label>
+                            <input type="number" id="inputBox" placeholder="0" data-placeholder-en="0" data-placeholder-ar="0" class="cake-input" />
+                        </div>
+                        <div>
+                            <label data-en="Pieces" data-ar="قطعة">قطعة</label>
+                            <input type="number" id="inputPcs" placeholder="0" data-placeholder-en="0" data-placeholder-ar="0" class="cake-input" />
+                        </div>
+                    </div>
+
+                    <button class="primary-btn cake-btn" onclick="calculateCake()" data-en="Calculate Total" data-ar="احسب الإجمالي">احسب الإجمالي</button>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <p data-en="Decimal Value" data-ar="القيمة العشرية">القيمة العشرية</p>
+                            <strong id="cakeDecimalVal">0</strong>
+                        </div>
+                        <div class="stat-card">
+                            <p data-en="Total Pieces" data-ar="إجمالي القطع">إجمالي القطع</p>
+                            <strong id="cakeTotalPcs">0</strong>
+                        </div>
+                    </div>
+
+                    <div class="detail-panel detail-panel-indigo">
+                        <p data-en="Package Breakdown" data-ar="التفصيل">التفصيل</p>
+                        <strong id="cakeFormatVal">-</strong>
+                    </div>
+
+                    <button class="secondary-btn" onclick="clearCake()" data-en="Clear All" data-ar="مسح البيانات">مسح البيانات</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Return Calculator -->
+        <section id="returnTab" class="tool-tab app-card compact-card narrow-tab hidden">
+            <div class="hero hero-return">
+                <h2 data-en="Return Calculator" data-ar="حاسبة المردود">حاسبة المردود</h2>
+                <p data-en="Returns & Gifts Management System" data-ar="نظام إدارة المرتجعات والهدايا">نظام إدارة المرتجعات والهدايا</p>
+            </div>
+            <div class="content">
+                <div class="form-stack">
+                    <div>
+                        <label data-en="Paid Units" data-ar="عدد القطع المدفوعة">عدد القطع المدفوعة</label>
+                        <input type="number" id="paidInput" placeholder="أدخل العدد..." data-placeholder-en="Enter quantity..." data-placeholder-ar="أدخل العدد..." />
+                    </div>
+                    <div>
+                        <label data-en="Gift Units (Free)" data-ar="عدد الهدايا (مجانية)">عدد الهدايا (مجانية)</label>
+                        <input type="number" id="giftInput" placeholder="أدخل العدد..." data-placeholder-en="Enter quantity..." data-placeholder-ar="أدخل العدد..." />
+                    </div>
+                    <div>
+                        <label data-en="Returned Quantity" data-ar="كمية المردود (المرتجع)">كمية المردود (المرتجع)</label>
+                        <input type="number" id="returnQtyInput" placeholder="أدخل الكمية..." data-placeholder-en="Enter quantity..." data-placeholder-ar="أدخل الكمية..." />
+                    </div>
+                    <div>
+                        <label data-en="Product Price (Per Carton)" data-ar="سعر المنتج (للكارتونة)">سعر المنتج (للكارتونة)</label>
+                        <input type="text" inputmode="decimal" id="priceInput" class="money-input" placeholder="أدخل السعر..." data-placeholder-en="Enter price..." data-placeholder-ar="أدخل السعر..." />
+                    </div>
+                </div>
+
+                <div class="button-row">
+                    <button class="primary-btn return-btn" onclick="calculateReturn()" data-en="Calculate Now" data-ar="احسب الآن">احسب الآن</button>
+                    <button class="secondary-btn" onclick="clearReturn()" data-en="Clear" data-ar="مسح">مسح</button>
+                </div>
+
+                <div class="detail-box">
+                    <h3><span class="accent-dot accent-return"></span> <span data-en="Detailed Results" data-ar="النتائج التفصيلية">النتائج التفصيلية</span></h3>
+                    <div class="result-row"><span data-en="Effective Unit Price:" data-ar="سعر المنتج الفعلي:">سعر المنتج الفعلي:</span><span id="piecePriceLbl">-</span></div>
+                    <div class="result-row"><span data-en="Paid Items in Return:" data-ar="القطع المدفوعة في المردود:">القطع المدفوعة في المردود:</span><span id="paidInReturnLbl" class="green">-</span></div>
+                    <div class="result-row"><span data-en="Free Items in Return:" data-ar="القطع المجانية في المردود:">القطع المجانية في المردود:</span><span id="freeInReturnLbl" class="amber">-</span></div>
+                    <div class="result-row total"><span data-en="Total Return Value:" data-ar="قيمة إجمالي المردود:">إجمالي المردود:</span><span id="returnTotalLbl" class="blue">-</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gifts Calculator -->
+        <section id="giftTab" class="tool-tab app-card hidden">
+            <div class="hero hero-gift">
+                <h2 data-en="Gifts Calculator" data-ar="حاسبة الهدايا">حاسبة الهدايا</h2>
+                <p data-en="Paid / Free Calculator" data-ar="حاسبة عدد القطع المدفوعة والمجانية">حاسبة عدد القطع المدفوعة والمجانية</p>
+            </div>
+            <div class="content">
+                <div class="gift-layout">
+                    <div class="gift-inputs">
+                        <div class="field">
+                            <label data-en="Original Price per Unit (p):" data-ar="السعر الأصلي للقطعة (p):">السعر الأصلي للقطعة (p):</label>
+                            <input type="text" inputmode="decimal" id="editOrig" class="money-input" placeholder="مثال: 10000" data-placeholder-en="Example: 10,000" data-placeholder-ar="مثال: 10,000" />
+                        </div>
+                        <div class="field">
+                            <label data-en="Target Price per Unit After Offer (t):" data-ar="السعر المراد لكل قطعة بعد العرض (t):">السعر المراد لكل قطعة بعد العرض (t):</label>
+                            <input type="text" inputmode="decimal" id="editTarget" class="money-input" placeholder="مثال: 7407" data-placeholder-en="Example: 7,407" data-placeholder-ar="مثال: 7,407" />
+                        </div>
+                        <div class="field">
+                            <label data-en="Unit Cost (optional):" data-ar="تكلفة القطعة (اختياري):">تكلفة القطعة (اختياري):</label>
+                            <input type="text" inputmode="decimal" id="editCost" class="money-input" placeholder="مثال: 6000 (اتركه فارغاً إذا غير متوفر)" data-placeholder-en="Example: 6,000 (leave empty if unavailable)" data-placeholder-ar="مثال: 6,000 (اتركه فارغاً إذا غير متوفر)" />
+                        </div>
+                        <div class="field">
+                            <label data-en="Allowed Error (%) — (0 = exact, 100 = any):" data-ar="معدل الخطأ المسموح (%) — (0=دقيق، 100=أي):">معدل الخطأ المسموح (%) — (0=دقيق، 100=أي):</label>
+                            <input type="number" id="spinTol" min="0" max="100" step="0.01" value="1.00" data-placeholder-en="1.00" data-placeholder-ar="1.00" />
+                            <div class="hint" data-en="Enter the percentage error relative to target price. 100% means any." data-ar="أدخل النسبة المئوية للخطأ المسموح به من سعر الهدف. 100% تعني أي.">أدخل النسبة المئوية للخطأ المسموح به من سعر الهدف. 100% تعني أي.</div>
+                        </div>
+
+                        <div class="field">
+                            <label data-en="Number of results:" data-ar="عدد النتائج:">عدد النتائج:</label>
+                            <select id="comboTopk">
+                                <option value="auto" selected data-en="Auto (matching results)" data-ar="تلقائي (النتائج المطابقة)">تلقائي (النتائج المطابقة)</option>
+                                <option value="5" data-en="5" data-ar="5">5</option>
+                                <option value="10" data-en="10" data-ar="10">10</option>
+                                <option value="20" data-en="20" data-ar="20">20</option>
+                                <option value="50" data-en="50" data-ar="50">50</option>
+                                <option value="100" data-en="100" data-ar="100">100</option>
+                                <option value="250" data-en="250" data-ar="250">250</option>
+                                <option value="500" data-en="500" data-ar="500">500</option>
+                                <option value="750" data-en="750" data-ar="750">750</option>
+                                <option value="1000" data-en="1000" data-ar="1000">1000</option>
+                            </select>
+                            <div class="hint" data-en="Controls how many results are kept before paging. Auto shows every matching result." data-ar="يتحكم بعدد النتائج التي يتم الاحتفاظ بها قبل التقسيم إلى صفحات. تلقائي يعرض كل نتيجة مطابقة.">يتحكم بعدد النتائج التي يتم الاحتفاظ بها قبل التقسيم إلى صفحات. تلقائي يعرض كل نتيجة مطابقة.</div>
+                        </div>
+
+
+                        <label class="check-wrap">
+                            <input type="checkbox" id="checkRound" />
+                            <span data-en="Round results (e.g. 349 → 350)" data-ar="تقريب النتائج (مثلاً 349 -> 350)">تقريب النتائج (مثلاً 349 -> 350)</span>
+                        </label>
+                        <div class="hint" data-en="When enabled, paid/free counts are rounded to a clean retail increment and the effective price/error are recalculated." data-ar="عند التفعيل، سيتم تقريب أعداد القطع لأقرب رقم منطقي وإعادة حساب السعر الفعلي والخطأ.">عند التفعيل، سيتم تقريب أعداد القطع لأقرب رقم منطقي وإعادة حساب السعر الفعلي والخطأ.</div>
+
+                        <div class="gift-actions">
+                            <button class="primary-btn gift-btn" onclick="onGiftCalculate()" data-en="Calculate" data-ar="احسب">احسب</button>
+                            <button class="secondary-btn" onclick="onGiftExport()" data-en="Export (Excel/CSV)" data-ar="تصدير (Excel/CSV)">تصدير (Excel/CSV)</button>
+                            <button id="giftClearBtn" type="button" class="secondary-btn" onclick="clearGiftData(event)" data-en="Clear Data" data-ar="مسح البيانات">مسح البيانات</button>
+                        </div>
+                    </div>
+
+                    <div class="gift-results">
+                        <div class="exact-card">
+                            <h3 data-en="Exact mathematical result" data-ar="النتيجة الدقيقة رياضياً">النتيجة الدقيقة رياضياً</h3>
+                            <p id="lblExact" data-en="Press Calculate to get the result." data-ar="اضغط على (احسب) للحصول على النتيجة.">اضغط على (احسب) للحصول على النتيجة.</p>
+                        </div>
+
+                        <div class="table-card">
+                            <div class="table-head">
+                                <h3 data-en="Offer suggestions" data-ar="اقتراحات العرض">اقتراحات العرض</h3>
+                                <div class="table-note" data-en="Double click a column to sort." data-ar="انقر نقراً مزدوجاً على العمود للفرز.">انقر نقراً مزدوجاً على العمود للفرز.</div>
+                            </div>
+                            <div class="table-wrap">
+                                <table id="giftTable">
+                                    <thead>
+                                        <tr>
+                                            <th data-col="0" data-en="N (Total)" data-ar="N (الإجمالي)">N (الإجمالي)</th>
+                                            <th data-col="1" data-en="Paid a" data-ar="المدفوعة a">المدفوعة a</th>
+                                            <th data-col="2" data-en="Free b" data-ar="المجانية b">المجانية b</th>
+                                            <th data-col="3" data-en="Effective Price" data-ar="السعر الفعلي">السعر الفعلي</th>
+                                            <th data-col="4" data-en="Error (IQD)" data-ar="الخطأ (دينار)">الخطأ (دينار)</th>
+                                            <th data-col="5" data-en="Margin (%)" data-ar="الهامش (%)">الهامش (%)</th>
+                                            <th data-col="6" data-en="Markup (%)" data-ar="العلامة (%)">العلامة (%)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                            <div class="pagination-wrap">
+                                <div id="giftPageInfo" class="pagination-info">0 / 0</div>
+                                <div id="giftPagination" class="pagination"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="gift-note" data-en="Error rate is measured as a percentage of the target price. Margin is (selling price - cost) / selling price × 100. Markup is (selling price - cost) / cost × 100." data-ar="ملاحظة: معدل الخطأ يحسب كنسبة مئوية من السعر المراد. الهامش (margin) محسوب بالنسبة لسعر البيع: (سعر البيع - التكلفة) / سعر البيع × 100. العلامة/الماركب (markup) محسوب بالنسبة للتكلفة: (سعر البيع - التكلفة) / التكلفة × 100.">ملاحظة: معدل الخطأ يحسب كنسبة مئوية من السعر المراد. الهامش (margin) محسوب بالنسبة لسعر البيع: (سعر البيع - التكلفة) / سعر البيع × 100. العلامة/الماركب (markup) محسوب بالنسبة للتكلفة: (سعر البيع - التكلفة) / التكلفة × 100.</p>
+            </div>
+        </section>
+    </div>
+
+    <div id="errorModal" class="modal hidden">
+        <div class="modal-card">
+            <div class="modal-icon">⚠️</div>
+            <h4 data-en="Alert" data-ar="تنبيه">تنبيه</h4>
+            <p id="errorText"></p>
+            <button onclick="hideError()" class="modal-btn" data-en="Understand" data-ar="فهمت">فهمت</button>
+        </div>
+    </div>
+
+    <div id="settingsModal" class="modal hidden" aria-hidden="true">
+        <div class="modal-card settings-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+            <div class="settings-head">
+                <div>
+                    <h4 id="settingsTitle" data-en="Settings" data-ar="الإعدادات">الإعدادات</h4>
+                    <p data-en="Control language and display mode." data-ar="تحكم باللغة ووضع العرض.">تحكم باللغة ووضع العرض.</p>
+                </div>
+                <button type="button" class="icon-btn" onclick="closeSettings()" aria-label="Close settings">×</button>
+            </div>
+
+            <div class="settings-list">
+                <div class="settings-row">
+                    <div class="settings-copy">
+                        <strong data-en="Language" data-ar="اللغة">اللغة</strong>
+                        <span data-en="Switch between Arabic and English." data-ar="التبديل بين العربية والإنجليزية.">التبديل بين العربية والإنجليزية.</span>
+                    </div>
+                    <button id="lang-toggle" type="button" class="option-btn" onclick="toggleLanguage()">English</button>
+                </div>
+
+                <div class="settings-row">
+                    <div class="settings-copy">
+                        <strong data-en="White mode" data-ar="الوضع الأبيض">الوضع الأبيض</strong>
+                        <span data-en="Switch between dark and white display modes." data-ar="التبديل بين الوضع الداكن والوضع الأبيض.">التبديل بين الوضع الداكن والوضع الأبيض.</span>
+                    </div>
+                    <button id="theme-toggle" type="button" class="option-btn" onclick="toggleTheme()">الوضع الأبيض</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="operations_tools.js"></script>
+</body>
+</html>
