@@ -55,15 +55,15 @@
     --teal-bg: rgba(13,158,137,0.10);
     --shadow: 0 4px 24px rgba(0,0,0,0.10);
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
   body {
-    font-family: 'Cairo', 'Segoe UI', system-ui, sans-serif;
+    font-family: 'Cairo', sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
     transition: background 0.3s, color 0.3s;
   }
-  body.rtl { direction: rtl; font-family: 'Cairo', system-ui, sans-serif; }
+  body.rtl { direction: rtl; font-family: 'Cairo', sans-serif; }
 
   header {
     background: var(--bg2);
@@ -419,10 +419,12 @@
         <span class="search-icon">🔍</span>
         <input type="text" id="search" placeholder="Search customers…" oninput="renderTable()"/>
       </div>
-      <button class="filter-btn active" id="f-all" onclick="setFilter('all')" data-ar="الكل" data-en="All">All</button>
-      <button class="filter-btn" id="f-balance" onclick="setFilter('balance')" data-ar="لديه رصيد" data-en="Has balance">Has balance</button>
-      <button class="filter-btn" id="f-zero" onclick="setFilter('zero')" data-ar="لا رصيد" data-en="Zero balance">Zero balance</button>
-      <button class="filter-btn" id="btn-upload-new" onclick="resetUpload()" data-ar="ملف جديد" data-en="New file">New file</button>
+      <button class="filter-btn active" id="f-all" onclick="setFilter('all')">All</button>
+      <button class="filter-btn" id="f-balance" onclick="setFilter('balance')">Has balance</button>
+      <button class="filter-btn" id="f-zero" onclick="setFilter('zero')">Zero balance</button>
+      <button class="filter-btn" id="f-nopay" onclick="setFilter('nopay')">No payment</button>
+      <button class="filter-btn" id="f-noinv" onclick="setFilter('noinv')">No invoice</button>
+      <button class="filter-btn" id="btn-upload-new" onclick="resetUpload()">New file</button>
       <button class="filter-btn" id="btn-print" onclick="printTable()">🖨 Print</button>
     </div>
 
@@ -474,7 +476,7 @@ const T = {
     noBalance: 'Cleared',
     totalBalance: 'Total Balance',
     cols: ['Customer', 'Balance', 'Last Invoice', 'Invoice Date', 'Last Payment', 'Payment Date'],
-    all: 'All', hasBalance: 'Has balance', zeroBalance: 'Zero balance', newFile: 'New file',
+    all: 'All', hasBalance: 'Has balance', zeroBalance: 'Zero balance', noPayment: 'No payment', noInvoice: 'No invoice', newFile: 'New file',
     search: 'Search customers…',
     noResults: 'No results found',
     detInvoice: 'Last Invoice', detInvDate: 'Invoice Date', detPayment: 'Last Payment',
@@ -493,7 +495,7 @@ const T = {
     noBalance: 'صفر',
     totalBalance: 'إجمالي الأرصدة',
     cols: ['العميل', 'الرصيد', 'آخر فاتورة', 'تاريخ الفاتورة', 'آخر دفعة', 'تاريخ الدفعة'],
-    all: 'الكل', hasBalance: 'لديه رصيد', zeroBalance: 'لا رصيد', newFile: 'ملف جديد',
+    all: 'الكل', hasBalance: 'لديه رصيد', zeroBalance: 'لا رصيد', noPayment: 'بدون دفعة', noInvoice: 'بدون فاتورة', newFile: 'ملف جديد',
     search: 'بحث عن عميل…',
     noResults: 'لا توجد نتائج',
     detInvoice: 'آخر فاتورة', detInvDate: 'تاريخ الفاتورة', detPayment: 'آخر دفعة',
@@ -529,6 +531,8 @@ function applyLang() {
   document.getElementById('f-all').textContent = t('all');
   document.getElementById('f-balance').textContent = t('hasBalance');
   document.getElementById('f-zero').textContent = t('zeroBalance');
+  document.getElementById('f-nopay').textContent = t('noPayment');
+  document.getElementById('f-noinv').textContent = t('noInvoice');
   document.getElementById('btn-home').textContent = lang === 'ar' ? '🏠 الرئيسية' : '🏠 Home';
   document.getElementById('btn-upload-new').textContent = t('newFile');
   document.getElementById('btn-print').textContent = lang === 'ar' ? '🖨 طباعة' : '🖨 Print';
@@ -569,9 +573,12 @@ function resetUpload() {
 
 function isInvoice(ref) { return /^INV\//i.test(ref); }
 function isReturn(ref) { return /^RRIV\//i.test(ref) || /مرتجع/i.test(ref); }
-function isPayment(ref, comm) {
-  return /payment|سداد/i.test(ref) || /payment|سداد/i.test(comm || '') ||
-    /^CHSJB|^RCEV|^RCV/i.test(ref);
+function isPayment(ref, comm, row) {
+  if (/payment|سداد/i.test(ref)) return true;
+  if (/^CHSJB|^RCEV|^RCV/i.test(ref)) return true;
+  // Check description/narration columns (cols 2–6) for سداد or payment
+  const cols = row ? [2,3,4,5,6].map(i => String(row[i] || '')) : [comm || ''];
+  return cols.some(v => /سداد|payment/i.test(v));
 }
 
 function parseDate(val) {
@@ -627,7 +634,7 @@ function parseRows(rows) {
     const isCustomerHeader = !dateRaw && !isNaN(balance) && 
       !/^(Total|إجمالي|الإجمالي|Initial|الرصيد)/i.test(ref) &&
       (row[7] || row[8] || row[9]) &&
-      !isInvoice(ref) && !isReturn(ref) && !isPayment(ref, comm) &&
+      !isInvoice(ref) && !isReturn(ref) && !isPayment(ref, comm, row) &&
       !/^CHSJB|^RCEV|^RCV|^WHKH/i.test(ref);
 
     if (isCustomerHeader) {
@@ -661,7 +668,7 @@ function parseRows(rows) {
     let type = 'other';
     if (isInvoice(ref)) type = 'invoice';
     else if (isReturn(ref)) type = 'return';
-    else if (isPayment(ref, comm)) type = 'payment';
+    else if (isPayment(ref, comm, row)) type = 'payment';
 
     currentCustomer.transactions.push({ ref, date, comm, debit, credit, type, balance: isNaN(balance) ? null : balance });
 
@@ -689,8 +696,8 @@ function parseRows(rows) {
 
 function setFilter(f) {
   filter = f;
-  ['all','balance','zero'].forEach(k => {
-    const id = k === 'all' ? 'f-all' : k === 'balance' ? 'f-balance' : 'f-zero';
+  const map = { all:'f-all', balance:'f-balance', zero:'f-zero', nopay:'f-nopay', noinv:'f-noinv' };
+  Object.entries(map).forEach(([k, id]) => {
     document.getElementById(id).classList.toggle('active', filter === k);
   });
   renderTable();
@@ -708,6 +715,8 @@ function printTable() {
   let data = customers.filter(c => {
     if (filter === 'balance' && c.balance <= 0) return false;
     if (filter === 'zero' && c.balance > 0) return false;
+    if (filter === 'nopay' && c.lastPayment !== null) return false;
+    if (filter === 'noinv' && c.lastInvoice !== null) return false;
     if (search && !c.name.toLowerCase().includes(search) && !c.id.includes(search)) return false;
     return true;
   });
@@ -729,7 +738,8 @@ function printTable() {
 
   const now = new Date();
   const dateStr = `${now.getDate()}-${now.getMonth()+1}-${now.getFullYear()}`;
-  const filterLabel = filter === 'balance' ? (isRtl ? 'لديه رصيد' : 'With balance') : filter === 'zero' ? (isRtl ? 'لا رصيد' : 'Zero balance') : (isRtl ? 'الكل' : 'All');
+  const filterLabels = { all: isRtl?'الكل':'All', balance: isRtl?'لديه رصيد':'Has balance', zero: isRtl?'لا رصيد':'Zero balance', nopay: isRtl?'بدون دفعة':'No payment', noinv: isRtl?'بدون فاتورة':'No invoice' };
+  const filterLabel = filterLabels[filter] || '';
   document.getElementById('print-meta').textContent = (isRtl ? 'تاريخ الطباعة: ' : 'Printed: ') + dateStr + '  |  ' + (isRtl ? 'الفلتر: ' : 'Filter: ') + filterLabel + '  |  ' + (isRtl ? 'العدد: ' : 'Count: ') + data.length;
 
   const total = data.length;
@@ -807,6 +817,8 @@ function renderTable() {
   let data = customers.filter(c => {
     if (filter === 'balance' && c.balance <= 0) return false;
     if (filter === 'zero' && c.balance > 0) return false;
+    if (filter === 'nopay' && c.lastPayment !== null) return false;
+    if (filter === 'noinv' && c.lastInvoice !== null) return false;
     if (search && !c.name.toLowerCase().includes(search) && !c.id.includes(search)) return false;
     return true;
   });
