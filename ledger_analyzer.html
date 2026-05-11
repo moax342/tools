@@ -214,7 +214,23 @@
     white-space: nowrap;
   }
   .filter-btn:hover { background: var(--bg3); }
-  .filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .filter-group {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .filter-clear {
+    background: var(--red-bg) !important;
+    color: var(--red) !important;
+    border-color: var(--red) !important;
+  }
+  .filter-clear:hover { opacity: 0.85; }
+  .filter-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
 
   /* Table */
   .table-wrap {
@@ -419,11 +435,13 @@
         <span class="search-icon">🔍</span>
         <input type="text" id="search" placeholder="Search customers…" oninput="renderTable()"/>
       </div>
-      <button class="filter-btn active" id="f-all" onclick="setFilter('all')">All</button>
-      <button class="filter-btn" id="f-balance" onclick="setFilter('balance')">Has balance</button>
-      <button class="filter-btn" id="f-zero" onclick="setFilter('zero')">Zero balance</button>
-      <button class="filter-btn" id="f-nopay" onclick="setFilter('nopay')">No payment</button>
-      <button class="filter-btn" id="f-noinv" onclick="setFilter('noinv')">No invoice</button>
+      <div class="filter-group" id="filter-group">
+        <button class="filter-btn" id="f-balance" onclick="toggleFilter('balance')">Has balance</button>
+        <button class="filter-btn" id="f-zero" onclick="toggleFilter('zero')">Zero balance</button>
+        <button class="filter-btn" id="f-nopay" onclick="toggleFilter('nopay')">No payment</button>
+        <button class="filter-btn" id="f-noinv" onclick="toggleFilter('noinv')">No invoice</button>
+        <button class="filter-btn filter-clear" id="f-clear" onclick="clearFilters()" style="display:none;">✕ <span id="f-clear-label">Clear</span></button>
+      </div>
       <button class="filter-btn" id="btn-upload-new" onclick="resetUpload()">New file</button>
       <button class="filter-btn" id="btn-print" onclick="printTable()">🖨 Print</button>
     </div>
@@ -458,7 +476,7 @@
 
 <script>
 let customers = [];
-let filter = 'all';
+let filters = new Set();
 let lang = 'ar';
 let isDark = true;
 let openRow = null;
@@ -528,11 +546,11 @@ function applyLang() {
   document.getElementById('uz-sub').textContent = t('uzSub');
   document.getElementById('uz-hint').textContent = t('uzHint');
   document.getElementById('search').placeholder = t('search');
-  document.getElementById('f-all').textContent = t('all');
   document.getElementById('f-balance').textContent = t('hasBalance');
   document.getElementById('f-zero').textContent = t('zeroBalance');
   document.getElementById('f-nopay').textContent = t('noPayment');
   document.getElementById('f-noinv').textContent = t('noInvoice');
+  document.getElementById('f-clear-label').textContent = lang === 'ar' ? 'مسح' : 'Clear';
   document.getElementById('btn-home').textContent = lang === 'ar' ? '🏠 الرئيسية' : '🏠 Home';
   document.getElementById('btn-upload-new').textContent = t('newFile');
   document.getElementById('btn-print').textContent = lang === 'ar' ? '🖨 طباعة' : '🖨 Print';
@@ -565,7 +583,8 @@ function processFile(file) {
 
 function resetUpload() {
   customers = [];
-  filter = 'all';
+  filters.clear();
+  syncFilterButtons();
   document.getElementById('upload-section').style.display = 'block';
   document.getElementById('data-section').style.display = 'none';
   document.getElementById('file-input').value = '';
@@ -694,13 +713,36 @@ function parseRows(rows) {
   return result;
 }
 
-function setFilter(f) {
-  filter = f;
-  const map = { all:'f-all', balance:'f-balance', zero:'f-zero', nopay:'f-nopay', noinv:'f-noinv' };
-  Object.entries(map).forEach(([k, id]) => {
-    document.getElementById(id).classList.toggle('active', filter === k);
-  });
+function toggleFilter(f) {
+  // balance and zero are mutually exclusive; nopay and noinv are mutually exclusive
+  if (f === 'balance' && filters.has('zero')) filters.delete('zero');
+  if (f === 'zero' && filters.has('balance')) filters.delete('balance');
+  if (filters.has(f)) filters.delete(f);
+  else filters.add(f);
+  syncFilterButtons();
   renderTable();
+}
+
+function clearFilters() {
+  filters.clear();
+  syncFilterButtons();
+  renderTable();
+}
+
+function syncFilterButtons() {
+  ['balance','zero','nopay','noinv'].forEach(k => {
+    document.getElementById('f-' + k).classList.toggle('active', filters.has(k));
+  });
+  const hasAny = filters.size > 0;
+  document.getElementById('f-clear').style.display = hasAny ? '' : 'none';
+}
+
+function applyFilters(c) {
+  if (filters.has('balance') && c.balance <= 0) return false;
+  if (filters.has('zero') && c.balance > 0) return false;
+  if (filters.has('nopay') && c.lastPayment !== null) return false;
+  if (filters.has('noinv') && c.lastInvoice !== null) return false;
+  return true;
 }
 
 function closePrint() {
@@ -713,10 +755,7 @@ function printTable() {
   const search = document.getElementById('search').value.toLowerCase();
 
   let data = customers.filter(c => {
-    if (filter === 'balance' && c.balance <= 0) return false;
-    if (filter === 'zero' && c.balance > 0) return false;
-    if (filter === 'nopay' && c.lastPayment !== null) return false;
-    if (filter === 'noinv' && c.lastInvoice !== null) return false;
+    if (!applyFilters(c)) return false;
     if (search && !c.name.toLowerCase().includes(search) && !c.id.includes(search)) return false;
     return true;
   });
@@ -738,8 +777,8 @@ function printTable() {
 
   const now = new Date();
   const dateStr = `${now.getDate()}-${now.getMonth()+1}-${now.getFullYear()}`;
-  const filterLabels = { all: isRtl?'الكل':'All', balance: isRtl?'لديه رصيد':'Has balance', zero: isRtl?'لا رصيد':'Zero balance', nopay: isRtl?'بدون دفعة':'No payment', noinv: isRtl?'بدون فاتورة':'No invoice' };
-  const filterLabel = filterLabels[filter] || '';
+  const filterNames = { balance: isRtl?'لديه رصيد':'Has balance', zero: isRtl?'لا رصيد':'Zero balance', nopay: isRtl?'بدون دفعة':'No payment', noinv: isRtl?'بدون فاتورة':'No invoice' };
+  const filterLabel = filters.size > 0 ? [...filters].map(f => filterNames[f]).join(' + ') : (isRtl ? 'الكل' : 'All');
   document.getElementById('print-meta').textContent = (isRtl ? 'تاريخ الطباعة: ' : 'Printed: ') + dateStr + '  |  ' + (isRtl ? 'الفلتر: ' : 'Filter: ') + filterLabel + '  |  ' + (isRtl ? 'العدد: ' : 'Count: ') + data.length;
 
   const total = data.length;
@@ -815,10 +854,7 @@ function getSortValue(c, field) {
 function renderTable() {
   const search = document.getElementById('search').value.toLowerCase();
   let data = customers.filter(c => {
-    if (filter === 'balance' && c.balance <= 0) return false;
-    if (filter === 'zero' && c.balance > 0) return false;
-    if (filter === 'nopay' && c.lastPayment !== null) return false;
-    if (filter === 'noinv' && c.lastInvoice !== null) return false;
+    if (!applyFilters(c)) return false;
     if (search && !c.name.toLowerCase().includes(search) && !c.id.includes(search)) return false;
     return true;
   });
