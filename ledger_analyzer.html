@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -534,13 +534,14 @@ function toggleTheme() {
 
 function toggleLang() {
   lang = lang === 'en' ? 'ar' : 'en';
-  document.body.classList.toggle('rtl', lang === 'ar');
-  document.documentElement.setAttribute('lang', lang);
-  document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
   applyLang();
 }
 
 function applyLang() {
+  const isAr = lang === 'ar';
+  document.body.classList.toggle('rtl', isAr);
+  document.documentElement.setAttribute('lang', lang);
+  document.documentElement.setAttribute('dir', isAr ? 'rtl' : 'ltr');
   document.getElementById('app-title').textContent = t('appTitle');
   document.getElementById('uz-title').textContent = t('uzTitle');
   document.getElementById('uz-sub').textContent = t('uzSub');
@@ -550,10 +551,11 @@ function applyLang() {
   document.getElementById('f-zero').textContent = t('zeroBalance');
   document.getElementById('f-nopay').textContent = t('noPayment');
   document.getElementById('f-noinv').textContent = t('noInvoice');
-  document.getElementById('f-clear-label').textContent = lang === 'ar' ? 'مسح' : 'Clear';
-  document.getElementById('btn-home').textContent = lang === 'ar' ? '🏠 الرئيسية' : '🏠 Home';
+  document.getElementById('f-clear-label').textContent = isAr ? 'مسح' : 'Clear';
+  document.getElementById('btn-home').textContent = isAr ? '🏠 الرئيسية' : '🏠 Home';
   document.getElementById('btn-upload-new').textContent = t('newFile');
-  document.getElementById('btn-print').textContent = lang === 'ar' ? '🖨 طباعة' : '🖨 Print';
+  document.getElementById('btn-print').textContent = isAr ? '🖨 طباعة' : '🖨 Print';
+  document.getElementById('lang-btn').textContent = isAr ? 'EN' : 'عر';
   if (customers.length > 0) { renderStats(); renderTable(); }
 }
 
@@ -575,8 +577,7 @@ function processFile(file) {
     customers = parseRows(rows);
     document.getElementById('upload-section').style.display = 'none';
     document.getElementById('data-section').style.display = 'block';
-    renderStats();
-    renderTable();
+    applyLang();
   };
   reader.readAsArrayBuffer(file);
 }
