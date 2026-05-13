@@ -232,6 +232,36 @@
     color: #fff;
   }
 
+  .btn-excel {
+    background: linear-gradient(135deg, #1a6e3c, #217346) !important;
+    border-color: #1a6e3c !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 8px rgba(26,110,60,0.35);
+    transition: all 0.2s !important;
+  }
+  .btn-excel:hover {
+    background: linear-gradient(135deg, #217346, #2a9059) !important;
+    box-shadow: 0 4px 16px rgba(26,110,60,0.5) !important;
+    transform: translateY(-1px);
+  }
+
+  .btn-print {
+    background: linear-gradient(135deg, #7c3aed, #5b21b6) !important;
+    border-color: #7c3aed !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 8px rgba(124,58,237,0.35);
+    transition: all 0.2s !important;
+  }
+  .btn-print:hover {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed) !important;
+    box-shadow: 0 4px 16px rgba(124,58,237,0.5) !important;
+    transform: translateY(-1px);
+  }
+
   /* Table */
   .table-wrap {
     background: var(--bg2);
@@ -443,7 +473,8 @@
         <button class="filter-btn filter-clear" id="f-clear" onclick="clearFilters()" style="display:none;">✕ <span id="f-clear-label">Clear</span></button>
       </div>
       <button class="filter-btn" id="btn-upload-new" onclick="resetUpload()">New file</button>
-      <button class="filter-btn" id="btn-print" onclick="printTable()">🖨 Print</button>
+      <button class="filter-btn btn-excel" id="btn-export" onclick="exportExcel()">⬇ Excel</button>
+      <button class="filter-btn btn-print" id="btn-print" onclick="printTable()">🖨 Print</button>
     </div>
 
     <div class="table-wrap">
@@ -554,6 +585,7 @@ function applyLang() {
   document.getElementById('f-clear-label').textContent = isAr ? 'مسح' : 'Clear';
   document.getElementById('btn-home').textContent = isAr ? '🏠 الرئيسية' : '🏠 Home';
   document.getElementById('btn-upload-new').textContent = t('newFile');
+  document.getElementById('btn-export').textContent = isAr ? '⬇ إكسل' : '⬇ Excel';
   document.getElementById('btn-print').textContent = isAr ? '🖨 طباعة' : '🖨 Print';
   document.getElementById('lang-btn').textContent = isAr ? 'EN' : 'عر';
   if (customers.length > 0) { renderStats(); renderTable(); }
@@ -633,36 +665,51 @@ function fmtNum(n) {
   return Number(n).toLocaleString('en-GB');
 }
 
+function detectFormat(rows) {
+  // Format B (partner ledger): col0=date or customer, col1=journal, col11=balance
+  // Format A (general ledger): col0=ref/customer, col1=date, col9=balance
+  for (let i = 0; i < Math.min(10, rows.length); i++) {
+    const r = rows[i];
+    const c1 = String(r[1] || '').trim();
+    // If col1 looks like a journal code (CHSJB, INV, RINV, JRNL) → format B
+    if (/^(CHSJB|INV|RINV|RRINV|JRNL|ٌٌINV)/i.test(c1)) return 'B';
+    // If col1 looks like a date → format A
+    if (parseDate(r[1]) && !(/^(CHSJB|INV)/i.test(String(r[0]||'')))) return 'A';
+  }
+  return 'A';
+}
+
 function parseRows(rows) {
+  const fmt = detectFormat(rows);
+  return fmt === 'B' ? parseFormatB(rows) : parseFormatA(rows);
+}
+
+// ── FORMAT A: original general ledger ─────────────────────────────────────
+function parseFormatA(rows) {
   const result = [];
   let currentCustomer = null;
-  let currentId = null;
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     const ref = String(row[0] || '').trim();
     const dateRaw = row[1];
     const comm = String(row[2] || '').trim();
-    const debit = parseFloat(String(row[7] || '').replace(/,/g,'')) || 0;
+    const debit  = parseFloat(String(row[7] || '').replace(/,/g,'')) || 0;
     const credit = parseFloat(String(row[8] || '').replace(/,/g,'')) || 0;
     const balance = parseFloat(String(row[9] || '').replace(/,/g,''));
 
-    // Header row
     if (ref === '' || ref === 'nan' || /^date$/i.test(ref) || /^التاريخ$/.test(ref)) continue;
 
-    // Detect customer header row (no date, has balance in col 9, starts with digits or Arabic name)
-    const isCustomerHeader = !dateRaw && !isNaN(balance) && 
+    const isCustomerHeader = !dateRaw && !isNaN(balance) &&
       !/^(Total|إجمالي|الإجمالي|Initial|الرصيد)/i.test(ref) &&
       (row[7] || row[8] || row[9]) &&
       !isInvoice(ref) && !isReturn(ref) && !isPayment(ref, comm, row) &&
       !/^CHSJB|^RCEV|^RCV|^WHKH/i.test(ref);
 
     if (isCustomerHeader) {
-      // Extract ID if present (leading digits)
       const idMatch = ref.match(/^(\d+)\s+(.+)/);
-      currentId = idMatch ? idMatch[1] : '';
       currentCustomer = {
-        id: currentId,
+        id: idMatch ? idMatch[1] : '',
         name: idMatch ? idMatch[2].trim() : ref,
         balance: isNaN(balance) ? 0 : balance,
         transactions: [],
@@ -674,44 +721,97 @@ function parseRows(rows) {
       continue;
     }
 
-    // Skip total rows and initial balance
     if (/^(Total|إجمالي|الإجمالي|Initial|الرصيد الافتتاحي)/i.test(ref)) {
       if (/^(Total|إجمالي|الإجمالي)/i.test(ref)) currentCustomer = null;
       continue;
     }
-
     if (!currentCustomer) continue;
 
     const date = parseDate(dateRaw);
-
-    // Classify transaction
     let type = 'other';
     if (isInvoice(ref)) type = 'invoice';
     else if (isReturn(ref)) type = 'return';
     else if (isPayment(ref, comm, row)) type = 'payment';
 
     currentCustomer.transactions.push({ ref, date, comm, debit, credit, type, balance: isNaN(balance) ? null : balance });
-
-    if (type === 'invoice' && date) {
-      if (!currentCustomer.lastInvoiceDate || date > currentCustomer.lastInvoiceDate) {
-        currentCustomer.lastInvoiceDate = date;
-        currentCustomer.lastInvoice = credit || debit;
-      }
-    }
-    if (type === 'return' && date) {
-      if (!currentCustomer.lastReturnDate || date > currentCustomer.lastReturnDate) {
-        currentCustomer.lastReturnDate = date;
-        currentCustomer.lastReturn = debit || credit;
-      }
-    }
-    if (type === 'payment' && date) {
-      if (!currentCustomer.lastPaymentDate || date > currentCustomer.lastPaymentDate) {
-        currentCustomer.lastPaymentDate = date;
-        currentCustomer.lastPayment = credit || debit;
-      }
-    }
+    updateLastTx(currentCustomer, type, date, debit, credit);
   }
   return result;
+}
+
+// ── FORMAT B: partner ledger (col0=date|name, col1=journal, col4=ref, col8=debit, col9=credit, col11=balance) ──
+function parseFormatB(rows) {
+  const result = [];
+  let currentCustomer = null;
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const col0 = String(row[0] || '').trim();
+    const col1 = String(row[1] || '').trim();
+    const col4 = String(row[4] || '').trim();  // description / ref
+    const debit  = parseFloat(String(row[8] || '').replace(/,/g,'')) || 0;
+    const credit = parseFloat(String(row[9] || '').replace(/,/g,'')) || 0;
+    const balance = parseFloat(String(row[11] || '').replace(/,/g,''));
+
+    // Skip header/total rows
+    if (/^(Total|إجمالي|الإجمالي|JRNL|NaN)/i.test(col0) || col0 === '') continue;
+    if (/^(Total|إجمالي|الإجمالي)/i.test(col0)) { currentCustomer = null; continue; }
+
+    // Customer header: col1 is empty/NaN and col0 is not a date
+    const isDate = /^\d{1,2}\/\d{1,2}\/\d{4}/.test(col0) || parseDate(col0) !== null;
+    if (!isDate && col1 !== 'JRNL') {
+      // This is a customer name row
+      currentCustomer = {
+        id: '',
+        name: col0,
+        balance: isNaN(balance) ? 0 : balance,
+        transactions: [],
+        lastInvoice: null, lastInvoiceDate: null,
+        lastPayment: null, lastPaymentDate: null,
+        lastReturn: null, lastReturnDate: null,
+      };
+      result.push(currentCustomer);
+      continue;
+    }
+
+    if (!currentCustomer) continue;
+
+    // Transaction row: col0 = date, col1 = journal code, col4 = ref/description
+    const date = parseDate(col0);
+    const ref = col4 || col1;
+    const comm = col4;
+
+    let type = 'other';
+    if (isInvoice(ref) || isInvoice(col1)) type = 'invoice';
+    else if (isReturn(ref) || isReturn(col1) || /^RINV|^RRINV/i.test(col1)) type = 'return';
+    else if (isPayment(ref, comm, row) || /^CHSJB|^RCEV|^RCV/i.test(col1)) type = 'payment';
+
+    currentCustomer.transactions.push({ ref, date, comm, debit, credit, type, balance: isNaN(balance) ? null : balance });
+    updateLastTx(currentCustomer, type, date, debit, credit);
+  }
+  return result;
+}
+
+// ── shared helper to update last invoice/payment/return ───────────────────
+function updateLastTx(c, type, date, debit, credit) {
+  if (type === 'invoice' && date) {
+    if (!c.lastInvoiceDate || date > c.lastInvoiceDate) {
+      c.lastInvoiceDate = date;
+      c.lastInvoice = debit || credit;
+    }
+  }
+  if (type === 'return' && date) {
+    if (!c.lastReturnDate || date > c.lastReturnDate) {
+      c.lastReturnDate = date;
+      c.lastReturn = credit || debit;
+    }
+  }
+  if (type === 'payment' && date) {
+    if (!c.lastPaymentDate || date > c.lastPaymentDate) {
+      c.lastPaymentDate = date;
+      c.lastPayment = credit || debit;
+    }
+  }
 }
 
 function toggleFilter(f) {
@@ -748,6 +848,58 @@ function applyFilters(c) {
 
 function closePrint() {
   document.getElementById('print-overlay').classList.remove('show');
+}
+
+function exportExcel() {
+  const isAr = lang === 'ar';
+  const search = document.getElementById('search').value.toLowerCase();
+  let data = customers.filter(c => {
+    if (!applyFilters(c)) return false;
+    if (search && !c.name.toLowerCase().includes(search) && !c.id.includes(search)) return false;
+    return true;
+  });
+
+  if (sortField) {
+    data.sort((a, b) => {
+      const av = getSortValue(a, sortField), bv = getSortValue(b, sortField);
+      if (av < bv) return -1 * sortDir;
+      if (av > bv) return 1 * sortDir;
+      return 0;
+    });
+  }
+
+  const headers = isAr
+    ? ['اسم العميل', 'الرصيد الحالي', 'آخر فاتورة', 'تاريخ الفاتورة', 'آخر دفعة', 'تاريخ الدفعة']
+    : ['Customer', 'Balance', 'Last Invoice', 'Invoice Date', 'Last Payment', 'Payment Date'];
+
+  const rows = data.map(c => [
+    c.name,
+    c.balance || 0,
+    c.lastInvoice || '',
+    c.lastInvoiceDate ? fmtDate(c.lastInvoiceDate) : '',
+    c.lastPayment || '',
+    c.lastPaymentDate ? fmtDate(c.lastPaymentDate) : '',
+  ]);
+
+  const wsData = [headers, ...rows];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // Column widths
+  ws['!cols'] = [{ wch: 35 }, { wch: 16 }, { wch: 16 }, { wch: 14 }, { wch: 16 }, { wch: 14 }];
+
+  // Style header row bold
+  headers.forEach((_, ci) => {
+    const cell = ws[XLSX.utils.encode_cell({ r: 0, c: ci })];
+    if (cell) cell.s = { font: { bold: true }, fill: { fgColor: { rgb: '5B5EA6' } }, alignment: { horizontal: 'center' } };
+  });
+
+  const wb = XLSX.utils.book_new();
+  const sheetName = isAr ? 'تحليل العملاء' : 'Customer Analysis';
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+
+  const now = new Date();
+  const dateStr = `${now.getDate()}-${now.getMonth()+1}-${now.getFullYear()}`;
+  XLSX.writeFile(wb, `ledger-analysis-${dateStr}.xlsx`);
 }
 
 function printTable() {
