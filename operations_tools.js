@@ -2,7 +2,7 @@
 
 let currentLang = localStorage.getItem('eastCrescentLang') || localStorage.getItem('hilalUnifiedLang') || 'ar';
 let currentTheme = localStorage.getItem('eastCrescentTheme') || localStorage.getItem('hilalUnifiedTheme') || localStorage.getItem('agedReceivableTheme') || 'dark';
-const MONEY_INPUT_IDS = ['priceInput', 'editOrig', 'editTarget', 'editCost'];
+const MONEY_INPUT_IDS = ['priceInput', 'editOrig', 'editTarget', 'editCost', 'editProductAmount'];
 
 const arabicDigitMap = {
     '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4', '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9',
@@ -448,6 +448,7 @@ function clearGiftData(event) {
     setValue('editOrig', '');
     setValue('editTarget', '');
     setValue('editCost', '');
+    setValue('editProductAmount', '');
     setValue('spinTol', '1.00');
     setValue('comboTopk', 'auto');
 
@@ -489,11 +490,172 @@ function clearGiftData(event) {
 
 window.clearGiftData = clearGiftData;
 
+function getGiftSelectionValue() {
+    return (document.getElementById('comboTopk')?.value || 'auto').trim();
+}
+
+function getGiftSelectionLimit(selection = getGiftSelectionValue()) {
+    if (selection === 'auto') return null;
+    const limit = parseInt(selection, 10);
+    return Number.isNaN(limit) || limit <= 0 ? null : limit;
+}
+
+function getGiftProfitMetrics(eff, cost) {
+    let margin = null;
+    let markup = null;
+    if (cost !== null && cost > 0) {
+        if (eff !== 0) margin = (eff - cost) / eff * 100.0;
+        if (cost !== 0) markup = (eff - cost) / cost * 100.0;
+    }
+    return { margin, markup };
+}
+
+function makeGiftResultRow(p, t, cost, paid, free) {
+    const total = paid + free;
+    const eff = total > 0 ? (paid * p) / total : 0;
+    const err = Math.abs(eff - t);
+    const metrics = getGiftProfitMetrics(eff, cost);
+    return { N: total, a: paid, b: free, eff, err, margin: metrics.margin, markup: metrics.markup };
+}
+
+function isGiftResultInsideTolerance(row, t, tolPercent) {
+    if (tolPercent >= 100.0) return true;
+    if (tolPercent === 0) return row.err < 1e-7;
+    return row.err <= (tolPercent / 100.0) * t;
+}
+
+function buildFixedPaidGiftResults(p, t, cost, paidAmount, doRound, tolPercent, selection) {
+    const exactFree = paidAmount * (p - t) / t;
+    const limit = getGiftSelectionLimit(selection);
+    const maxCandidates = limit === null ? NMAX_DEFAULT : Math.max(100, limit * 8);
+    const candidates = new Set();
+    const isAny = tolPercent >= 100.0;
+    const isStrict = tolPercent === 0;
+    const tolThreshold = (tolPercent / 100.0) * t;
+
+    const addCandidate = (targetSet, rawFree) => {
+        if (!Number.isFinite(rawFree)) return;
+        let free = doRound ? roundSmart(rawFree) : Math.round(rawFree);
+        if (!Number.isFinite(free)) return;
+        free = Math.trunc(free);
+        if (free <= 0) return;
+        targetSet.add(free);
+    };
+
+    const addNearestCandidates = (targetSet, desiredCount) => {
+        const preferredCenter = doRound ? roundSmart(exactFree) : Math.round(exactFree);
+        const center = Math.max(1, preferredCenter);
+        for (let offset = 0; offset <= NMAX_DEFAULT * 4 && targetSet.size < desiredCount; offset++) {
+            addCandidate(targetSet, center - offset);
+            addCandidate(targetSet, center + offset);
+            addCandidate(targetSet, Math.floor(exactFree) - offset);
+            addCandidate(targetSet, Math.ceil(exactFree) + offset);
+        }
+    };
+
+    if (isStrict) {
+        if (Math.abs(exactFree - Math.round(exactFree)) < 1e-7) {
+            addCandidate(candidates, exactFree);
+        }
+    } else {
+        let minFree = 1;
+        let maxFree = Infinity;
+
+        if (!isAny) {
+            const upperEff = t + tolThreshold;
+            const lowerEff = Math.max(t - tolThreshold, 1e-9);
+            minFree = Math.max(1, Math.ceil((paidAmount * p / upperEff) - paidAmount - 1e-9));
+            maxFree = Math.floor((paidAmount * p / lowerEff) - paidAmount + 1e-9);
+        }
+
+        if (maxFree >= minFree) {
+            const preferredCenter = doRound ? roundSmart(exactFree) : Math.round(exactFree);
+            const center = Number.isFinite(maxFree)
+                ? Math.min(Math.max(preferredCenter, minFree), maxFree)
+                : Math.max(1, preferredCenter);
+            const maxOffset = Number.isFinite(maxFree)
+                ? Math.max(Math.abs(center - minFree), Math.abs(maxFree - center))
+                : NMAX_DEFAULT * 4;
+
+            for (let offset = 0; offset <= maxOffset && candidates.size < maxCandidates; offset++) {
+                addCandidate(candidates, center - offset);
+                addCandidate(candidates, center + offset);
+                addCandidate(candidates, Math.floor(exactFree) - offset);
+                addCandidate(candidates, Math.ceil(exactFree) + offset);
+
+                if (Number.isFinite(maxFree) && center - offset < minFree && center + offset > maxFree) break;
+            }
+        }
+    }
+
+    let rows = [...candidates]
+        .map(free => makeGiftResultRow(p, t, cost, paidAmount, free))
+        .sort((x, y) => (x.err - y.err) || (x.N - y.N));
+
+    const matchingRows = rows.filter(row => isGiftResultInsideTolerance(row, t, tolPercent));
+    if (matchingRows.length) return matchingRows;
+
+    const fallbackCandidates = new Set();
+    const fallbackCount = limit === null ? GIFT_PAGE_SIZE : Math.max(5, limit);
+    addNearestCandidates(fallbackCandidates, fallbackCount);
+    rows = [...fallbackCandidates]
+        .map(free => makeGiftResultRow(p, t, cost, paidAmount, free))
+        .sort((x, y) => (x.err - y.err) || (x.N - y.N));
+    return rows;
+}
+
+function buildRatioGiftResults(p, t, cost, doRound, tolPercent) {
+    const results = [];
+    const tolThreshold = (tolPercent / 100.0) * t;
+    const isAny = tolPercent >= 100.0;
+    const isStrict = tolPercent === 0;
+    const ratio = t / p;
+
+    for (let N = 2; N <= NMAX_DEFAULT; N++) {
+        let a = Math.round(ratio * N);
+        if (a < 1 || a >= N) continue;
+
+        let b = N - a;
+        let effA = a, effB = b, effN = N;
+        if (doRound) {
+            effA = roundSmart(a);
+            effB = roundSmart(b);
+            if (effA <= 0) effA = 1;
+            effN = effA + effB;
+            if (effN <= effA) continue;
+        }
+
+        const eff = (effA * p) / effN;
+        const err = Math.abs(eff - t);
+
+        let ok = false;
+        if (isAny) ok = true;
+        else if (isStrict) ok = (err < 1e-7);
+        else ok = (err <= tolThreshold);
+
+        if (!ok) continue;
+
+        const metrics = getGiftProfitMetrics(eff, cost);
+        results.push({ N: effN, a: effA, b: effB, eff, err, margin: metrics.margin, markup: metrics.markup });
+    }
+
+    const unique = new Map();
+    results.forEach(res => {
+        const key = `${res.a}|${res.b}`;
+        if (!unique.has(key) || res.err < unique.get(key).err) {
+            unique.set(key, res);
+        }
+    });
+
+    return [...unique.values()].sort((x, y) => (x.err - y.err) || (x.N - y.N));
+}
+
 function onGiftCalculate() {
     try {
         const pText = stripThousands(document.getElementById('editOrig').value);
         const tText = stripThousands(document.getElementById('editTarget').value);
         const costText = stripThousands(document.getElementById('editCost').value);
+        const productAmountText = stripThousands(document.getElementById('editProductAmount')?.value || '');
 
         if (!pText || !tText) return;
 
@@ -505,6 +667,19 @@ function onGiftCalculate() {
             cost = parseFloat(costText);
             if (Number.isNaN(cost) || cost < 0) {
                 showError("التكلفة يجب أن تكون قيمة موجبة أو اتركها فارغة.", "The cost must be a positive value or leave it empty.");
+                return;
+            }
+        }
+
+        let productAmount = null;
+        if (productAmountText) {
+            productAmount = parseFloat(productAmountText);
+            if (!Number.isFinite(productAmount) || productAmount <= 0) {
+                showError("كمية المنتج يجب أن تكون أكبر من صفر.", "Product amount must be greater than zero.");
+                return;
+            }
+            if (!Number.isInteger(productAmount)) {
+                showError("كمية المنتج يجب أن تكون رقماً صحيحاً بدون كسور.", "Product amount must be a whole number without decimals.");
                 return;
             }
         }
@@ -521,81 +696,55 @@ function onGiftCalculate() {
         const a_ex = Math.floor(T_cents / g);
         const b_ex = Math.floor(D_cents / g);
         const n_ex = a_ex + b_ex;
-        const eff_ex = (a_ex * p) / n_ex;
+        const ratioEff = (a_ex * p) / n_ex;
 
-        let margin_ex = null;
-        let markup_ex = null;
-        if (cost !== null && cost > 0) {
-            margin_ex = eff_ex !== 0 ? (eff_ex - cost) / eff_ex * 100.0 : null;
-            markup_ex = cost !== 0 ? (eff_ex - cost) / cost * 100.0 : null;
-        }
-
-        let exactMsg = currentLang === 'ar'
-            ? `دقيق: ادفع ${formatInteger(a_ex)} واحصل على ${formatInteger(n_ex)} (${formatInteger(b_ex)} مجانية).\nالسعر الفعلي = ${formatMoney(eff_ex, 4, true)} دينار.`
-            : `Exact: pay ${formatInteger(a_ex)} and get ${formatInteger(n_ex)} total (${formatInteger(b_ex)} free).\nEffective price = ${formatMoney(eff_ex, 4, true)} IQD.`;
-        if (margin_ex !== null) exactMsg += currentLang === 'ar' ? `  الهامش = ${formatNumber(margin_ex, 2, true)}%.` : `  Margin = ${formatNumber(margin_ex, 2, true)}%.`;
-        if (markup_ex !== null) exactMsg += currentLang === 'ar' ? `  العلامة = ${formatNumber(markup_ex, 2, true)}%.` : `  Markup = ${formatNumber(markup_ex, 2, true)}%.`;
-        document.getElementById('lblExact').textContent = exactMsg;
-
-        const results = [];
         const doRound = document.getElementById('checkRound').checked;
         const tolPercent = parseFloat(document.getElementById('spinTol').value || '0');
-        const isAny = tolPercent >= 100.0;
-        const isStrict = tolPercent === 0;
-        const tolThreshold = (tolPercent / 100.0) * t;
-        const ratio = t / p;
-
-        for (let N = 2; N <= NMAX_DEFAULT; N++) {
-            let a = Math.round(ratio * N);
-            if (a < 1 || a >= N) continue;
-
-            let b = N - a;
-
-            let effA = a, effB = b, effN = N;
-            if (doRound) {
-                effA = roundSmart(a);
-                effB = roundSmart(b);
-                if (effA <= 0) effA = 1;
-                effN = effA + effB;
-                if (effN <= effA) continue;
-            }
-
-            const eff = (effA * p) / effN;
-            const err = Math.abs(eff - t);
-
-            let ok = false;
-            if (isAny) ok = true;
-            else if (isStrict) ok = (err < 1e-7);
-            else ok = (err <= tolThreshold);
-
-            if (!ok) continue;
-
-            let margin_pct = null;
-            let markup_pct = null;
-            if (cost !== null && cost > 0) {
-                if (eff !== 0) margin_pct = (eff - cost) / eff * 100.0;
-                if (cost !== 0) markup_pct = (eff - cost) / cost * 100.0;
-            }
-
-            results.push({ N: effN, a: effA, b: effB, eff, err, margin: margin_pct, markup: markup_pct });
+        if (Number.isNaN(tolPercent) || tolPercent < 0) {
+            showError("معدل الخطأ المسموح يجب أن يكون صفراً أو أكثر.", "Allowed error must be zero or higher.");
+            return;
         }
 
-        const unique = new Map();
-        results.forEach(res => {
-            const key = `${res.a}|${res.b}`;
-            if (!unique.has(key) || res.err < unique.get(key).err) {
-                unique.set(key, res);
-            }
-        });
+        const selection = getGiftSelectionValue();
+        let selectedResults = [];
+        let exactMsg = '';
 
-        let selectedResults = [...unique.values()].sort((x, y) => (x.err - y.err) || (x.N - y.N));
+        if (productAmount !== null) {
+            const exactFreeAmount = productAmount * D_cents / T_cents;
+            const exactTotal = productAmount + exactFreeAmount;
+            const fixedEff = exactTotal > 0 ? (productAmount * p) / exactTotal : 0;
+            const exactMetrics = getGiftProfitMetrics(fixedEff, cost);
+            const freeIsWhole = Math.abs(exactFreeAmount - Math.round(exactFreeAmount)) < 1e-7;
 
-        const selection = (document.getElementById('comboTopk')?.value || 'auto').trim();
-        if (selection !== 'auto') {
-            const topk = parseInt(selection, 10);
-            if (!Number.isNaN(topk) && topk > 0) {
-                selectedResults = selectedResults.slice(0, topk);
+            exactMsg = currentLang === 'ar'
+                ? `للكمية المدفوعة ${formatInteger(productAmount)}: كمية الهدايا الدقيقة = ${formatQuantity(exactFreeAmount, 4)}، الإجمالي = ${formatQuantity(exactTotal, 4)}. السعر الفعلي = ${formatMoney(fixedEff, 4, true)} دينار.`
+                : `For paid amount ${formatInteger(productAmount)}: exact free gifts = ${formatQuantity(exactFreeAmount, 4)}, total = ${formatQuantity(exactTotal, 4)}. Effective price = ${formatMoney(fixedEff, 4, true)} IQD.`;
+
+            if (!freeIsWhole) {
+                exactMsg += currentLang === 'ar'
+                    ? ' النتيجة الدقيقة تحتوي على كسر، لذلك يعرض الجدول أقرب كميات هدايا صحيحة لهذه الكمية المدفوعة.'
+                    : ' The exact result contains a fraction, so the table shows the closest whole-number gift quantities for this paid amount.';
             }
+            if (exactMetrics.margin !== null) exactMsg += currentLang === 'ar' ? `  الهامش = ${formatNumber(exactMetrics.margin, 2, true)}%.` : `  Margin = ${formatNumber(exactMetrics.margin, 2, true)}%.`;
+            if (exactMetrics.markup !== null) exactMsg += currentLang === 'ar' ? `  العلامة = ${formatNumber(exactMetrics.markup, 2, true)}%.` : `  Markup = ${formatNumber(exactMetrics.markup, 2, true)}%.`;
+
+            selectedResults = buildFixedPaidGiftResults(p, t, cost, productAmount, doRound, tolPercent, selection);
+        } else {
+            const metrics = getGiftProfitMetrics(ratioEff, cost);
+            exactMsg = currentLang === 'ar'
+                ? `دقيق: ادفع ${formatInteger(a_ex)} واحصل على ${formatInteger(n_ex)} (${formatInteger(b_ex)} مجانية).\nالسعر الفعلي = ${formatMoney(ratioEff, 4, true)} دينار.`
+                : `Exact: pay ${formatInteger(a_ex)} and get ${formatInteger(n_ex)} total (${formatInteger(b_ex)} free).\nEffective price = ${formatMoney(ratioEff, 4, true)} IQD.`;
+            if (metrics.margin !== null) exactMsg += currentLang === 'ar' ? `  الهامش = ${formatNumber(metrics.margin, 2, true)}%.` : `  Margin = ${formatNumber(metrics.margin, 2, true)}%.`;
+            if (metrics.markup !== null) exactMsg += currentLang === 'ar' ? `  العلامة = ${formatNumber(metrics.markup, 2, true)}%.` : `  Markup = ${formatNumber(metrics.markup, 2, true)}%.`;
+
+            selectedResults = buildRatioGiftResults(p, t, cost, doRound, tolPercent);
+        }
+
+        document.getElementById('lblExact').textContent = exactMsg;
+
+        const limit = getGiftSelectionLimit(selection);
+        if (limit !== null) {
+            selectedResults = selectedResults.slice(0, limit);
         }
 
         currentGiftResultsOriginal = selectedResults;
@@ -604,7 +753,10 @@ function onGiftCalculate() {
         if (currentGiftResultsOriginal.length === 0) {
             populateGiftTable([]);
             renderGiftPagination();
-            if (isStrict) {
+            const isStrict = tolPercent === 0;
+            if (productAmount !== null) {
+                showError("لا توجد كمية هدايا صحيحة ضمن الخطأ المسموح لهذه الكمية المدفوعة. جرّب رفع نسبة الخطأ أو تغيير كمية المنتج.", "No whole-number gift quantity fits the allowed error for this paid amount. Try increasing the allowed error or changing the product amount.");
+            } else if (isStrict) {
                 showError("لا يوجد نتائج دقيقة تماماً في هذا النطاق. جرب رفع نسبة الخطأ المسموح.", "There are no exact results in this range. Try increasing the allowed error.");
             } else {
                 showError("لم يتم العثور على نتائج ضمن النطاق والخطأ المسموح.", "No results were found within the allowed range and error.");
