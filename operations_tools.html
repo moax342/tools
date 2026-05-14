@@ -38,8 +38,8 @@
         </section>
 
         <nav class="tabbar" aria-label="Operations calculator sections">
-            <button onclick="switchTab('cakeTab')" id="btn-cakeTab" class="tab-btn" data-en="Cake Converter" data-ar="حاسبة الكيك">حاسبة الكيك</button>
-            <button onclick="switchTab('returnTab')" id="btn-returnTab" class="tab-btn active" data-en="Return Calculator" data-ar="حاسبة المردود">حاسبة المردود</button>
+            <button onclick="switchTab('cakeTab')" id="btn-cakeTab" class="tab-btn active" data-en="Cake Converter" data-ar="حاسبة الكيك">حاسبة الكيك</button>
+            <button onclick="switchTab('returnTab')" id="btn-returnTab" class="tab-btn" data-en="Return Calculator" data-ar="حاسبة المردود">حاسبة المردود</button>
             <button onclick="switchTab('giftTab')" id="btn-giftTab" class="tab-btn" data-en="Gifts Calculator" data-ar="حاسبة الهدايا">حاسبة الهدايا</button>
         </nav>
 
@@ -150,6 +150,11 @@
                         <div class="field">
                             <label data-en="Unit Cost (optional):" data-ar="تكلفة القطعة (اختياري):">تكلفة القطعة (اختياري):</label>
                             <input type="text" inputmode="decimal" id="editCost" class="money-input" placeholder="مثال: 6000 (اتركه فارغاً إذا غير متوفر)" data-placeholder-en="Example: 6,000 (leave empty if unavailable)" data-placeholder-ar="مثال: 6,000 (اتركه فارغاً إذا غير متوفر)" />
+                        </div>
+                        <div class="field">
+                            <label data-en="Product Amount (paid quantity):" data-ar="كمية المنتج المدفوعة:">كمية المنتج المدفوعة:</label>
+                            <input type="text" inputmode="decimal" id="editProductAmount" class="money-input" placeholder="مثال: 100" data-placeholder-en="Example: 100" data-placeholder-ar="مثال: 100" />
+                            <div class="hint" data-en="Optional. Enter the paid product amount to calculate the matching free gifts only for that amount." data-ar="اختياري. أدخل كمية المنتج المدفوعة ليتم حساب الهدايا المناسبة لهذه الكمية فقط.">اختياري. أدخل كمية المنتج المدفوعة ليتم حساب الهدايا المناسبة لهذه الكمية فقط.</div>
                         </div>
                         <div class="field">
                             <label data-en="Allowed Error (%) — (0 = exact, 100 = any):" data-ar="معدل الخطأ المسموح (%) — (0=دقيق، 100=أي):">معدل الخطأ المسموح (%) — (0=دقيق، 100=أي):</label>
