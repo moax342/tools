@@ -1,6 +1,9 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
+  <link rel="icon" type="image/x-icon" href="icon.ico">
+  <link rel="shortcut icon" type="image/x-icon" href="icon.ico">
+  <link rel="apple-touch-icon" href="icon.ico">
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>General Ledger Analyzer</title>
@@ -55,15 +58,15 @@
     --teal-bg: rgba(13,158,137,0.10);
     --shadow: 0 4px 24px rgba(0,0,0,0.10);
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: 'Cairo', sans-serif;
+    font-family: 'Cairo', 'Segoe UI', system-ui, sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
     transition: background 0.3s, color 0.3s;
   }
-  body.rtl { direction: rtl; font-family: 'Cairo', sans-serif; }
+  body.rtl { direction: rtl; font-family: 'Cairo', system-ui, sans-serif; }
 
   header {
     background: var(--bg2);
@@ -87,12 +90,12 @@
     color: var(--text);
   }
   .logo-icon {
-    width: 32px; height: 32px;
-    background: var(--accent);
-    border-radius: var(--radius-sm);
-    display: flex; align-items: center; justify-content: center;
-    color: #fff;
-    font-size: 16px;
+    width: 38px; height: 38px; object-fit: contain;
+    background: linear-gradient(135deg, rgba(91,94,166,.18), rgba(245,216,0,.10));
+    border: 1px solid rgba(245,216,0,.24);
+    border-radius: 12px; padding: 3px;
+    box-shadow: 0 10px 24px rgba(0,0,0,.18);
+    flex: 0 0 auto;
   }
   .header-actions {
     display: flex;
@@ -138,7 +141,17 @@
     background: var(--bg2);
   }
   .upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: var(--bg3); }
-  .upload-icon { font-size: 48px; margin-bottom: 16px; }
+  .upload-icon { margin-bottom: 16px; display:flex; justify-content:center; }
+  .brand-glyph {
+    width: 58px; height: 58px; border-radius: 18px;
+    display:inline-flex; align-items:center; justify-content:center;
+    background: linear-gradient(135deg, rgba(91,94,166,.92), rgba(42,44,92,.96));
+    border: 1px solid rgba(245,216,0,.24); box-shadow: 0 12px 30px rgba(0,0,0,.22);
+    position: relative; overflow:hidden;
+  }
+  .brand-glyph::before { content:''; position:absolute; inset:6px; background:url('icon.ico') center/contain no-repeat; opacity:.13; transform:scale(1.25); }
+  .brand-glyph svg { position:relative; z-index:1; width:32px; height:32px; stroke:#F5D800; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+  .search-icon svg { width: 16px; height: 16px; stroke: currentColor; fill:none; stroke-width:2.2; stroke-linecap:round; }
   .upload-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
   .upload-sub { font-size: 14px; color: var(--text2); }
   .upload-hint { font-size: 12px; color: var(--text3); margin-top: 8px; }
@@ -214,53 +227,14 @@
     white-space: nowrap;
   }
   .filter-btn:hover { background: var(--bg3); }
-  .filter-group {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-  .filter-clear {
-    background: var(--red-bg) !important;
-    color: var(--red) !important;
-    border-color: var(--red) !important;
-  }
-  .filter-clear:hover { opacity: 0.85; }
-  .filter-btn.active {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
-  }
-
-  .btn-excel {
-    background: linear-gradient(135deg, #1a6e3c, #217346) !important;
-    border-color: #1a6e3c !important;
-    color: #fff !important;
-    font-weight: 700 !important;
-    letter-spacing: 0.3px;
-    box-shadow: 0 2px 8px rgba(26,110,60,0.35);
-    transition: all 0.2s !important;
-  }
-  .btn-excel:hover {
-    background: linear-gradient(135deg, #217346, #2a9059) !important;
-    box-shadow: 0 4px 16px rgba(26,110,60,0.5) !important;
-    transform: translateY(-1px);
-  }
-
-  .btn-print {
-    background: linear-gradient(135deg, #7c3aed, #5b21b6) !important;
-    border-color: #7c3aed !important;
-    color: #fff !important;
-    font-weight: 700 !important;
-    letter-spacing: 0.3px;
-    box-shadow: 0 2px 8px rgba(124,58,237,0.35);
-    transition: all 0.2s !important;
-  }
-  .btn-print:hover {
-    background: linear-gradient(135deg, #8b5cf6, #7c3aed) !important;
-    box-shadow: 0 4px 16px rgba(124,58,237,0.5) !important;
-    transform: translateY(-1px);
-  }
+  .filter-group { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .filter-clear { background: var(--red-bg) !important; color: var(--red) !important; border-color: var(--red) !important; }
+  .filter-clear:hover { opacity: .88; }
+  .filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn-excel { background: linear-gradient(135deg,#1a6e3c,#217346) !important; border-color:#1a6e3c !important; color:#fff !important; font-weight:700 !important; box-shadow:0 2px 8px rgba(26,110,60,.35); }
+  .btn-excel:hover { background: linear-gradient(135deg,#217346,#2a9059) !important; box-shadow:0 4px 16px rgba(26,110,60,.5) !important; transform:translateY(-1px); }
+  .btn-print { background: linear-gradient(135deg,#7c3aed,#5b21b6) !important; border-color:#7c3aed !important; color:#fff !important; font-weight:700 !important; box-shadow:0 2px 8px rgba(124,58,237,.35); }
+  .btn-print:hover { background: linear-gradient(135deg,#8b5cf6,#7c3aed) !important; box-shadow:0 4px 16px rgba(124,58,237,.5) !important; transform:translateY(-1px); }
 
   /* Table */
   .table-wrap {
@@ -430,26 +404,29 @@
     #print-frame { max-height: none; overflow: visible; box-shadow: none; width: 100%; border-radius: 0; padding: 0; }
     #print-frame .print-actions { display: none !important; }
   }
+
+/* Shared settings modal: same placement and behavior across every page */
+.ec-settings-modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(2,6,23,.78);backdrop-filter:blur(8px);z-index:9999}.ec-settings-modal.hidden{display:none!important}.ec-settings-card{width:min(540px,100%);border-radius:26px;background:var(--card,var(--surf,var(--bg2,#1a1a32)));border:1px solid var(--bdr,var(--border,var(--card-border,rgba(245,216,0,.12))));box-shadow:var(--shadow,0 18px 60px rgba(0,0,0,.35));padding:26px;text-align:initial;color:var(--text,var(--txt,#eeeef8));font-family:'Cairo',Tahoma,Arial,sans-serif}.ec-settings-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px}.ec-settings-head h4{margin:0 0 6px;font-size:20px;font-weight:900;color:var(--text,var(--txt,#eeeef8))}.ec-settings-head p{margin:0;color:var(--text2,var(--muted,#b0b2d8));line-height:1.6;font-weight:700}.ec-settings-close{width:38px;height:38px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:var(--bg2,var(--surf2,#15152a));color:var(--text,var(--txt,#eeeef8));border:1px solid var(--bdr,var(--border,rgba(245,216,0,.12)));font-size:24px;line-height:1;cursor:pointer}.ec-settings-list{display:grid;gap:12px}.ec-settings-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px;border-radius:18px;background:var(--bg2,var(--surf2,#15152a));border:1px solid var(--bdr,var(--border,rgba(245,216,0,.12)))}.ec-settings-copy{display:grid;gap:4px}.ec-settings-copy strong{color:var(--text,var(--txt,#eeeef8));font-size:16px}.ec-settings-copy span{color:var(--text2,var(--muted,#b0b2d8));font-size:13px;line-height:1.5}.ec-option-btn{min-width:118px;padding:10px 14px;border-radius:999px;border:0;font-weight:900;color:#fff;background:linear-gradient(135deg,var(--purple,#5B5EA6),var(--purple-dark,#3f4282));box-shadow:0 10px 22px rgba(91,94,166,.20);cursor:pointer;font-family:'Cairo',Tahoma,Arial,sans-serif}.ec-settings-close:hover,.ec-option-btn:hover{transform:translateY(-1px)}@media(max-width:520px){.ec-settings-row{align-items:stretch;flex-direction:column}.ec-option-btn{width:100%}}
+
 </style>
 </head>
 <body data-theme="dark">
 
 <header>
   <div class="logo">
-    <div class="logo-icon">📊</div>
+    <img class="logo-icon" src="icon.ico" alt="Hilal Al-Sharq icon">
     <span id="app-title">Ledger Analyzer</span>
   </div>
   <div class="header-actions">
-    <a href="index.html" class="btn-lang" style="text-decoration:none;" id="btn-home">🏠 الرئيسية</a>
-    <button class="btn-lang" onclick="toggleLang()" id="lang-btn">AR / عر</button>
-    <button class="btn-icon" onclick="toggleTheme()" id="theme-btn" title="Toggle theme">🌙</button>
+    <a href="index.html" class="btn-lang" style="text-decoration:none;" id="btn-home">الرئيسية</a>
+    <button class="btn-lang" onclick="openSettings()" id="settings-btn">الإعدادات</button>
   </div>
 </header>
 
 <main>
   <div id="upload-section">
     <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
-      <div class="upload-icon">📂</div>
+      <div class="upload-icon"><span class="brand-glyph"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 17h13l4 5h15v18H8z"/><path d="M8 17v-5h12l4 5"/><path d="M16 31h16"/><path d="M24 23v16"/></svg></span></div>
       <div class="upload-title" id="uz-title">Drop your Excel file here</div>
       <div class="upload-sub" id="uz-sub">or click to browse</div>
       <div class="upload-hint" id="uz-hint">Supports English &amp; Arabic General Ledger exports (.xlsx)</div>
@@ -462,7 +439,7 @@
 
     <div class="controls-row">
       <div class="search-box">
-        <span class="search-icon">🔍</span>
+        <span class="search-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg></span>
         <input type="text" id="search" placeholder="Search customers…" oninput="renderTable()"/>
       </div>
       <div class="filter-group" id="filter-group">
@@ -474,7 +451,7 @@
       </div>
       <button class="filter-btn" id="btn-upload-new" onclick="resetUpload()">New file</button>
       <button class="filter-btn btn-excel" id="btn-export" onclick="exportExcel()">⬇ Excel</button>
-      <button class="filter-btn btn-print" id="btn-print" onclick="printTable()">🖨 Print</button>
+      <button class="filter-btn btn-print" id="btn-print" onclick="printTable()">Print</button>
     </div>
 
     <div class="table-wrap">
@@ -489,10 +466,24 @@
   </div>
 </main>
 
+
+<div id="settingsModal" class="ec-settings-modal hidden" aria-hidden="true">
+  <div class="ec-settings-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="ec-settings-head">
+      <div><h4 id="settingsTitle">الإعدادات</h4><p id="settingsSub">تحكم باللغة ووضع العرض لكل أدوات الموقع.</p></div>
+      <button type="button" class="ec-settings-close" onclick="closeSettings()" aria-label="Close settings">×</button>
+    </div>
+    <div class="ec-settings-list">
+      <div class="ec-settings-row"><div class="ec-settings-copy"><strong id="languageLabel">اللغة</strong><span id="languageSub">التبديل بين العربية والإنجليزية.</span></div><button id="lang-toggle" type="button" class="ec-option-btn" onclick="toggleLang()">English</button></div>
+      <div class="ec-settings-row"><div class="ec-settings-copy"><strong id="themeLabel">المظهر</strong><span id="themeSub">التبديل بين الوضع الداكن والفاتح.</span></div><button id="theme-toggle" type="button" class="ec-option-btn" onclick="toggleTheme()">فاتح</button></div>
+    </div>
+  </div>
+</div>
+
 <div id="print-overlay">
   <div id="print-frame">
     <div class="print-actions">
-      <button class="btn-doit" onclick="window.print()">🖨 Print / Save PDF</button>
+      <button class="btn-doit" onclick="window.print()">Print / Save PDF</button>
       <button onclick="closePrint()">✕ Close</button>
     </div>
     <h2 id="print-title">General Ledger — Customer Analysis</h2>
@@ -508,8 +499,8 @@
 <script>
 let customers = [];
 let filters = new Set();
-let lang = 'ar';
-let isDark = true;
+let lang = localStorage.getItem('eastCrescentLang') || localStorage.getItem('hilalUnifiedLang') || 'ar';
+let isDark = (localStorage.getItem('eastCrescentTheme') || localStorage.getItem('hilalUnifiedTheme') || 'dark') === 'dark';
 let openRow = null;
 let sortField = null;
 let sortDir = 1;
@@ -519,13 +510,13 @@ const T = {
     appTitle: 'Ledger Analyzer',
     uzTitle: 'Drop your Excel file here',
     uzSub: 'or click to browse',
-    uzHint: 'Supports English & Arabic General Ledger exports (.xlsx)',
+    uzHint: 'Supports General Ledger format 1 and format 2 (.xlsx)',
     totalCustomers: 'Total Customers',
     withBalance: 'With Balance',
     noBalance: 'Cleared',
     totalBalance: 'Total Balance',
     cols: ['Customer', 'Balance', 'Last Invoice', 'Invoice Date', 'Last Payment', 'Payment Date'],
-    all: 'All', hasBalance: 'Has balance', zeroBalance: 'Zero balance', noPayment: 'No payment', noInvoice: 'No invoice', newFile: 'New file',
+    all: 'All', hasBalance: 'Has balance', zeroBalance: 'Zero balance', noPayment: 'No payment', noInvoice: 'No invoice', clearFilters: 'Clear', exportExcel: 'Excel', newFile: 'New file',
     search: 'Search customers…',
     noResults: 'No results found',
     detInvoice: 'Last Invoice', detInvDate: 'Invoice Date', detPayment: 'Last Payment',
@@ -538,13 +529,13 @@ const T = {
     appTitle: 'محلل الأستاذ العام',
     uzTitle: 'اسحب ملف Excel هنا',
     uzSub: 'أو انقر للاختيار',
-    uzHint: 'يدعم ملفات دفتر الأستاذ العام (.xlsx)',
+    uzHint: 'يدعم دفتر الأستاذ العام بصيغة 1 وصيغة 2 (.xlsx)',
     totalCustomers: 'إجمالي العملاء',
     withBalance: 'لديهم رصيد',
     noBalance: 'صفر',
     totalBalance: 'إجمالي الأرصدة',
     cols: ['العميل', 'الرصيد', 'آخر فاتورة', 'تاريخ الفاتورة', 'آخر دفعة', 'تاريخ الدفعة'],
-    all: 'الكل', hasBalance: 'لديه رصيد', zeroBalance: 'لا رصيد', noPayment: 'بدون دفعة', noInvoice: 'بدون فاتورة', newFile: 'ملف جديد',
+    all: 'الكل', hasBalance: 'لديه رصيد', zeroBalance: 'لا رصيد', noPayment: 'بدون دفعة', noInvoice: 'بدون فاتورة', clearFilters: 'مسح', exportExcel: 'Excel', newFile: 'ملف جديد',
     search: 'بحث عن عميل…',
     noResults: 'لا توجد نتائج',
     detInvoice: 'آخر فاتورة', detInvDate: 'تاريخ الفاتورة', detPayment: 'آخر دفعة',
@@ -560,19 +551,23 @@ function t(key) { return T[lang][key] || key; }
 function toggleTheme() {
   isDark = !isDark;
   document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
-  document.getElementById('theme-btn').textContent = isDark ? '🌙' : '☀️';
+  localStorage.setItem('eastCrescentTheme', isDark ? 'dark' : 'light');
+  localStorage.setItem('hilalUnifiedTheme', isDark ? 'dark' : 'light');
+  localStorage.setItem('agedReceivableTheme', isDark ? 'dark' : 'light');
+  updateSettingsControls();
 }
 
 function toggleLang() {
   lang = lang === 'en' ? 'ar' : 'en';
+  localStorage.setItem('eastCrescentLang', lang);
+  localStorage.setItem('hilalUnifiedLang', lang);
+  document.body.classList.toggle('rtl', lang === 'ar');
+  document.documentElement.setAttribute('lang', lang);
+  document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
   applyLang();
 }
 
 function applyLang() {
-  const isAr = lang === 'ar';
-  document.body.classList.toggle('rtl', isAr);
-  document.documentElement.setAttribute('lang', lang);
-  document.documentElement.setAttribute('dir', isAr ? 'rtl' : 'ltr');
   document.getElementById('app-title').textContent = t('appTitle');
   document.getElementById('uz-title').textContent = t('uzTitle');
   document.getElementById('uz-sub').textContent = t('uzSub');
@@ -582,12 +577,13 @@ function applyLang() {
   document.getElementById('f-zero').textContent = t('zeroBalance');
   document.getElementById('f-nopay').textContent = t('noPayment');
   document.getElementById('f-noinv').textContent = t('noInvoice');
-  document.getElementById('f-clear-label').textContent = isAr ? 'مسح' : 'Clear';
-  document.getElementById('btn-home').textContent = isAr ? '🏠 الرئيسية' : '🏠 Home';
+  document.getElementById('f-clear-label').textContent = t('clearFilters');
+  document.getElementById('btn-home').textContent = lang === 'ar' ? 'الرئيسية' : 'Home';
+  updateSettingsControls();
   document.getElementById('btn-upload-new').textContent = t('newFile');
-  document.getElementById('btn-export').textContent = isAr ? '⬇ إكسل' : '⬇ Excel';
-  document.getElementById('btn-print').textContent = isAr ? '🖨 طباعة' : '🖨 Print';
-  document.getElementById('lang-btn').textContent = isAr ? 'EN' : 'عر';
+  document.getElementById('btn-export').innerHTML = '⬇ ' + t('exportExcel');
+  document.getElementById('btn-print').textContent = lang === 'ar' ? 'طباعة' : 'Print';
+  syncFilterButtons();
   if (customers.length > 0) { renderStats(); renderTable(); }
 }
 
@@ -601,15 +597,31 @@ function handleFile(ev) { if(ev.target.files[0]) processFile(ev.target.files[0])
 
 function processFile(file) {
   const reader = new FileReader();
+  reader.onerror = () => alert(lang === 'ar' ? 'تعذر قراءة الملف.' : 'Could not read the file.');
   reader.onload = e => {
-    const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
-    const sheetName = wb.SheetNames[0];
-    const ws = wb.Sheets[sheetName];
-    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, dateNF: 'yyyy-mm-dd' });
-    customers = parseRows(rows);
-    document.getElementById('upload-section').style.display = 'none';
-    document.getElementById('data-section').style.display = 'block';
-    applyLang();
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
+      let best = [];
+      let bestSheet = '';
+      for (const sheetName of wb.SheetNames) {
+        const ws = wb.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, dateNF: 'yyyy-mm-dd', defval: '' });
+        const parsed = parseRows(rows);
+        if (parseScore(parsed) > parseScore(best)) { best = parsed; bestSheet = sheetName; }
+      }
+      customers = best;
+      if (!customers.length) {
+        alert(lang === 'ar' ? 'لم يتم العثور على عملاء في الملف. تأكد من أن الملف هو دفتر الأستاذ العام بصيغة 1 أو صيغة 2.' : 'No customers were found. Make sure the file is a General Ledger export in format 1 or format 2.');
+        return;
+      }
+      document.getElementById('upload-section').style.display = 'none';
+      document.getElementById('data-section').style.display = 'block';
+      console.info('Customer Analyzer parsed sheet:', bestSheet, 'customers:', customers.length);
+      applyLang();
+    } catch (err) {
+      console.error(err);
+      alert((lang === 'ar' ? 'خطأ في تحليل الملف: ' : 'File parsing error: ') + (err && err.message ? err.message : err));
+    }
   };
   reader.readAsArrayBuffer(file);
 }
@@ -624,20 +636,29 @@ function resetUpload() {
 }
 
 function isInvoice(ref) { return /^INV\//i.test(ref); }
-function isReturn(ref) { return /^RRIV\//i.test(ref) || /مرتجع/i.test(ref); }
+function isReturn(ref) { return /^(RINV|RRINV)\//i.test(ref || '') || /مرتجع/i.test(ref || ''); }
 function isPayment(ref, comm, row) {
-  if (/payment|سداد/i.test(ref)) return true;
-  if (/^CHSJB|^RCEV|^RCV/i.test(ref)) return true;
-  // Check description/narration columns (cols 2–6) for سداد or payment
-  const cols = row ? [2,3,4,5,6].map(i => String(row[i] || '')) : [comm || ''];
-  return cols.some(v => /سداد|payment/i.test(v));
+  if (/payment|سداد/i.test(ref || '')) return true;
+  if (/^CHSJB|^RCEV|^RCV/i.test(ref || '')) return true;
+  const cols = row ? [1,2,3,4,5,6,7,8,9,10,11].map(i => String(row[i] || '')) : [comm || ''];
+  return cols.some(v => /payment|سداد/i.test(v));
 }
 
 function parseDate(val) {
-  if (!val || val === 'NaN' || val === '' || val === 'null') return null;
-  if (val instanceof Date) return val;
+  if (val === null || val === undefined || val === 'NaN' || val === '' || val === 'null') return null;
+  if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
+  if (typeof val === 'number' && val > 1000) {
+    const d = new Date(Math.round((val - 25569) * 86400 * 1000));
+    return isNaN(d.getTime()) ? null : d;
+  }
+  const s = normalizeDigits(val).trim();
+  const dm = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+  if (dm) {
+    const year = parseInt(dm[3].length === 2 ? '20' + dm[3] : dm[3], 10);
+    return new Date(year, parseInt(dm[2], 10) - 1, parseInt(dm[1], 10));
+  }
   // Try direct parse
-  const d = new Date(val);
+  const d = new Date(s || val);
   if (!isNaN(d)) return d;
   // Arabic month names
   const arMonths = {
@@ -665,44 +686,136 @@ function fmtNum(n) {
   return Number(n).toLocaleString('en-GB');
 }
 
+
+function normalizeDigits(value) {
+  return String(value ?? '')
+    .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+    .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+}
+
+function numCell(value, fallback = NaN) {
+  if (value === null || value === undefined || value === '') return fallback;
+  const cleaned = normalizeDigits(value).replace(/\u00a0/g, ' ').replace(/[,،]/g, '').replace(/[^0-9.\-]/g, '');
+  const n = parseFloat(cleaned);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function compactLabel(value) {
+  return String(value || '').toLowerCase().replace(/[\s_:\-–—\.]/g, '').trim();
+}
+
+function findHeaderRow(rows) {
+  for (let i = 0; i < Math.min(rows.length, 30); i++) {
+    const labels = (rows[i] || []).map(compactLabel);
+    const hasDate = labels.some(v => ['date','التاريخ'].includes(v));
+    const hasBalance = labels.some(v => ['balance','الرصيد'].includes(v));
+    const hasDebit = labels.some(v => ['debit','المدين','مدين'].includes(v));
+    const hasCredit = labels.some(v => ['credit','الدائن','دائن'].includes(v));
+    if (hasDate && (hasBalance || hasDebit || hasCredit)) return i;
+  }
+  return -1;
+}
+
+function detectColumns(rows, fallback) {
+  const cols = {...fallback};
+  const hr = findHeaderRow(rows);
+  if (hr >= 0) {
+    (rows[hr] || []).forEach((cell, i) => {
+      const v = compactLabel(cell);
+      if (['date','التاريخ'].includes(v)) cols.date = i;
+      if (['communication','communications','اتصالات','البيان','description','narration','label','memo','التسمية'].includes(v)) cols.comm = i;
+      if (['partner','الشريك','customer','العميل'].includes(v)) cols.partner = i;
+      if (['sourcedocument','المستندالمصدر','source','origin','documentno'].includes(v)) cols.source = i;
+      if (['debit','المدين','مدين'].includes(v)) cols.debit = i;
+      if (['credit','الدائن','دائن'].includes(v)) cols.credit = i;
+      if (['balance','الرصيد'].includes(v)) cols.balance = i;
+      if (['journal','jrnl','journalentry','journalcode','اليومية','دفتراليومية'].includes(v)) cols.journal = i;
+      if (['reference','ref','document','move','number','المستند','المرجع','رقمالمستند'].includes(v)) cols.ref = i;
+    });
+  }
+  return cols;
+}
+
 function detectFormat(rows) {
-  // Format B (partner ledger): col0=date or customer, col1=journal, col11=balance
-  // Format A (general ledger): col0=ref/customer, col1=date, col9=balance
-  for (let i = 0; i < Math.min(10, rows.length); i++) {
-    const r = rows[i];
+  const hr = findHeaderRow(rows);
+  if (hr >= 0) {
+    const labels = (rows[hr] || []).map(compactLabel);
+    const dateIndex = labels.findIndex(v => ['date','التاريخ'].includes(v));
+    const journalIndex = labels.findIndex(v => ['journal','jrnl','اليومية'].includes(v));
+    if (dateIndex === 0 && journalIndex === 1) return 'B';
+    if (dateIndex === 1) return 'A';
+  }
+  for (let i = 0; i < Math.min(20, rows.length); i++) {
+    const r = rows[i] || [];
+    const c0 = String(r[0] || '').trim();
     const c1 = String(r[1] || '').trim();
-    // If col1 looks like a journal code (CHSJB, INV, RINV, JRNL) → format B
-    if (/^(CHSJB|INV|RINV|RRINV|JRNL|ٌٌINV)/i.test(c1)) return 'B';
-    // If col1 looks like a date → format A
-    if (parseDate(r[1]) && !(/^(CHSJB|INV)/i.test(String(r[0]||'')))) return 'A';
+    if ((parseDate(c0) && /^(CHSJB|INV|RINV|RRINV|JRNL|RCEV|RCV)/i.test(c1)) || /^JRNL$/i.test(c1)) return 'B';
+    if (parseDate(r[1])) return 'A';
   }
   return 'A';
 }
 
-function parseRows(rows) {
-  const fmt = detectFormat(rows);
-  return fmt === 'B' ? parseFormatB(rows) : parseFormatA(rows);
+function parseScore(list) {
+  return (list || []).reduce((score, c) => {
+    const txCount = (c.transactions || []).length;
+    const hasUsefulDate = (c.lastInvoiceDate ? 1 : 0) + (c.lastPaymentDate ? 1 : 0) + (c.lastReturnDate ? 1 : 0);
+    const hasBalance = Math.abs(Number(c.balance || 0)) > 0 ? 1 : 0;
+    return score + 10 + (txCount * 4) + (hasUsefulDate * 8) + (hasBalance * 3);
+  }, 0);
 }
 
-// ── FORMAT A: original general ledger ─────────────────────────────────────
+function parseRows(rows) {
+  // The two Odoo ledger exports use different column layouts.
+  // Try both parsers and keep the one that extracts the most useful customer/transaction data.
+  const guessed = detectFormat(rows);
+  const parsedA = parseFormatA(rows);
+  const parsedB = parseFormatB(rows);
+  const scoreA = parseScore(parsedA);
+  const scoreB = parseScore(parsedB);
+  if (guessed === 'A' && scoreA >= scoreB) return parsedA;
+  if (guessed === 'B' && scoreB >= scoreA) return parsedB;
+  return scoreB > scoreA ? parsedB : parsedA;
+}
+
+function countNumericInColumn(rows, col) {
+  let count = 0;
+  for (const row of rows || []) {
+    const n = numCell((row || [])[col], NaN);
+    if (Number.isFinite(n)) count++;
+  }
+  return count;
+}
+
+function inferFormatAFallback(rows) {
+  // Format 1 normally has Debit/Credit/Balance at G/H/I.
+  // Some exports insert one extra column, shifting them to H/I/J.
+  const gHi = countNumericInColumn(rows, 6) + countNumericInColumn(rows, 7) + countNumericInColumn(rows, 8);
+  const hJ = countNumericInColumn(rows, 7) + countNumericInColumn(rows, 8) + countNumericInColumn(rows, 9);
+  return hJ > gHi + 3
+    ? {ref: 0, date: 1, comm: 2, partner: 3, source: 5, debit: 7, credit: 8, balance: 9}
+    : {ref: 0, date: 1, comm: 2, partner: 3, source: 5, debit: 6, credit: 7, balance: 8};
+}
+
 function parseFormatA(rows) {
+  const cols = detectColumns(rows, inferFormatAFallback(rows));
   const result = [];
   let currentCustomer = null;
 
   for (let i = 0; i < rows.length; i++) {
-    const row = rows[i];
-    const ref = String(row[0] || '').trim();
-    const dateRaw = row[1];
-    const comm = String(row[2] || '').trim();
-    const debit  = parseFloat(String(row[7] || '').replace(/,/g,'')) || 0;
-    const credit = parseFloat(String(row[8] || '').replace(/,/g,'')) || 0;
-    const balance = parseFloat(String(row[9] || '').replace(/,/g,''));
+    const row = rows[i] || [];
+    const ref = String(row[cols.ref] || row[0] || '').trim();
+    const dateRaw = row[cols.date];
+    const comm = String(row[cols.comm] || '').replace(/\u00a0/g, ' ').trim();
+    const debit = numCell(row[cols.debit], 0);
+    const credit = numCell(row[cols.credit], 0);
+    const balance = numCell(row[cols.balance], NaN);
 
-    if (ref === '' || ref === 'nan' || /^date$/i.test(ref) || /^التاريخ$/.test(ref)) continue;
+    if (ref === '' || ref.toLowerCase() === 'nan' || /^date$/i.test(ref) || /^التاريخ$/.test(ref)) continue;
+    if (String(dateRaw || '').trim() === 'التاريخ' || /^date$/i.test(String(dateRaw || '').trim())) continue;
 
-    const isCustomerHeader = !dateRaw && !isNaN(balance) &&
+    const isCustomerHeader = !parseDate(dateRaw) && !String(dateRaw || '').trim() && !isNaN(balance) &&
       !/^(Total|إجمالي|الإجمالي|Initial|الرصيد)/i.test(ref) &&
-      (row[7] || row[8] || row[9]) &&
+      (row[cols.debit] !== '' || row[cols.credit] !== '' || row[cols.balance] !== '') &&
       !isInvoice(ref) && !isReturn(ref) && !isPayment(ref, comm, row) &&
       !/^CHSJB|^RCEV|^RCV|^WHKH/i.test(ref);
 
@@ -728,6 +841,7 @@ function parseFormatA(rows) {
     if (!currentCustomer) continue;
 
     const date = parseDate(dateRaw);
+    if (!date) continue;
     let type = 'other';
     if (isInvoice(ref)) type = 'invoice';
     else if (isReturn(ref)) type = 'return';
@@ -739,31 +853,33 @@ function parseFormatA(rows) {
   return result;
 }
 
-// ── FORMAT B: partner ledger (col0=date|name, col1=journal, col4=ref, col8=debit, col9=credit, col11=balance) ──
 function parseFormatB(rows) {
+  const cols = detectColumns(rows, {date: 0, journal: 1, ref: 4, comm: 4, source: 4, debit: 8, credit: 9, balance: 11});
   const result = [];
   let currentCustomer = null;
 
   for (let i = 0; i < rows.length; i++) {
-    const row = rows[i];
-    const col0 = String(row[0] || '').trim();
-    const col1 = String(row[1] || '').trim();
-    const col4 = String(row[4] || '').trim();  // description / ref
-    const debit  = parseFloat(String(row[8] || '').replace(/,/g,'')) || 0;
-    const credit = parseFloat(String(row[9] || '').replace(/,/g,'')) || 0;
-    const balance = parseFloat(String(row[11] || '').replace(/,/g,''));
+    const row = rows[i] || [];
+    const col0 = String(row[cols.date] || row[0] || '').trim();
+    const journal = String(row[cols.journal] || row[1] || '').trim();
+    const ref = String(row[cols.ref] || journal || '').trim();
+    const comm = String(row[cols.comm] || ref || '').replace(/\u00a0/g, ' ').trim();
+    const debit = numCell(row[cols.debit], 0);
+    const credit = numCell(row[cols.credit], 0);
+    const balance = numCell(row[cols.balance], NaN);
 
-    // Skip header/total rows
-    if (/^(Total|إجمالي|الإجمالي|JRNL|NaN)/i.test(col0) || col0 === '') continue;
+    if (!col0 || /^NaN$/i.test(col0)) continue;
     if (/^(Total|إجمالي|الإجمالي)/i.test(col0)) { currentCustomer = null; continue; }
+    if (/^(Initial Balance|Opening Balance|الرصيد الافتتاحي|رصيد افتتاحي)/i.test(col0)) continue;
+    if (/^(date|التاريخ)$/i.test(col0) || /^(journal|jrnl|اليومية)$/i.test(journal)) continue;
 
-    // Customer header: col1 is empty/NaN and col0 is not a date
-    const isDate = /^\d{1,2}\/\d{1,2}\/\d{4}/.test(col0) || parseDate(col0) !== null;
-    if (!isDate && col1 !== 'JRNL') {
-      // This is a customer name row
+    const isDate = !!parseDate(col0);
+    const looksLikeJournal = /^(CHSJB|INV|RINV|RRINV|JRNL|RCEV|RCV)/i.test(journal);
+    if (!isDate && !looksLikeJournal) {
+      const idMatch = col0.match(/^(\d+)\s+(.+)/);
       currentCustomer = {
-        id: '',
-        name: col0,
+        id: idMatch ? idMatch[1] : '',
+        name: idMatch ? idMatch[2].trim() : col0,
         balance: isNaN(balance) ? 0 : balance,
         transactions: [],
         lastInvoice: null, lastInvoiceDate: null,
@@ -775,24 +891,20 @@ function parseFormatB(rows) {
     }
 
     if (!currentCustomer) continue;
-
-    // Transaction row: col0 = date, col1 = journal code, col4 = ref/description
     const date = parseDate(col0);
-    const ref = col4 || col1;
-    const comm = col4;
+    if (!date) continue;
 
     let type = 'other';
-    if (isInvoice(ref) || isInvoice(col1)) type = 'invoice';
-    else if (isReturn(ref) || isReturn(col1) || /^RINV|^RRINV/i.test(col1)) type = 'return';
-    else if (isPayment(ref, comm, row) || /^CHSJB|^RCEV|^RCV/i.test(col1)) type = 'payment';
+    if (isInvoice(ref) || isInvoice(journal)) type = 'invoice';
+    else if (isReturn(ref) || isReturn(journal) || /^RINV|^RRINV/i.test(journal)) type = 'return';
+    else if (isPayment(ref, comm, row) || /^CHSJB|^RCEV|^RCV/i.test(journal)) type = 'payment';
 
-    currentCustomer.transactions.push({ ref, date, comm, debit, credit, type, balance: isNaN(balance) ? null : balance });
+    currentCustomer.transactions.push({ ref: ref || journal, date, comm, debit, credit, type, balance: isNaN(balance) ? null : balance });
     updateLastTx(currentCustomer, type, date, debit, credit);
   }
   return result;
 }
 
-// ── shared helper to update last invoice/payment/return ───────────────────
 function updateLastTx(c, type, date, debit, credit) {
   if (type === 'invoice' && date) {
     if (!c.lastInvoiceDate || date > c.lastInvoiceDate) {
@@ -814,8 +926,9 @@ function updateLastTx(c, type, date, debit, credit) {
   }
 }
 
+
+
 function toggleFilter(f) {
-  // balance and zero are mutually exclusive; nopay and noinv are mutually exclusive
   if (f === 'balance' && filters.has('zero')) filters.delete('zero');
   if (f === 'zero' && filters.has('balance')) filters.delete('balance');
   if (filters.has(f)) filters.delete(f);
@@ -832,10 +945,11 @@ function clearFilters() {
 
 function syncFilterButtons() {
   ['balance','zero','nopay','noinv'].forEach(k => {
-    document.getElementById('f-' + k).classList.toggle('active', filters.has(k));
+    const btn = document.getElementById('f-' + k);
+    if (btn) btn.classList.toggle('active', filters.has(k));
   });
-  const hasAny = filters.size > 0;
-  document.getElementById('f-clear').style.display = hasAny ? '' : 'none';
+  const clear = document.getElementById('f-clear');
+  if (clear) clear.style.display = filters.size ? '' : 'none';
 }
 
 function applyFilters(c) {
@@ -846,9 +960,11 @@ function applyFilters(c) {
   return true;
 }
 
+
 function closePrint() {
   document.getElementById('print-overlay').classList.remove('show');
 }
+
 
 function exportExcel() {
   const isAr = lang === 'ar';
@@ -869,11 +985,11 @@ function exportExcel() {
   }
 
   const headers = isAr
-    ? ['اسم العميل', 'الرصيد الحالي', 'آخر فاتورة', 'تاريخ الفاتورة', 'آخر دفعة', 'تاريخ الدفعة']
-    : ['Customer', 'Balance', 'Last Invoice', 'Invoice Date', 'Last Payment', 'Payment Date'];
-
+    ? ['اسم العميل', 'رقم الحساب', 'الرصيد الحالي', 'آخر فاتورة', 'تاريخ الفاتورة', 'آخر دفعة', 'تاريخ الدفعة']
+    : ['Customer', 'Account ID', 'Balance', 'Last Invoice', 'Invoice Date', 'Last Payment', 'Payment Date'];
   const rows = data.map(c => [
     c.name,
+    c.id || '',
     c.balance || 0,
     c.lastInvoice || '',
     c.lastInvoiceDate ? fmtDate(c.lastInvoiceDate) : '',
@@ -881,22 +997,10 @@ function exportExcel() {
     c.lastPaymentDate ? fmtDate(c.lastPaymentDate) : '',
   ]);
 
-  const wsData = [headers, ...rows];
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-  // Column widths
-  ws['!cols'] = [{ wch: 35 }, { wch: 16 }, { wch: 16 }, { wch: 14 }, { wch: 16 }, { wch: 14 }];
-
-  // Style header row bold
-  headers.forEach((_, ci) => {
-    const cell = ws[XLSX.utils.encode_cell({ r: 0, c: ci })];
-    if (cell) cell.s = { font: { bold: true }, fill: { fgColor: { rgb: '5B5EA6' } }, alignment: { horizontal: 'center' } };
-  });
-
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  ws['!cols'] = [{wch:35},{wch:16},{wch:16},{wch:16},{wch:14},{wch:16},{wch:14}];
   const wb = XLSX.utils.book_new();
-  const sheetName = isAr ? 'تحليل العملاء' : 'Customer Analysis';
-  XLSX.utils.book_append_sheet(wb, ws, sheetName);
-
+  XLSX.utils.book_append_sheet(wb, ws, isAr ? 'تحليل العملاء' : 'Customer Analysis');
   const now = new Date();
   const dateStr = `${now.getDate()}-${now.getMonth()+1}-${now.getFullYear()}`;
   XLSX.writeFile(wb, `ledger-analysis-${dateStr}.xlsx`);
@@ -931,7 +1035,7 @@ function printTable() {
   const now = new Date();
   const dateStr = `${now.getDate()}-${now.getMonth()+1}-${now.getFullYear()}`;
   const filterNames = { balance: isRtl?'لديه رصيد':'Has balance', zero: isRtl?'لا رصيد':'Zero balance', nopay: isRtl?'بدون دفعة':'No payment', noinv: isRtl?'بدون فاتورة':'No invoice' };
-  const filterLabel = filters.size > 0 ? [...filters].map(f => filterNames[f]).join(' + ') : (isRtl ? 'الكل' : 'All');
+  const filterLabel = filters.size ? [...filters].map(f => filterNames[f] || f).join(' + ') : (isRtl ? 'الكل' : 'All');
   document.getElementById('print-meta').textContent = (isRtl ? 'تاريخ الطباعة: ' : 'Printed: ') + dateStr + '  |  ' + (isRtl ? 'الفلتر: ' : 'Filter: ') + filterLabel + '  |  ' + (isRtl ? 'العدد: ' : 'Count: ') + data.length;
 
   const total = data.length;
@@ -1133,6 +1237,26 @@ function toggleExpand(idx) {
   }
 }
 
+function updateSettingsControls(){
+  const ar = lang === 'ar';
+  document.getElementById('settings-btn').textContent = ar ? 'الإعدادات' : 'Settings';
+  document.getElementById('settingsTitle').textContent = ar ? 'الإعدادات' : 'Settings';
+  document.getElementById('settingsSub').textContent = ar ? 'تحكم باللغة ووضع العرض لكل أدوات الموقع.' : 'Control language and display mode for the whole tools suite.';
+  document.getElementById('languageLabel').textContent = ar ? 'اللغة' : 'Language';
+  document.getElementById('languageSub').textContent = ar ? 'التبديل بين العربية والإنجليزية.' : 'Switch between Arabic and English.';
+  document.getElementById('themeLabel').textContent = ar ? 'المظهر' : 'Theme';
+  document.getElementById('themeSub').textContent = ar ? 'التبديل بين الوضع الداكن والفاتح.' : 'Switch between dark and light display modes.';
+  document.getElementById('lang-toggle').textContent = ar ? 'English' : 'العربية';
+  document.getElementById('theme-toggle').textContent = isDark ? (ar ? 'فاتح' : 'Light') : (ar ? 'داكن' : 'Dark');
+}
+function openSettings(){ document.getElementById('settingsModal').classList.remove('hidden'); document.getElementById('settingsModal').setAttribute('aria-hidden','false'); }
+function closeSettings(){ document.getElementById('settingsModal').classList.add('hidden'); document.getElementById('settingsModal').setAttribute('aria-hidden','true'); }
+document.getElementById('settingsModal').addEventListener('click', e=>{ if(e.target.id==='settingsModal') closeSettings(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeSettings(); });
+document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
+document.body.classList.toggle('rtl', lang === 'ar');
+document.documentElement.setAttribute('lang', lang);
+document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
 applyLang();
 </script>
 </body>
