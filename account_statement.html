@@ -119,7 +119,7 @@ main{max-width:1100px;margin:0 auto;padding:32px 18px 60px;}
 table.pt{width:100%;border-collapse:collapse;font-size:12px;direction:rtl;border:2px solid #5b5ea6;}
 table.pt thead tr{background:#5b5ea6;color:#fff;}
 table.pt thead th{padding:9px 7px;font-weight:700;text-align:center;white-space:nowrap;font-size:11.5px;border:1.5px solid rgba(255,255,255,.3);}
-table.pt tbody tr:nth-child(even){background:#f8f8ff;}
+table.pt thead{display:table-header-group;}table.pt tbody tr{break-inside:avoid;page-break-inside:avoid;}table.pt tbody tr:nth-child(even){background:#f8f8ff;}
 table.pt td{padding:8px 7px;text-align:center;border:1px solid #c8c8e0;}
 table.pt td.inv{color:#5b5ea6;font-weight:700;}
 table.pt td.pay{color:#38a169;font-weight:700;}
@@ -155,14 +155,21 @@ table.pt tr.ob-tr td{background:#fffbea !important;font-weight:800;color:#7a6000
 .psc .lar{font-size:11.5px;color:#555;font-weight:700;}.psc .len{font-size:10px;color:#999;margin-bottom:5px;}
 .psc .val{font-size:20px;font-weight:900;color:#5b5ea6;}
 .psc .val.out{color:#e53e3e;}.psc .val.col{color:#38a169;}
-/* signatures */
-.sig-section{margin:0 18px 22px;border:1.5px solid #d0d0e8;border-radius:11px;overflow:hidden;}
+/* notes + signatures */
+.signoff-block{margin:0 18px 22px;display:block;break-inside:avoid;page-break-inside:avoid;}
+.notes-section{border:1.5px solid #d0d0e8;border-radius:11px;margin:0 0 10px;overflow:hidden;background:#fff;break-inside:avoid;page-break-inside:avoid;}
+.notes-ttl{background:#f5f5ff;padding:9px 18px;font-size:13px;font-weight:900;color:#333;border-bottom:1.5px solid #d0d0e8;text-align:right;}
+.notes-lines{padding:8px 18px 10px;}
+.note-line{display:flex;align-items:flex-end;gap:8px;font-size:12.5px;font-weight:800;color:#444;min-height:24px;line-height:1.6;}
+.note-line span{flex:1;border-bottom:1px solid #888;height:16px;}
+.sig-section{border:1.5px solid #d0d0e8;border-radius:11px;overflow:hidden;break-inside:avoid;page-break-inside:avoid;}
 .sig-ttl{background:#f5f5ff;padding:9px 18px;font-size:13px;font-weight:800;color:#333;border-bottom:1.5px solid #d0d0e8;text-align:center;}
-.sig-grid{display:grid;grid-template-columns:repeat(3,1fr);}
-.sig-box{padding:22px 18px 16px;text-align:center;border-left:1px solid #e0e0f0;}
+.sig-grid{display:grid;grid-template-columns:repeat(3,1fr);break-inside:avoid;page-break-inside:avoid;}
+.sig-box{padding:22px 18px 16px;text-align:center;border-left:1px solid #e0e0f0;break-inside:avoid;page-break-inside:avoid;}
 .sig-box:last-child{border-left:none;}
 .sig-line{border-bottom:1.5px solid #888;margin:0 10px 10px;height:40px;}
 .sig-lbl{font-size:12.5px;font-weight:700;color:#444;}
+@media print{.signoff-block,.notes-section,.sig-section,.sig-grid,.sig-box{break-inside:avoid!important;page-break-inside:avoid!important;}.signoff-block{break-before:auto;page-break-before:auto;}}
 /* footer */
 .pft{background:#f5f5ff;border-top:2px solid #5b5ea6;padding:12px 26px;text-align:center;font-size:11.5px;color:#888;}
 
@@ -202,6 +209,7 @@ table.pt tr.ob-tr td{background:#fffbea !important;font-weight:800;color:#7a6000
     <div class="ec-settings-list">
       <div class="ec-settings-row"><div class="ec-settings-copy"><strong id="languageLabel">اللغة</strong><span id="languageSub">التبديل بين العربية والإنجليزية.</span></div><button id="lang-toggle" type="button" class="ec-option-btn" onclick="toggleLanguage()">English</button></div>
       <div class="ec-settings-row"><div class="ec-settings-copy"><strong id="themeLabel">المظهر</strong><span id="themeSub">التبديل بين الوضع الداكن والفاتح.</span></div><button id="theme-toggle" type="button" class="ec-option-btn" onclick="toggleTheme()">فاتح</button></div>
+      <div class="ec-settings-row" id="multiPdfSettingsRow"><div class="ec-settings-copy"><strong id="multiPdfLabel">تحويل الملفات المرفوعة المتعددة إلى تقارير متعددة</strong><span id="multiPdfSub">عند رفع أكثر من ملف، أنشئ كشف PDF مستقل لكل ملف بدلاً من ملف واحد طويل.</span></div><button id="multiPdf-toggle" type="button" class="ec-option-btn" onclick="toggleMultiPdfMode()">إيقاف</button></div>
     </div>
   </div>
 </div>
@@ -220,7 +228,7 @@ table.pt tr.ob-tr td{background:#fffbea !important;font-weight:800;color:#7a6000
     <p><span id="uploadDesc">يدعم ملفات Excel بالعربية والإنجليزية مع عملاء متعددين</span><br>
        <small style="color:var(--muted)"><span id="formatHint">الصيغ المدعومة: .xlsx | .xls فقط</span></small></p>
     <button class="btn-up" id="chooseFileBtn" onclick="event.stopPropagation();document.getElementById('fileInput').click()">اختيار الملف</button>
-    <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFileInput(this)">
+    <input type="file" id="fileInput" accept=".xlsx,.xls" multiple onchange="handleFileInput(this)">
   </div>
 
   <!-- Customer list -->
@@ -265,9 +273,11 @@ const AR_MONTHS={'يناير':1,'فبراير':2,'مارس':3,'أبريل':4,'م
 
 let dark=(localStorage.getItem('eastCrescentTheme') || localStorage.getItem('hilalUnifiedTheme') || 'dark') === 'dark', allC=[], curFilter='all', chosen=null;
 let currentLang = localStorage.getItem('eastCrescentLang') || localStorage.getItem('hilalUnifiedLang') || 'ar';
+let multiPdfSeparate = localStorage.getItem('accountStatementMultiXlsxMode') === 'separate';
+let uploadedFileGroups = [];
 const UI={
-  ar:{home:'الرئيسية',back:'← رجوع',settings:'الإعدادات',settingsSub:'تحكم باللغة ووضع العرض لكل أدوات الموقع.',language:'اللغة',languageSub:'التبديل بين العربية والإنجليزية.',theme:'المظهر',themeSub:'التبديل بين الوضع الداكن والفاتح.',langBtn:'English',themeLight:'وضع النهار',themeDark:'وضع الليل',upload:'رفع ملف دفتر الأستاذ العام',uploadDesc:'يدعم ملفات Excel بالعربية والإنجليزية مع عملاء متعددين',format:'الصيغ المدعومة: .xlsx | .xls فقط',choose:'اختيار الملف',chooseCustomer:'اختر العميل',search:'ابحث باسم العميل أو رقم الحساب...',filter:'فلتر:',all:'الكل',owing:'رصيد مستحق',clear:'رصيد صفر',generate:'إنشاء كشف الحساب',preview:'معاينة كشف الحساب',backList:'← العودة للقائمة',download:'تحميل PDF',downloadAll:'تحميل كل العملاء ذوي الرصيد المستحق'},
-  en:{home:'Home',back:'← Back',settings:'Settings',settingsSub:'Control language and display mode for the whole tools suite.',language:'Language',languageSub:'Switch between Arabic and English.',theme:'Theme',themeSub:'Switch between dark and light display modes.',langBtn:'العربية',themeLight:'Light mode',themeDark:'Dark mode',upload:'Upload General Ledger File',uploadDesc:'Supports Arabic and English Excel files with multiple customers',format:'Supported formats: .xlsx | .xls only',choose:'Choose file',chooseCustomer:'Choose customer',search:'Search by customer name or account number...',filter:'Filter:',all:'All',owing:'Outstanding balance',clear:'Zero balance',generate:'Generate account statement',preview:'Account statement preview',backList:'← Back to list',download:'Download PDF',downloadAll:'Download all outstanding customers'}
+  ar:{home:'الرئيسية',back:'← رجوع',settings:'الإعدادات',settingsSub:'تحكم باللغة ووضع العرض لكل أدوات الموقع.',language:'اللغة',languageSub:'التبديل بين العربية والإنجليزية.',theme:'المظهر',themeSub:'التبديل بين الوضع الداكن والفاتح.',langBtn:'English',themeLight:'وضع النهار',themeDark:'وضع الليل',upload:'رفع ملف دفتر الأستاذ العام',uploadDesc:'يدعم رفع ملف واحد أو عدة ملفات Excel بالعربية والإنجليزية مع عملاء متعددين',format:'الصيغ المدعومة: .xlsx | .xls فقط',choose:'اختيار ملف أو عدة ملفات',chooseCustomer:'اختر العميل',search:'ابحث باسم العميل أو رقم الحساب أو اسم الملف...',filter:'فلتر:',all:'الكل',owing:'رصيد مستحق',clear:'رصيد صفر',generate:'إنشاء كشف الحساب',preview:'معاينة كشف الحساب',backList:'← العودة للقائمة',download:'تحميل PDF',downloadAll:'تحميل كل العملاء ذوي الرصيد المستحق',downloadAllSeparate:'تحميل PDF مستقل لكل ملف مرفوع',multiPdf:'تحويل الملفات المرفوعة المتعددة إلى تقارير متعددة',multiPdfSub:'عند رفع أكثر من ملف، أنشئ كشف PDF مستقل لكل ملف بدلاً من ملف واحد طويل.',multiOn:'تشغيل',multiOff:'إيقاف',sourceFile:'الملف'},
+  en:{home:'Home',back:'← Back',settings:'Settings',settingsSub:'Control language and display mode for the whole tools suite.',language:'Language',languageSub:'Switch between Arabic and English.',theme:'Theme',themeSub:'Switch between dark and light display modes.',langBtn:'العربية',themeLight:'Light mode',themeDark:'Dark mode',upload:'Upload General Ledger File',uploadDesc:'Supports one or multiple Arabic/English Excel files with multiple customers',format:'Supported formats: .xlsx | .xls only',choose:'Choose file(s)',chooseCustomer:'Choose customer',search:'Search by customer name, account number, or file name...',filter:'Filter:',all:'All',owing:'Outstanding balance',clear:'Zero balance',generate:'Generate account statement',preview:'Account statement preview',backList:'← Back to list',download:'Download PDF',downloadAll:'Download all outstanding customers',downloadAllSeparate:'Download one PDF per uploaded file',multiPdf:'multiple uploaded to multiple downloaded',multiPdfSub:'When more than one XLSX is uploaded, create a separate PDF report for every workbook instead of one long PDF.',multiOn:'On',multiOff:'Off',sourceFile:'File'}
 };
 
 /* ── THEME + LANGUAGE ── */
@@ -280,6 +290,32 @@ function setTheme(theme){
   updateSettingsText();
 }
 function toggleTheme(){ setTheme(dark?'light':'dark'); }
+function setMultiPdfMode(separate){
+  multiPdfSeparate = !!separate;
+  localStorage.setItem('accountStatementMultiXlsxMode', multiPdfSeparate ? 'separate' : 'combined');
+  updateSettingsText();
+}
+function toggleMultiPdfMode(){ setMultiPdfMode(!multiPdfSeparate); }
+
+function ensureMultiPdfSettingsRow(){
+  const list=document.querySelector('#settingsModal .ec-settings-list');
+  if(!list)return;
+  let row=document.getElementById('multiPdfSettingsRow');
+  if(row)return row;
+  row=document.createElement('div');
+  row.className='ec-settings-row';
+  row.id='multiPdfSettingsRow';
+  row.innerHTML='<div class="ec-settings-copy"><strong id="multiPdfLabel"></strong><span id="multiPdfSub"></span></div><button id="multiPdf-toggle" type="button" class="ec-option-btn" onclick="toggleMultiPdfMode()"></button>';
+  list.appendChild(row);
+  return row;
+}
+
+function updateAllButtonLabel(){
+  const btn=document.getElementById('allBtn');
+  if(!btn)return;
+  const u=UI[currentLang]||UI.ar;
+  btn.textContent=(multiPdfSeparate&&uploadedFileGroups.length>1)?u.downloadAllSeparate:u.downloadAll;
+}
 function setLanguage(lang){
   currentLang = lang === 'en' ? 'en' : 'ar';
   localStorage.setItem('eastCrescentLang', currentLang);
@@ -290,6 +326,7 @@ function setLanguage(lang){
 }
 function toggleLanguage(){ setLanguage(currentLang === 'ar' ? 'en' : 'ar'); }
 function updateSettingsText(){
+  ensureMultiPdfSettingsRow();
   const u=UI[currentLang];
   document.getElementById('settingsBtn').textContent=u.settings;
   document.getElementById('settingsTitle').textContent=u.settings;
@@ -300,13 +337,17 @@ function updateSettingsText(){
   document.getElementById('themeSub').textContent=u.themeSub;
   document.getElementById('lang-toggle').textContent=u.langBtn;
   document.getElementById('theme-toggle').textContent=dark?u.themeLight:u.themeDark;
+  document.getElementById('multiPdfLabel').textContent=u.multiPdf;
+  document.getElementById('multiPdfSub').textContent=u.multiPdfSub;
+  document.getElementById('multiPdf-toggle').textContent=multiPdfSeparate?u.multiOn:u.multiOff;
+  updateAllButtonLabel();
 }
 function applyLanguage(){
   const u=UI[currentLang];
   document.title=currentLang==='ar'?'هلال الشرق - كشف الحساب':'Hilal Al-Sharq — Account Statement';
   document.getElementById('homeBtn').textContent=u.home; document.getElementById('headerBackBtn').textContent=u.back; document.getElementById('uploadTitle').textContent=u.upload; document.getElementById('uploadDesc').textContent=u.uploadDesc; document.getElementById('formatHint').textContent=u.format; document.getElementById('chooseFileBtn').textContent=u.choose; document.getElementById('chooseCustomerTitle').textContent=u.chooseCustomer; document.getElementById('searchBox').placeholder=u.search; document.getElementById('filterLabel').textContent=u.filter; document.getElementById('fAll').textContent=u.all; document.getElementById('fOwing').textContent=u.owing; document.getElementById('fClear').textContent=u.clear; document.getElementById('genBtn').textContent=u.generate; document.getElementById('allBtn').textContent=u.downloadAll; document.getElementById('previewTitle').textContent=u.preview; document.getElementById('backListBtn').textContent=u.backList; document.getElementById('downloadPdfBtn').textContent=u.download; updateSettingsText();
 }
-function openSettings(){ document.getElementById('settingsModal').classList.remove('hidden'); document.getElementById('settingsModal').setAttribute('aria-hidden','false'); }
+function openSettings(){ ensureMultiPdfSettingsRow(); updateSettingsText(); document.getElementById('settingsModal').classList.remove('hidden'); document.getElementById('settingsModal').setAttribute('aria-hidden','false'); }
 function closeSettings(){ document.getElementById('settingsModal').classList.add('hidden'); document.getElementById('settingsModal').setAttribute('aria-hidden','true'); }
 document.getElementById('settingsModal').addEventListener('click', e=>{ if(e.target.id==='settingsModal') closeSettings(); });
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeSettings(); });
@@ -326,7 +367,7 @@ function showToast(msg,type='error'){
 /* ── BACK NAVIGATION ── */
 function goBack(){
   // Full reset — back to upload screen
-  allC=[];chosen=null;curFilter='all';
+  allC=[];uploadedFileGroups=[];chosen=null;curFilter='all';
   document.getElementById('upZone').style.display='';
   document.getElementById('toolbar').style.display='none';
   document.getElementById('prevSec').style.display='none';
@@ -355,41 +396,82 @@ function goBackToList(){
 function onDrop(e){
   e.preventDefault();
   document.getElementById('upZone').classList.remove('over');
-  const f=e.dataTransfer.files[0];
-  if(f) validateAndLoad(f);
+  const files=Array.from(e.dataTransfer.files||[]);
+  if(files.length) validateAndLoadFiles(files);
 }
 
 /* ── FILE INPUT ── */
 function handleFileInput(input){
-  const f=input.files[0];
-  if(f) validateAndLoad(f);
+  const files=Array.from(input.files||[]);
+  if(files.length) validateAndLoadFiles(files);
 }
 
 /* ── FILE VALIDATION ── */
-function validateAndLoad(file){
-  const name=file.name||'';
-  const ext=name.split('.').pop().toLowerCase();
-  if(ext!=='xlsx'&&ext!=='xls'){
-    showToast('صيغة الملف غير صحيحة! يُقبل فقط .xlsx أو .xls','warn');
+function validateAndLoadFiles(files){
+  const invalid=files.filter(file=>{
+    const ext=String(file.name||'').split('.').pop().toLowerCase();
+    return ext!=='xlsx'&&ext!=='xls';
+  });
+  if(invalid.length){
+    showToast('صيغة أحد الملفات غير صحيحة! يُقبل فقط .xlsx أو .xls','warn');
     document.getElementById('fileInput').value='';
     return;
   }
-  loadFile(file);
+  const valid=files.filter(Boolean);
+  if(!valid.length)return;
+  const printTargets=valid.length>1?reserveMultiPrintTargets(valid):null;
+  loadFiles(valid,printTargets);
+}
+
+function reserveMultiPrintTargets(files){
+  if(multiPdfSeparate){
+    return {mode:'separate',targets:files.map((file,index)=>({fileName:file.name||('file-'+(index+1)),fileIndex:index,win:reportWindow('Preparing PDF - '+(file.name||('file-'+(index+1))))}))};
+  }
+  return {mode:'combined',targets:[{fileName:'combined',fileIndex:-1,win:reportWindow('Preparing combined PDF')}]} ;
+}
+
+function readFileAsArrayBuffer(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onerror=()=>reject(new Error('خطأ في قراءة الملف: '+(file.name||'')));
+    reader.onload=e=>resolve(e.target.result);
+    reader.readAsArrayBuffer(file);
+  });
 }
 
 /* ── LOAD ── */
-function loadFile(file){
-  const reader=new FileReader();
-  reader.onerror=()=>showToast('خطأ في قراءة الملف');
-  reader.onload=e=>{
-    try{
-      const wb=XLSX.read(e.target.result,{type:'array',cellDates:false});
-      parseSheet(wb.Sheets[wb.SheetNames[0]]);
-      document.getElementById('upZone').style.display='none';
-      document.getElementById('headerBackBtn').style.display='flex';
-    }catch(err){showToast('خطأ في تحليل الملف: '+err.message);console.error(err);}
-  };
-  reader.readAsArrayBuffer(file);
+async function loadFiles(files,printTargets=null){
+  try{
+    allC=[];
+    uploadedFileGroups=[];
+    for(let i=0;i<files.length;i++){
+      const file=files[i];
+      const data=await readFileAsArrayBuffer(file);
+      const wb=XLSX.read(data,{type:'array',cellDates:false});
+      const customers=parseWorkbook(wb,file.name||('file-'+(i+1)),i);
+      uploadedFileGroups.push({fileName:file.name||('file-'+(i+1)),customers});
+      allC.push(...customers);
+    }
+    uploadedFileGroups=uploadedFileGroups.filter(g=>g.customers.length>0);
+    if(allC.length===0){
+      showToast('لم يتم العثور على عملاء في الملفات. تأكد من التنسيق.');
+      return;
+    }
+    document.getElementById('upZone').style.display='none';
+    document.getElementById('toolbar').style.display='block';
+    document.getElementById('allBtn').style.display='block';
+    document.getElementById('headerBackBtn').style.display='flex';
+    updateAllButtonLabel();
+    renderGrid();
+    const fileWord=files.length>1?' ملفات':' ملف';
+    showToast('تم تحميل '+files.length+fileWord+' بنجاح','success');
+    if(printTargets&&files.length>1){
+      setTimeout(()=>printLoadedMultiReports(printTargets),250);
+    }
+  }catch(err){
+    showToast('خطأ في تحليل الملف: '+err.message);
+    console.error(err);
+  }
 }
 
 /* ── DATE PARSING ── */
@@ -464,7 +546,10 @@ function findHeaderRow(rows){
     const hasBalance=labels.some(v=>['balance','الرصيد'].includes(v));
     const hasDebit=labels.some(v=>['debit','المدين','مدين'].includes(v));
     const hasCredit=labels.some(v=>['credit','الدائن','دائن'].includes(v));
+    const hasJournal=labels.some(v=>['journal','jrnl','journalentry','journalcode','اليومية','دفتراليومية'].includes(v));
+    const hasReference=labels.some(v=>['reference','ref','document','move','number','المستند','المرجع','رقمالمستند','sourcedocument','المستندالمصدر','source','origin','documentno'].includes(v));
     if(hasDate&&(hasBalance||hasDebit||hasCredit))return i;
+    if((hasDebit||hasCredit)&&hasBalance&&(hasJournal||hasReference))return i;
   }
   return -1;
 }
@@ -475,14 +560,14 @@ function detectColumns(rows,fallback){
     (rows[hr]||[]).forEach((cell,i)=>{
       const v=compactLabel(cell);
       if(['date','التاريخ'].includes(v))cols.date=i;
-      if(['communication','communications','اتصالات','البيان','description','narration','label'].includes(v))cols.comm=i;
+      if(['communication','communications','اتصالات','البيان','description','narration','label','memo','التسمية'].includes(v))cols.comm=i;
       if(['partner','الشريك','customer','العميل'].includes(v))cols.partner=i;
-      if(['sourcedocument','المستندالمصدر','source'].includes(v))cols.source=i;
+      if(['sourcedocument','المستندالمصدر','source','origin','documentno'].includes(v))cols.source=i;
       if(['debit','المدين','مدين'].includes(v))cols.debit=i;
       if(['credit','الدائن','دائن'].includes(v))cols.credit=i;
       if(['balance','الرصيد'].includes(v))cols.balance=i;
-      if(['journal','jrnl','اليومية'].includes(v))cols.journal=i;
-      if(['reference','ref','document','المستند','المرجع'].includes(v))cols.ref=i;
+      if(['journal','jrnl','journalentry','journalcode','اليومية','دفتراليومية'].includes(v))cols.journal=i;
+      if(['reference','ref','document','move','number','المستند','المرجع','رقمالمستند'].includes(v))cols.ref=i;
     });
   }
   return cols;
@@ -492,27 +577,46 @@ function detectLedgerFormat(rows){
   if(hr>=0){
     const labels=(rows[hr]||[]).map(compactLabel);
     const dateIndex=labels.findIndex(v=>['date','التاريخ'].includes(v));
-    const journalIndex=labels.findIndex(v=>['journal','jrnl','اليومية'].includes(v));
+    const journalIndex=labels.findIndex(v=>['journal','jrnl','journalentry','journalcode','اليومية','دفتراليومية'].includes(v));
+    const debitIndex=labels.findIndex(v=>['debit','المدين','مدين'].includes(v));
+    const creditIndex=labels.findIndex(v=>['credit','الدائن','دائن'].includes(v));
+    const balanceIndex=labels.findIndex(v=>['balance','الرصيد'].includes(v));
     if(dateIndex===0&&journalIndex===1)return 'B';
+    if(dateIndex<0&&journalIndex===1&&(debitIndex>=0||creditIndex>=0)&&balanceIndex>=0)return 'B';
     if(dateIndex===1)return 'A';
   }
   for(let i=0;i<Math.min(20,rows.length);i++){
     const r=rows[i]||[];
     const c0=String(r[0]||'').trim(), c1=String(r[1]||'').trim();
-    if((parseDate(c0)&&/^(CHSJB|INV|RINV|RRINV|JRNL|RCEV|RCV)/i.test(c1))||/^JRNL$/i.test(c1))return 'B';
+    if((parseDate(c0)&&/^(CHSJB|CHASM|INV|RINV|RRINV|JRNL|RCEV|RCV|WHKH|CHHAD|B\d)/i.test(c1))||/^JRNL$/i.test(c1))return 'B';
     if(parseDate(r[1]))return 'A';
   }
   return 'A';
 }
 function cleanDescription(text){return String(text||'').replace(/\u00a0/g,' ').replace(/\s+/g,' ').trim();}
 
-function parseSheet(sheet){
-  const rows=XLSX.utils.sheet_to_json(sheet,{header:1,defval:'',raw:true});
-  allC=[];
+function countNumericInColumn(rows,col){
+  let count=0;
+  for(const row of rows||[]){
+    const raw=(row||[])[col];
+    const n=numVal(raw);
+    if(n!==0 || String(raw??'').trim()==='0')count++;
+  }
+  return count;
+}
+function inferFormatBFallback(rows){
+  const k=countNumericInColumn(rows,10);
+  const l=countNumericInColumn(rows,11);
+  return {date:0,journal:1,ref:4,comm:4,source:4,debit:8,credit:9,balance:k>=l?10:11};
+}
+
+
+function parseRowsToCustomers(rows, meta={}){
+  const customers=[];
   let cur=null;
   const format=detectLedgerFormat(rows);
   const cols=format==='B'
-    ? detectColumns(rows,{date:0,journal:1,ref:4,comm:4,source:4,debit:8,credit:9,balance:11})
+    ? detectColumns(rows,inferFormatBFallback(rows))
     : detectColumns(rows,{ref:0,date:1,comm:2,partner:3,source:5,debit:6,credit:7,balance:8});
   const TOTAL_PREFIX=['الإجمالي','Total'];
   const OB_KEYS=['الرصيد الافتتاحي','Initial Balance'];
@@ -529,11 +633,11 @@ function parseSheet(sheet){
       const journal=String(r[cols.journal]||r[1]||'').trim();
       if(/^(date|التاريخ)$/i.test(c0)||/^(journal|jrnl|اليومية)$/i.test(journal))continue;
       const dateObj=parseDate(c0);
-      const looksLikeJournal=/^(CHSJB|INV|RINV|RRINV|JRNL|RCEV|RCV)/i.test(journal);
+      const looksLikeJournal=/^(CHSJB|CHASM|INV|RINV|RRINV|JRNL|RCEV|RCV|WHKH|CHHAD|B\d)/i.test(journal);
       if(!dateObj&&!looksLikeJournal){
         const m=c0.match(/^(\d+)\s+(.*)/);
-        cur={id:m?m[1]:'',name:m?m[2].trim():c0,totalDebit:numVal(r[cols.debit]),totalCredit:numVal(r[cols.credit]),balance:numVal(r[cols.balance]),openingDebit:0,openingCredit:0,openingBalance:0,txns:[]};
-        allC.push(cur); continue;
+        cur={id:m?m[1]:'',name:m?m[2].trim():c0,totalDebit:numVal(r[cols.debit]),totalCredit:numVal(r[cols.credit]),balance:numVal(r[cols.balance]),openingDebit:0,openingCredit:0,openingBalance:0,txns:[],sourceFileName:meta.fileName||'',sourceFileIndex:meta.fileIndex||0,sheetName:meta.sheetName||''};
+        customers.push(cur); continue;
       }
       if(cur&&dateObj){
         const doc=String(r[cols.ref]||journal||'').trim();
@@ -553,8 +657,8 @@ function parseSheet(sheet){
     const noDate=isEmpty(r[cols.date])||!dateObj;
     if(noDate&&hasTotals(r)&&!/^الرصيد الافتتاحي/i.test(c0)){
       const m=c0.match(/^(\d+)\s+(.*)/);
-      cur={id:m?m[1]:c0,name:m?m[2].trim():c0,totalDebit:numVal(r[cols.debit]),totalCredit:numVal(r[cols.credit]),balance:numVal(r[cols.balance]),openingDebit:0,openingCredit:0,openingBalance:0,txns:[]};
-      allC.push(cur); continue;
+      cur={id:m?m[1]:c0,name:m?m[2].trim():c0,totalDebit:numVal(r[cols.debit]),totalCredit:numVal(r[cols.credit]),balance:numVal(r[cols.balance]),openingDebit:0,openingCredit:0,openingBalance:0,txns:[],sourceFileName:meta.fileName||'',sourceFileIndex:meta.fileIndex||0,sheetName:meta.sheetName||''};
+      customers.push(cur); continue;
     }
     if(cur&&dateObj){
       const doc=c0;
@@ -564,12 +668,38 @@ function parseSheet(sheet){
     }
   }
 
+  customers.forEach(c=>{
+    c.txns.sort((a,b)=>(a.ts||0)-(b.ts||0));
+    if(!c.totalDebit)c.totalDebit=c.openingDebit+c.txns.reduce((sum,t)=>sum+(t.debit||0),0);
+    if(!c.totalCredit)c.totalCredit=c.openingCredit+c.txns.reduce((sum,t)=>sum+(t.credit||0),0);
+    if(!c.balance&&c.txns.length)c.balance=c.txns[c.txns.length-1].bal;
+  });
+  return customers;
+}
+
+function parseWorkbook(wb,fileName,fileIndex){
+  let best=[];
+  let bestScore=-1;
+  (wb.SheetNames||[]).forEach(sheetName=>{
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[sheetName],{header:1,defval:'',raw:true});
+    const customers=parseRowsToCustomers(rows,{fileName,fileIndex,sheetName});
+    const score=customers.length*100+customers.reduce((s,c)=>s+c.txns.length,0);
+    if(score>bestScore){best=customers;bestScore=score;}
+  });
+  return best;
+}
+
+function parseSheet(sheet){
+  const rows=XLSX.utils.sheet_to_json(sheet,{header:1,defval:'',raw:true});
+  allC=parseRowsToCustomers(rows,{});
+  uploadedFileGroups=allC.length?[{fileName:'',customers:allC}]:[];
   if(allC.length===0){
     showToast('لم يتم العثور على عملاء في الملف. تأكد من التنسيق.');
     return;
   }
   document.getElementById('toolbar').style.display='block';
   document.getElementById('allBtn').style.display='block';
+  updateAllButtonLabel();
   renderGrid();
 }
 
@@ -606,11 +736,11 @@ function setF(f){
 function renderGrid(){
   const q=document.getElementById('searchBox').value.trim().toLowerCase();
   const list=allC.filter(c=>{
-    const mq=!q||c.name.toLowerCase().includes(q)||c.id.includes(q);
+    const mq=!q||c.name.toLowerCase().includes(q)||c.id.includes(q)||String(c.sourceFileName||'').toLowerCase().includes(q);
     const mf=curFilter==='all'||(curFilter==='owing'&&c.balance>0)||(curFilter==='clear'&&c.balance<=0);
     return mq&&mf;
   });
-  document.getElementById('cntBadge').textContent=list.length+' عميل';
+  document.getElementById('cntBadge').textContent=list.length+' عميل'+(uploadedFileGroups.length>1?' / '+uploadedFileGroups.length+' ملف':'');
   const grid=document.getElementById('custGrid');
   grid.innerHTML='';chosen=null;
   document.getElementById('genBtn').style.display='none';
@@ -623,6 +753,7 @@ function renderGrid(){
     const d=document.createElement('div');
     d.className='ctile';
     d.innerHTML=`<div class="cn">${c.name}</div><div class="ci">رقم الحساب: ${c.id}</div>
+      ${uploadedFileGroups.length>1?`<div class="ci">${UI[currentLang].sourceFile}: ${c.sourceFileName||'—'}</div>`:''}
       <div class="cb ${pos?'pos':'zero'}"><span class="dot ${pos?'pos':'zero'}"></span>
       ${pos?'رصيد مستحق: '+fmt(c.balance)+' د.ع':'✔ لا يوجد رصيد مستحق'}</div>`;
     d.onclick=()=>{
@@ -640,6 +771,7 @@ function buildStatementHTML(c){
   const today=Date.now();
   const dates=c.txns.map(t=>t.date).filter(Boolean);
   const period=dates.length?dates[0]+' → '+dates[dates.length-1]:'—';
+  const sourceLine=c.sourceFileName?` &nbsp;|&nbsp; الملف: ${c.sourceFileName}`:'';
   let lastInv='—',lastPay='—';
   c.txns.forEach(t=>{if(t.type==='فاتورة')lastInv=t.date;if(t.type==='دفعة')lastPay=t.date;});
   const aging=calcAging(c.txns,c.balance,today);
@@ -672,8 +804,7 @@ function buildStatementHTML(c){
   const tableSection=`
     <div class="ptw">
       <table class="pt">
-        <thead><tr><th>#</th><th>التاريخ<br></th><th>الحركة<br></th><th>المستند<br></th><th>البيان<br></th><th>مدين<br></th><th>دائن<br></th><th>الرصيد<br></th></tr></thead>
-        <tbody>${obTableRow}${rowsHTML||'<tr><td colspan="8" style="text-align:center;padding:18px;color:#888;">لا توجد حركات تفصيلية</td></tr>'}</tbody>
+        <thead><tr><th>#</th><th>التاريخ<br></th><th>الحركة<br></th><th>المستند<br></th><th>البيان<br></th><th>مدين<br></th><th>دائن<br></th><th>الرصيد<br></th></tr></thead>        <tbody>${obTableRow}${rowsHTML||'<tr><td colspan="8" style="text-align:center;padding:18px;color:#888;">لا توجد حركات تفصيلية</td></tr>'}</tbody>
       </table>
     </div>`;
   return `
@@ -684,7 +815,7 @@ function buildStatementHTML(c){
       <div class="ph-badge">Account Statement<small>كشف حساب</small></div>
     </div>
     <div class="ptb">كشف حساب | Account Statement</div>
-    <div class="pcb"><h3>${c.name}</h3><div class="per">رقم الحساب: ${c.id} &nbsp;|&nbsp; الفترة: ${period}</div></div>
+    <div class="pcb"><h3>${c.name}</h3><div class="per">رقم الحساب: ${c.id} &nbsp;|&nbsp; الفترة: ${period}${sourceLine}</div></div>
     ${tableSection}
     <div class="pas">
       <div class="pas-ttl">ملخص الحساب </div>
@@ -709,7 +840,17 @@ function buildStatementHTML(c){
       <div class="psc"><div class="lar">إجمالي المدفوعات</div><div class="val col">${fmt(c.totalCredit)}</div></div>
       <div class="psc"><div class="lar">إجمالي الفواتير</div><div class="val">${fmt(c.totalDebit)}</div></div>
     </div>
-    <div class="sig-section"><div class="sig-ttl">التوقيعات </div><div class="sig-grid"><div class="sig-box"><div class="sig-line"></div><div class="sig-lbl">ختم و توقيع العميل</div></div><div class="sig-box"><div class="sig-line"></div><div class="sig-lbl">ادارة المبيعات</div></div><div class="sig-box"><div class="sig-line"></div><div class="sig-lbl">مندوب المبيعات</div></div></div></div>
+    <div class="signoff-block">
+      <div class="notes-section">
+        <div class="notes-ttl">الملاحظات</div>
+        <div class="notes-lines">
+          <div class="note-line">1- <span></span></div>
+          <div class="note-line">2- <span></span></div>
+          <div class="note-line">3- <span></span></div>
+        </div>
+      </div>
+      <div class="sig-section"><div class="sig-ttl">التوقيعات </div><div class="sig-grid"><div class="sig-box"><div class="sig-line"></div><div class="sig-lbl">ختم و توقيع العميل</div></div><div class="sig-box"><div class="sig-line"></div><div class="sig-lbl">ادارة المبيعات</div></div><div class="sig-box"><div class="sig-line"></div><div class="sig-lbl">مندوب المبيعات</div></div></div></div>
+    </div>
     <div class="pft">الرجاء التواصل معنا 07864002650 خلال 15 يوماً في حال وجود أي تناقضات<br></div>
   </div>`;
 }
@@ -724,85 +865,99 @@ function generate(){
 
 
 /* ── PRINT PDF ── */
+function reportWindow(title='Account Statement'){
+  const win=window.open('','_blank','width=990,height=860');
+  if(!win){showToast('المتصفح منع فتح نافذة الطباعة. اسمح بالنوافذ المنبثقة ثم جرّب مرة أخرى.','warn');return null;}
+  win.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>${title}</title><style>body{font-family:Arial,Tahoma,sans-serif;direction:rtl;padding:28px;text-align:center;color:#333}h2{color:#5b5ea6}</style></head><body><h2>جاري تجهيز تقرير PDF...</h2><p>${title}</p></body></html>`);
+  win.document.close();
+  return win;
+}
+
+function printCss(){return `
+*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Cairo',sans-serif;direction:rtl;background:#fff;color:#1a1a2e;}.page-break{page-break-after:always;border-bottom:3px dashed #ddd;margin:30px 0;padding-bottom:30px;}@media print{@page{margin:7mm;size:A4;}body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}.page-break{page-break-after:always;border:none;margin:0;padding:0;}}
+.ph{background:#fff;padding:18px 22px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #5b5ea6;}.ph-co h2{font-size:19px;font-weight:900;color:#5b5ea6;}.ph-co p{font-size:11px;color:#888;}.ph-logo{height:50px;}.ph-badge{background:#5b5ea6;color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:800;text-align:center;direction:ltr;}.ph-badge small{display:block;font-size:9.5px;opacity:.8;direction:rtl;margin-top:2px;}.ptb{background:#5b5ea6;color:#fff;text-align:center;padding:8px;font-size:15px;font-weight:800;}.pcb{background:#f5f5ff;padding:11px 22px;border-bottom:1px solid #e0e0f0;}.pcb h3{font-size:16px;font-weight:900;}.pcb .per{font-size:11px;color:#888;margin-top:2px;}.ptw{padding:0 14px 12px;overflow-x:auto;}table.pt{width:100%;border-collapse:collapse;font-size:11px;direction:rtl;border:2px solid #5b5ea6;page-break-inside:auto;break-inside:auto;}table.pt thead tr{background:#5b5ea6!important;color:#fff;}table.pt thead th{padding:8px 6px;font-weight:700;text-align:center;white-space:nowrap;font-size:10.5px;border:1.5px solid rgba(255,255,255,.3);}table.pt thead{display:table-header-group;}table.pt tbody tr{break-inside:avoid;page-break-inside:avoid;}table.pt tbody tr:nth-child(even){background:#f8f8ff;}table.pt td{padding:7px 6px;text-align:center;border:1px solid #c0c0dc;}table.pt td.inv{color:#5b5ea6;font-weight:700;}table.pt td.pay{color:#38a169;font-weight:700;}table.pt td.ret{color:#e53e3e;font-weight:700;}table.pt td.adj{color:#dd6b20;font-weight:700;}table.pt td.deb{color:#5b5ea6;font-weight:700;}table.pt td.crd{color:#38a169;font-weight:700;}table.pt td.bal{font-weight:700;}table.pt td.desc{text-align:right;max-width:190px;font-size:10px;line-height:1.4;}table.pt tr.ob-tr td{background:#fffbea!important;font-weight:800;color:#7a6000;font-size:11px;border:1px solid #e0d080;}.pas{margin:0 14px 12px;border:1.5px solid #d0d0e8;border-radius:10px;overflow:hidden;}.pas-ttl{background:#efefff;padding:8px 16px;font-size:12.5px;font-weight:800;border-bottom:1.5px solid #d0d0e8;text-align:center;}.pas-r{display:flex;justify-content:space-between;padding:6px 16px;border-bottom:1px solid #ebebf5;font-size:11.5px;}.pas-r:last-child{border:none;}.pas-r .lb{color:#555;}.pas-r .vl{font-weight:800;}.pas-r.out .lb,.pas-r.out .vl{color:#e53e3e;font-size:13px;}.aging-wrap{margin:0 14px 12px;}.aging-ttl{background:#fff3e0;border:1.5px solid #f6ad55;border-radius:10px 10px 0 0;padding:8px 16px;font-size:12px;font-weight:800;color:#7b3f00;text-align:center;border-bottom:1.5px solid #f6ad55;}.aging-grid{display:grid;grid-template-columns:repeat(4,1fr);border:1.5px solid #f6ad55;border-top:none;border-radius:0 0 10px 10px;overflow:hidden;}.aging-cell{padding:10px 8px;text-align:center;background:#fff;border-left:1px solid #f6ad55;}.aging-cell:last-child{border-left:none;}.aging-cell .albl{font-size:10px;color:#888;margin-bottom:2px;}.aging-cell .aval{font-size:15px;font-weight:900;}.aging-cell .adays{font-size:9px;color:#aaa;margin-top:2px;}.aval.a0{color:#38a169;}.aval.a30{color:#d69e2e;}.aval.a60{color:#dd6b20;}.aval.a90{color:#e53e3e;}.psg{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#d0d0e0;margin:0 14px 14px;border-radius:10px;overflow:hidden;border:1.5px solid #d0d0e0;}.psc{background:#fff;padding:11px 7px;text-align:center;}.psc .lar{font-size:11px;color:#555;font-weight:700;}.psc .val{font-size:17px;font-weight:900;color:#5b5ea6;}.psc .val.out{color:#e53e3e;}.psc .val.col{color:#38a169;}.signoff-block{margin:0 14px 18px;display:block;break-inside:avoid;page-break-inside:avoid;}.notes-section{border:1.5px solid #d0d0e8;border-radius:10px;margin:0 0 9px;overflow:hidden;background:#fff;break-inside:avoid;page-break-inside:avoid;}.notes-ttl{background:#f5f5ff;padding:8px 16px;font-size:12px;font-weight:900;color:#333;border-bottom:1.5px solid #d0d0e8;text-align:right;}.notes-lines{padding:7px 16px 9px;}.note-line{display:flex;align-items:flex-end;gap:7px;font-size:12px;font-weight:800;color:#444;min-height:22px;line-height:1.55;}.note-line span{flex:1;border-bottom:1px solid #666;height:15px;}.sig-section{border:1.5px solid #d0d0e8;border-radius:10px;overflow:hidden;break-inside:avoid;page-break-inside:avoid;}.sig-ttl{background:#f5f5ff;padding:8px 16px;font-size:12px;font-weight:800;color:#333;border-bottom:1.5px solid #d0d0e8;text-align:center;}.sig-grid{display:grid;grid-template-columns:repeat(3,1fr);break-inside:avoid;page-break-inside:avoid;}.sig-box{padding:20px 16px 14px;text-align:center;border-left:1px solid #e0e0f0;break-inside:avoid;page-break-inside:avoid;}.sig-box:last-child{border-left:none;}.sig-line{border-bottom:1.5px solid #666;margin:0 10px 10px;height:36px;}.sig-lbl{font-size:12px;font-weight:700;color:#444;}@media print{.signoff-block,.notes-section,.sig-section,.sig-grid,.sig-box{break-inside:avoid!important;page-break-inside:avoid!important;}.signoff-block{break-before:auto;page-break-before:auto;}}.pft{background:#f5f5ff;border-top:2px solid #5b5ea6;padding:10px 22px;text-align:center;font-size:11px;color:#888;}
+`;}
+
+function buildPrintPages(customers){
+  return customers.map((c,i)=>`<div class="${i<customers.length-1?'page-break':''}">${buildStatementHTML(c).replace('id="pdfDoc"','')}</div>`).join('');
+}
+
+function writePrintWindow(win, customers, title){
+  if(!win)return;
+  const pages=buildPrintPages(customers);
+  win.document.open();
+  win.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>${title}</title><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet"><style>${printCss()}</style></head><body>${pages}<script>window.onload=function(){setTimeout(function(){window.print();},1000);};<\/script></body></html>`);
+  win.document.close();
+}
+
+function writeNoDataWindow(win,title){
+  if(!win)return;
+  win.document.open();
+  win.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>${title}</title><style>body{font-family:Arial,Tahoma,sans-serif;direction:rtl;padding:32px;text-align:center;color:#333}h2{color:#5b5ea6}</style></head><body><h2>لا يوجد عملاء لديهم رصيد مستحق</h2><p>${title}</p></body></html>`);
+  win.document.close();
+}
+
+function printLoadedMultiReports(printTargets){
+  const outstanding=allC.filter(c=>c.balance>0);
+  if(printTargets.mode==='combined'){
+    const target=printTargets.targets[0];
+    if(outstanding.length===0)writeNoDataWindow(target.win,'Account Statements - Combined');
+    else writePrintWindow(target.win,outstanding,'Account Statements - Combined');
+    return;
+  }
+  printTargets.targets.forEach(target=>{
+    const group=uploadedFileGroups.find(g=>g.customers.some(c=>c.sourceFileIndex===target.fileIndex));
+    const customers=group?group.customers.filter(c=>c.balance>0):[];
+    const title='Account Statements - '+target.fileName;
+    if(customers.length===0)writeNoDataWindow(target.win,title);
+    else writePrintWindow(target.win,customers,title);
+  });
+}
+
 function dlPDF(){
   const el=document.getElementById('pdfDoc');
   if(!el){showToast('لا يوجد كشف حساب للطباعة');return;}
-  const win=window.open('','_blank','width=990,height=860');
-  win.document.write(`<!DOCTYPE html>
-<html dir="rtl"><head>
-<meta charset="UTF-8">
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  const win=reportWindow(chosen?('Account Statement - '+chosen.name):'Account Statement');
+  writePrintWindow(win,[chosen],chosen?('Account Statement - '+chosen.name):'Account Statement');
+}
 
-<style>
-*{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Cairo',sans-serif;direction:rtl;background:#fff;color:#1a1a2e;}
-@media print{@page{margin:7mm;size:A4;}body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
-.ph{background:#fff;padding:18px 22px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #5b5ea6;}
-.ph-co h2{font-size:19px;font-weight:900;color:#5b5ea6;}.ph-co p{font-size:11px;color:#888;}
-.ph-logo{height:50px;}
-.ph-badge{background:#5b5ea6;color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:800;text-align:center;direction:ltr;}
-.ph-badge small{display:block;font-size:9.5px;opacity:.8;direction:rtl;margin-top:2px;}
-.ptb{background:#5b5ea6;color:#fff;text-align:center;padding:8px;font-size:15px;font-weight:800;}
-.pcb{background:#f5f5ff;padding:11px 22px;border-bottom:1px solid #e0e0f0;}
-.pcb h3{font-size:16px;font-weight:900;}.pcb .per{font-size:11px;color:#888;margin-top:2px;}
-.ob-row{background:#fffbea;border-bottom:2px solid #e0d080;padding:8px 22px;display:flex;justify-content:space-between;align-items:center;}
-.ob-row .ob-lbl{font-size:12px;font-weight:700;color:#7a6000;}
-.ob-row .ob-vals{display:flex;gap:24px;}.ob-row .ob-item{text-align:center;}
-.ob-row .ob-item .ov{font-size:13px;font-weight:900;color:#5b5ea6;}.ob-row .ob-item .ok{font-size:9.5px;color:#888;}
-.ptw{padding:0 14px 12px;overflow-x:auto;}
-table.pt{width:100%;border-collapse:collapse;font-size:11px;direction:rtl;border:2px solid #5b5ea6;}
-table.pt thead tr{background:#5b5ea6 !important;color:#fff;}
-table.pt thead th{padding:8px 6px;font-weight:700;text-align:center;white-space:nowrap;font-size:10.5px;border:1.5px solid rgba(255,255,255,.3);}
-table.pt tbody tr:nth-child(even){background:#f8f8ff;}
-table.pt td{padding:7px 6px;text-align:center;border:1px solid #c0c0dc;}
-table.pt td.inv{color:#5b5ea6;font-weight:700;}table.pt td.pay{color:#38a169;font-weight:700;}
-table.pt td.ret{color:#e53e3e;font-weight:700;}table.pt td.adj{color:#dd6b20;font-weight:700;}
-table.pt td.deb{color:#5b5ea6;font-weight:700;}table.pt td.crd{color:#38a169;font-weight:700;}
-table.pt td.bal{font-weight:700;}table.pt td.desc{text-align:right;max-width:190px;font-size:10px;line-height:1.4;}
-table.pt tr.ob-tr td{background:#fffbea !important;font-weight:800;color:#7a6000;font-size:11px;border:1px solid #e0d080;}
-.pas{margin:0 14px 12px;border:1.5px solid #d0d0e8;border-radius:10px;overflow:hidden;}
-.pas-ttl{background:#efefff;padding:8px 16px;font-size:12.5px;font-weight:800;border-bottom:1.5px solid #d0d0e8;text-align:center;}
-.pas-r{display:flex;justify-content:space-between;padding:6px 16px;border-bottom:1px solid #ebebf5;font-size:11.5px;}
-.pas-r:last-child{border:none;}.pas-r .lb{color:#555;}.pas-r .vl{font-weight:800;}
-.pas-r.out .lb,.pas-r.out .vl{color:#e53e3e;font-size:13px;}
-.aging-wrap{margin:0 14px 12px;}
-.aging-ttl{background:#fff3e0;border:1.5px solid #f6ad55;border-radius:10px 10px 0 0;padding:8px 16px;font-size:12px;font-weight:800;color:#7b3f00;text-align:center;border-bottom:1.5px solid #f6ad55;}
-.aging-grid{display:grid;grid-template-columns:repeat(4,1fr);border:1.5px solid #f6ad55;border-top:none;border-radius:0 0 10px 10px;overflow:hidden;}
-.aging-cell{padding:10px 8px;text-align:center;background:#fff;border-left:1px solid #f6ad55;}
-.aging-cell:last-child{border-left:none;}.aging-cell .albl{font-size:10px;color:#888;margin-bottom:2px;}
-.aging-cell .aval{font-size:15px;font-weight:900;}.aging-cell .adays{font-size:9px;color:#aaa;margin-top:2px;}
-.aval.a0{color:#38a169;}.aval.a30{color:#d69e2e;}.aval.a60{color:#dd6b20;}.aval.a90{color:#e53e3e;}
-.psg{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#d0d0e0;margin:0 14px 14px;border-radius:10px;overflow:hidden;border:1.5px solid #d0d0e0;}
-.psc{background:#fff;padding:11px 7px;text-align:center;}
-.psc .lar{font-size:11px;color:#555;font-weight:700;}.psc .len{font-size:9.5px;color:#999;margin-bottom:4px;}
-.psc .val{font-size:17px;font-weight:900;color:#5b5ea6;}
-.psc .val.out{color:#e53e3e;}.psc .val.col{color:#38a169;}
-.sig-section{margin:0 14px 18px;border:1.5px solid #d0d0e8;border-radius:10px;overflow:hidden;}
-.sig-ttl{background:#f5f5ff;padding:8px 16px;font-size:12px;font-weight:800;color:#333;border-bottom:1.5px solid #d0d0e8;text-align:center;}
-.sig-grid{display:grid;grid-template-columns:repeat(3,1fr);}
-.sig-box{padding:20px 16px 14px;text-align:center;border-left:1px solid #e0e0f0;}
-.sig-box:last-child{border-left:none;}.sig-line{border-bottom:1.5px solid #666;margin:0 10px 10px;height:36px;}
-.sig-lbl{font-size:12px;font-weight:700;color:#444;}
-.pft{background:#f5f5ff;border-top:2px solid #5b5ea6;padding:10px 22px;text-align:center;font-size:11px;color:#888;}
-</style>
-</head><body>
-${el.outerHTML}
-<script>window.onload=function(){setTimeout(function(){window.print();},800);};<\/script>
-</body></html>`);
-  win.document.close();
+function customersBySource(customers){
+  const map=new Map();
+  customers.forEach(c=>{
+    const key=(c.sourceFileIndex??0)+'::'+(c.sourceFileName||'ملف');
+    if(!map.has(key))map.set(key,{fileName:c.sourceFileName||'ملف',customers:[]});
+    map.get(key).customers.push(c);
+  });
+  return Array.from(map.values());
+}
+
+function dlSeparatePDFsBySource(customers){
+  const groups=customersBySource(customers).filter(g=>g.customers.length>0);
+  if(groups.length<=1){
+    const win=reportWindow('Account Statements');
+    writePrintWindow(win,customers,'Account Statements');
+    return;
+  }
+  groups.forEach((g,i)=>{
+    setTimeout(()=>{
+      const win=reportWindow('Account Statements - '+g.fileName);
+      writePrintWindow(win,g.customers,'Account Statements - '+g.fileName);
+    },i*350);
+  });
 }
 
 function dlAllPDF(){
   const outstanding=allC.filter(c=>c.balance>0);
   if(outstanding.length===0){showToast('لا يوجد عملاء لديهم رصيد مستحق','warn');return;}
-  const pages=outstanding.map((c,i)=>`<div class="${i<outstanding.length-1?'page-break':''}">${buildStatementHTML(c).replace('id="pdfDoc"','')}</div>`).join('');
-  const win=window.open('','_blank','width=990,height=860');
-  win.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet"><style>
-*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Cairo',sans-serif;direction:rtl;background:#fff;color:#1a1a2e;}.page-break{page-break-after:always;border-bottom:3px dashed #ddd;margin:30px 0;padding-bottom:30px;}@media print{@page{margin:7mm;size:A4;}body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}.page-break{page-break-after:always;border:none;margin:0;padding:0;}}
-.ph{background:#fff;padding:18px 22px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #5b5ea6;}.ph-co h2{font-size:19px;font-weight:900;color:#5b5ea6;}.ph-co p{font-size:11px;color:#888;}.ph-logo{height:50px;}.ph-badge{background:#5b5ea6;color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:800;text-align:center;direction:ltr;}.ph-badge small{display:block;font-size:9.5px;opacity:.8;direction:rtl;margin-top:2px;}.ptb{background:#5b5ea6;color:#fff;text-align:center;padding:8px;font-size:15px;font-weight:800;}.pcb{background:#f5f5ff;padding:11px 22px;border-bottom:1px solid #e0e0f0;}.pcb h3{font-size:16px;font-weight:900;}.pcb .per{font-size:11px;color:#888;margin-top:2px;}.ptw{padding:0 14px 12px;overflow-x:auto;}table.pt{width:100%;border-collapse:collapse;font-size:11px;direction:rtl;border:2px solid #5b5ea6;}table.pt thead tr{background:#5b5ea6!important;color:#fff;}table.pt thead th{padding:8px 6px;font-weight:700;text-align:center;white-space:nowrap;font-size:10.5px;border:1.5px solid rgba(255,255,255,.3);}table.pt tbody tr:nth-child(even){background:#f8f8ff;}table.pt td{padding:7px 6px;text-align:center;border:1px solid #c0c0dc;}table.pt td.inv{color:#5b5ea6;font-weight:700;}table.pt td.pay{color:#38a169;font-weight:700;}table.pt td.ret{color:#e53e3e;font-weight:700;}table.pt td.adj{color:#dd6b20;font-weight:700;}table.pt td.deb{color:#5b5ea6;font-weight:700;}table.pt td.crd{color:#38a169;font-weight:700;}table.pt td.bal{font-weight:700;}table.pt td.desc{text-align:right;max-width:190px;font-size:10px;line-height:1.4;}table.pt tr.ob-tr td{background:#fffbea!important;font-weight:800;color:#7a6000;font-size:11px;border:1px solid #e0d080;}.pas{margin:0 14px 12px;border:1.5px solid #d0d0e8;border-radius:10px;overflow:hidden;}.pas-ttl{background:#efefff;padding:8px 16px;font-size:12.5px;font-weight:800;border-bottom:1.5px solid #d0d0e8;text-align:center;}.pas-r{display:flex;justify-content:space-between;padding:6px 16px;border-bottom:1px solid #ebebf5;font-size:11.5px;}.pas-r:last-child{border:none;}.pas-r .lb{color:#555;}.pas-r .vl{font-weight:800;}.pas-r.out .lb,.pas-r.out .vl{color:#e53e3e;font-size:13px;}.aging-wrap{margin:0 14px 12px;}.aging-ttl{background:#fff3e0;border:1.5px solid #f6ad55;border-radius:10px 10px 0 0;padding:8px 16px;font-size:12px;font-weight:800;color:#7b3f00;text-align:center;border-bottom:1.5px solid #f6ad55;}.aging-grid{display:grid;grid-template-columns:repeat(4,1fr);border:1.5px solid #f6ad55;border-top:none;border-radius:0 0 10px 10px;overflow:hidden;}.aging-cell{padding:10px 8px;text-align:center;background:#fff;border-left:1px solid #f6ad55;}.aging-cell:last-child{border-left:none;}.aging-cell .albl{font-size:10px;color:#888;margin-bottom:2px;}.aging-cell .aval{font-size:15px;font-weight:900;}.aging-cell .adays{font-size:9px;color:#aaa;margin-top:2px;}.aval.a0{color:#38a169;}.aval.a30{color:#d69e2e;}.aval.a60{color:#dd6b20;}.aval.a90{color:#e53e3e;}.psg{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#d0d0e0;margin:0 14px 14px;border-radius:10px;overflow:hidden;border:1.5px solid #d0d0e0;}.psc{background:#fff;padding:11px 7px;text-align:center;}.psc .lar{font-size:11px;color:#555;font-weight:700;}.psc .val{font-size:17px;font-weight:900;color:#5b5ea6;}.psc .val.out{color:#e53e3e;}.psc .val.col{color:#38a169;}.sig-section{margin:0 14px 18px;border:1.5px solid #d0d0e8;border-radius:10px;overflow:hidden;}.sig-ttl{background:#f5f5ff;padding:8px 16px;font-size:12px;font-weight:800;color:#333;border-bottom:1.5px solid #d0d0e8;text-align:center;}.sig-grid{display:grid;grid-template-columns:repeat(3,1fr);}.sig-box{padding:20px 16px 14px;text-align:center;border-left:1px solid #e0e0f0;}.sig-box:last-child{border-left:none;}.sig-line{border-bottom:1.5px solid #666;margin:0 10px 10px;height:36px;}.sig-lbl{font-size:12px;font-weight:700;color:#444;}.pft{background:#f5f5ff;border-top:2px solid #5b5ea6;padding:10px 22px;text-align:center;font-size:11px;color:#888;}
-</style></head><body>${pages}<script>window.onload=function(){setTimeout(function(){window.print();},1000);};<\/script></body></html>`);
-  win.document.close();
+  const groups=customersBySource(outstanding);
+  if(multiPdfSeparate&&groups.length>1){
+    dlSeparatePDFsBySource(outstanding);
+    return;
+  }
+  const win=reportWindow('Account Statements - Combined');
+  writePrintWindow(win,outstanding,'Account Statements - Combined');
 }
+
 
 </script>
 </body>
