@@ -771,7 +771,7 @@ function buildStatementHTML(c){
   const today=Date.now();
   const dates=c.txns.map(t=>t.date).filter(Boolean);
   const period=dates.length?dates[0]+' → '+dates[dates.length-1]:'—';
-  //const sourceLine=c.sourceFileName?` &nbsp;|&nbsp; الملف: ${c.sourceFileName}`:'';
+  const sourceLine=c.sourceFileName?` &nbsp;|&nbsp; الملف: ${c.sourceFileName}`:'';
   let lastInv='—',lastPay='—';
   c.txns.forEach(t=>{if(t.type==='فاتورة')lastInv=t.date;if(t.type==='دفعة')lastPay=t.date;});
   const aging=calcAging(c.txns,c.balance,today);
