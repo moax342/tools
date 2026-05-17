@@ -47,21 +47,6 @@ main{max-width:1100px;margin:0 auto;padding:32px 18px 60px;}
 .btn-up{background:var(--purple);color:#fff;padding:11px 30px;border-radius:50px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:800;border:none;cursor:pointer;box-shadow:0 4px 18px rgba(91,94,166,.45);transition:all .2s;}
 .btn-up:hover{transform:translateY(-2px);}
 
-/* ── UPLOADED FILES ── */
-.file-panel{display:none;background:var(--surf2);border:1.5px solid var(--bdr);border-radius:14px;padding:12px 14px;margin-bottom:14px;}
-.file-panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
-.file-panel-title{font-size:13px;font-weight:900;color:var(--purple);}
-.file-chip-list{display:flex;flex-wrap:wrap;gap:8px;}
-.file-chip{display:flex;align-items:center;gap:8px;max-width:100%;background:var(--surf);border:1.5px solid var(--bdr);border-radius:999px;padding:6px 8px 6px 12px;color:var(--txt);box-shadow:0 3px 12px rgba(0,0,0,.10);}
-.file-chip-name{font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px;}
-.file-chip-count{font-size:10px;color:var(--muted);font-weight:800;}
-.file-chip-x{width:24px;height:24px;border-radius:999px;border:none;background:rgba(229,62,62,.12);color:var(--red);font-size:17px;line-height:1;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .18s;}
-.file-chip-x:hover{background:var(--red);color:#fff;transform:translateY(-1px);}
-.clear-files-btn{background:rgba(229,62,62,.10)!important;border-color:rgba(229,62,62,.45)!important;color:var(--red)!important;}
-.clear-files-btn:hover{background:var(--red)!important;color:#fff!important;border-color:var(--red)!important;}
-html[dir="ltr"] .file-chip{padding:6px 12px 6px 8px;}
-@media(max-width:700px){.file-chip-name{max-width:190px}.file-panel-head{align-items:stretch}.clear-files-btn{width:100%;}}
-
 /* ── TOOLBAR ── */
 .toolbar{display:none;background:var(--surf);border:1.5px solid var(--bdr);border-radius:16px;padding:18px 22px;margin-bottom:18px;box-shadow:0 4px 20px var(--shad);}
 .toolbar-top{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
@@ -253,13 +238,6 @@ table.pt tr.ob-tr td{background:#fffbea !important;font-weight:800;color:#7a6000
       <input class="search-box" id="searchBox" placeholder="ابحث باسم العميل أو رقم الحساب..." oninput="renderGrid()">
       <span class="count-badge" id="cntBadge">0 عميل</span>
     </div>
-    <div class="file-panel" id="filePanel">
-      <div class="file-panel-head">
-        <strong class="file-panel-title" id="uploadedFilesTitle">الملفات المرفوعة</strong>
-        <button class="fbtn clear-files-btn" id="clearFilesBtn" onclick="clearUploadedFiles()">مسح الملفات</button>
-      </div>
-      <div class="file-chip-list" id="uploadedFileList"></div>
-    </div>
     <div class="filter-row">
       <span class="filter-label" id="filterLabel">فلتر:</span>
       <button class="fbtn on" id="fAll"   onclick="setF('all')">الكل</button>
@@ -298,8 +276,8 @@ let currentLang = localStorage.getItem('eastCrescentLang') || localStorage.getIt
 let multiPdfSeparate = localStorage.getItem('accountStatementMultiXlsxMode') === 'separate';
 let uploadedFileGroups = [];
 const UI={
-  ar:{home:'الرئيسية',back:'← رجوع',settings:'الإعدادات',settingsSub:'تحكم باللغة ووضع العرض لكل أدوات الموقع.',language:'اللغة',languageSub:'التبديل بين العربية والإنجليزية.',theme:'المظهر',themeSub:'التبديل بين الوضع الداكن والفاتح.',langBtn:'English',themeLight:'وضع النهار',themeDark:'وضع الليل',upload:'رفع ملف دفتر الأستاذ العام',uploadDesc:'يدعم رفع ملف واحد أو عدة ملفات Excel بالعربية والإنجليزية مع عملاء متعددين',format:'الصيغ المدعومة: .xlsx | .xls فقط',choose:'اختيار ملف أو عدة ملفات',chooseCustomer:'اختر العميل',search:'ابحث باسم العميل أو رقم الحساب أو اسم الملف...',filter:'فلتر:',all:'الكل',owing:'رصيد مستحق',clear:'رصيد صفر',generate:'إنشاء كشف الحساب',preview:'معاينة كشف الحساب',backList:'← العودة للقائمة',download:'تحميل PDF',downloadAll:'تحميل كل العملاء ذوي الرصيد المستحق',downloadAllSeparate:'تحميل PDF مستقل لكل ملف مرفوع',multiPdf:'تحويل الملفات المرفوعة المتعددة إلى تقارير متعددة',multiPdfSub:'عند رفع أكثر من ملف، أنشئ كشف PDF مستقل لكل ملف بدلاً من ملف واحد طويل.',multiOn:'تشغيل',multiOff:'إيقاف',sourceFile:'الملف',uploadedFiles:'الملفات المرفوعة',clearFiles:'مسح كل الملفات',removeFile:'إزالة الملف',customerCount:'عميل'},
-  en:{home:'Home',back:'← Back',settings:'Settings',settingsSub:'Control language and display mode for the whole tools suite.',language:'Language',languageSub:'Switch between Arabic and English.',theme:'Theme',themeSub:'Switch between dark and light display modes.',langBtn:'العربية',themeLight:'Light mode',themeDark:'Dark mode',upload:'Upload General Ledger File',uploadDesc:'Supports one or multiple Arabic/English Excel files with multiple customers',format:'Supported formats: .xlsx | .xls only',choose:'Choose file(s)',chooseCustomer:'Choose customer',search:'Search by customer name, account number, or file name...',filter:'Filter:',all:'All',owing:'Outstanding balance',clear:'Zero balance',generate:'Generate account statement',preview:'Account statement preview',backList:'← Back to list',download:'Download PDF',downloadAll:'Download all outstanding customers',downloadAllSeparate:'Download one PDF per uploaded file',multiPdf:'multiple uploaded to multiple downloaded',multiPdfSub:'When more than one XLSX is uploaded, create a separate PDF report for every workbook instead of one long PDF.',multiOn:'On',multiOff:'Off',sourceFile:'File',uploadedFiles:'Uploaded files',clearFiles:'Clear all files',removeFile:'Remove file',customerCount:'customer'}
+  ar:{home:'الرئيسية',back:'← رجوع',settings:'الإعدادات',settingsSub:'تحكم باللغة ووضع العرض لكل أدوات الموقع.',language:'اللغة',languageSub:'التبديل بين العربية والإنجليزية.',theme:'المظهر',themeSub:'التبديل بين الوضع الداكن والفاتح.',langBtn:'English',themeLight:'وضع النهار',themeDark:'وضع الليل',upload:'رفع ملف دفتر الأستاذ العام',uploadDesc:'يدعم رفع ملف واحد أو عدة ملفات Excel بالعربية والإنجليزية مع عملاء متعددين',format:'الصيغ المدعومة: .xlsx | .xls فقط',choose:'اختيار ملف أو عدة ملفات',chooseCustomer:'اختر العميل',search:'ابحث باسم العميل أو رقم الحساب أو اسم الملف...',filter:'فلتر:',all:'الكل',owing:'رصيد مستحق',clear:'رصيد صفر',generate:'إنشاء كشف الحساب',preview:'معاينة كشف الحساب',backList:'← العودة للقائمة',download:'تحميل PDF',downloadAll:'تحميل كل العملاء ذوي الرصيد المستحق',downloadAllSeparate:'تحميل PDF مستقل لكل ملف مرفوع',multiPdf:'تحويل الملفات المرفوعة المتعددة إلى تقارير متعددة',multiPdfSub:'عند رفع أكثر من ملف، أنشئ كشف PDF مستقل لكل ملف بدلاً من ملف واحد طويل.',multiOn:'تشغيل',multiOff:'إيقاف',sourceFile:'الملف'},
+  en:{home:'Home',back:'← Back',settings:'Settings',settingsSub:'Control language and display mode for the whole tools suite.',language:'Language',languageSub:'Switch between Arabic and English.',theme:'Theme',themeSub:'Switch between dark and light display modes.',langBtn:'العربية',themeLight:'Light mode',themeDark:'Dark mode',upload:'Upload General Ledger File',uploadDesc:'Supports one or multiple Arabic/English Excel files with multiple customers',format:'Supported formats: .xlsx | .xls only',choose:'Choose file(s)',chooseCustomer:'Choose customer',search:'Search by customer name, account number, or file name...',filter:'Filter:',all:'All',owing:'Outstanding balance',clear:'Zero balance',generate:'Generate account statement',preview:'Account statement preview',backList:'← Back to list',download:'Download PDF',downloadAll:'Download all outstanding customers',downloadAllSeparate:'Download one PDF per uploaded file',multiPdf:'multiple uploaded to multiple downloaded',multiPdfSub:'When more than one XLSX is uploaded, create a separate PDF report for every workbook instead of one long PDF.',multiOn:'On',multiOff:'Off',sourceFile:'File'}
 };
 
 /* ── THEME + LANGUAGE ── */
@@ -367,7 +345,7 @@ function updateSettingsText(){
 function applyLanguage(){
   const u=UI[currentLang];
   document.title=currentLang==='ar'?'هلال الشرق - كشف الحساب':'Hilal Al-Sharq — Account Statement';
-  document.getElementById('homeBtn').textContent=u.home; document.getElementById('headerBackBtn').textContent=u.back; document.getElementById('uploadTitle').textContent=u.upload; document.getElementById('uploadDesc').textContent=u.uploadDesc; document.getElementById('formatHint').textContent=u.format; document.getElementById('chooseFileBtn').textContent=u.choose; document.getElementById('chooseCustomerTitle').textContent=u.chooseCustomer; document.getElementById('searchBox').placeholder=u.search; document.getElementById('filterLabel').textContent=u.filter; document.getElementById('fAll').textContent=u.all; document.getElementById('fOwing').textContent=u.owing; document.getElementById('fClear').textContent=u.clear; document.getElementById('genBtn').textContent=u.generate; document.getElementById('allBtn').textContent=u.downloadAll; document.getElementById('previewTitle').textContent=u.preview; document.getElementById('backListBtn').textContent=u.backList; document.getElementById('downloadPdfBtn').textContent=u.download; document.getElementById('uploadedFilesTitle').textContent=u.uploadedFiles; document.getElementById('clearFilesBtn').textContent=u.clearFiles; updateSettingsText(); renderUploadedFiles();
+  document.getElementById('homeBtn').textContent=u.home; document.getElementById('headerBackBtn').textContent=u.back; document.getElementById('uploadTitle').textContent=u.upload; document.getElementById('uploadDesc').textContent=u.uploadDesc; document.getElementById('formatHint').textContent=u.format; document.getElementById('chooseFileBtn').textContent=u.choose; document.getElementById('chooseCustomerTitle').textContent=u.chooseCustomer; document.getElementById('searchBox').placeholder=u.search; document.getElementById('filterLabel').textContent=u.filter; document.getElementById('fAll').textContent=u.all; document.getElementById('fOwing').textContent=u.owing; document.getElementById('fClear').textContent=u.clear; document.getElementById('genBtn').textContent=u.generate; document.getElementById('allBtn').textContent=u.downloadAll; document.getElementById('previewTitle').textContent=u.preview; document.getElementById('backListBtn').textContent=u.backList; document.getElementById('downloadPdfBtn').textContent=u.download; updateSettingsText();
 }
 function openSettings(){ ensureMultiPdfSettingsRow(); updateSettingsText(); document.getElementById('settingsModal').classList.remove('hidden'); document.getElementById('settingsModal').setAttribute('aria-hidden','false'); }
 function closeSettings(){ document.getElementById('settingsModal').classList.add('hidden'); document.getElementById('settingsModal').setAttribute('aria-hidden','true'); }
@@ -398,8 +376,6 @@ function goBack(){
   document.getElementById('allBtn').style.display='none';
   document.getElementById('searchBox').value='';
   document.getElementById('fileInput').value='';
-  document.getElementById('filePanel').style.display='none';
-  document.getElementById('uploadedFileList').innerHTML='';
   document.getElementById('headerBackBtn').style.display='none';
   setF('all');
   window.scrollTo({top:0,behavior:'smooth'});
@@ -414,69 +390,6 @@ function goBackToList(){
   document.getElementById('genBtn').style.display='none';
   document.querySelectorAll('.ctile').forEach(t=>t.classList.remove('sel'));
   window.scrollTo({top:0,behavior:'smooth'});
-}
-
-/* ── UPLOADED FILE CONTROLS ── */
-function escapeHTML(value){
-  return String(value ?? '').replace(/[&<>"']/g, ch=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[ch]));
-}
-
-function syncAllCustomersFromGroups(){
-  allC=uploadedFileGroups.flatMap(g=>g.customers||[]);
-}
-
-function renderUploadedFiles(){
-  const panel=document.getElementById('filePanel');
-  const list=document.getElementById('uploadedFileList');
-  if(!panel||!list)return;
-  const u=UI[currentLang]||UI.ar;
-  document.getElementById('uploadedFilesTitle').textContent=u.uploadedFiles;
-  document.getElementById('clearFilesBtn').textContent=u.clearFiles;
-  if(!uploadedFileGroups.length){
-    panel.style.display='none';
-    list.innerHTML='';
-    return;
-  }
-  panel.style.display='block';
-  list.innerHTML=uploadedFileGroups.map(g=>{
-    const count=(g.customers||[]).length;
-    const fileIndex=(g.customers&&g.customers[0]&&g.customers[0].sourceFileIndex!==undefined)?g.customers[0].sourceFileIndex:g.fileIndex;
-    return `<div class="file-chip" title="${escapeHTML(g.fileName||'')}">
-      <button type="button" class="file-chip-x" title="${escapeHTML(u.removeFile)}" aria-label="${escapeHTML(u.removeFile)}" onclick="event.stopPropagation();removeUploadedFile(${Number(fileIndex)||0})">×</button>
-      <span class="file-chip-name">${escapeHTML(g.fileName||'—')}</span>
-      <span class="file-chip-count">${count} ${escapeHTML(u.customerCount)}</span>
-    </div>`;
-  }).join('');
-}
-
-function clearUploadedFiles(){
-  goBack();
-  showToast(currentLang==='ar'?'تم مسح كل الملفات المرفوعة':'All uploaded files were cleared','success');
-}
-
-function removeUploadedFile(fileIndex){
-  const before=uploadedFileGroups.length;
-  uploadedFileGroups=uploadedFileGroups.filter(g=>!((g.customers||[]).some(c=>Number(c.sourceFileIndex)===Number(fileIndex)) || Number(g.fileIndex)===Number(fileIndex)));
-  if(uploadedFileGroups.length===before)return;
-  syncAllCustomersFromGroups();
-  chosen=null;
-  document.getElementById('prevSec').style.display='none';
-  document.getElementById('pdfWrap').innerHTML='';
-  document.getElementById('genBtn').style.display='none';
-  document.getElementById('searchBox').value='';
-  if(!uploadedFileGroups.length){
-    goBack();
-    showToast(currentLang==='ar'?'تم إزالة آخر ملف والعودة إلى شاشة الرفع':'Last file removed; returned to upload screen','success');
-    return;
-  }
-  document.getElementById('upZone').style.display='none';
-  document.getElementById('toolbar').style.display='block';
-  document.getElementById('allBtn').style.display='block';
-  document.getElementById('headerBackBtn').style.display='flex';
-  updateAllButtonLabel();
-  renderUploadedFiles();
-  renderGrid();
-  showToast(currentLang==='ar'?'تمت إزالة الملف':'File removed','success');
 }
 
 /* ── DROP ── */
@@ -536,7 +449,7 @@ async function loadFiles(files,printTargets=null){
       const data=await readFileAsArrayBuffer(file);
       const wb=XLSX.read(data,{type:'array',cellDates:false});
       const customers=parseWorkbook(wb,file.name||('file-'+(i+1)),i);
-      uploadedFileGroups.push({fileName:file.name||('file-'+(i+1)),fileIndex:i,customers});
+      uploadedFileGroups.push({fileName:file.name||('file-'+(i+1)),customers});
       allC.push(...customers);
     }
     uploadedFileGroups=uploadedFileGroups.filter(g=>g.customers.length>0);
@@ -549,9 +462,7 @@ async function loadFiles(files,printTargets=null){
     document.getElementById('allBtn').style.display='block';
     document.getElementById('headerBackBtn').style.display='flex';
     updateAllButtonLabel();
-    renderUploadedFiles();
     renderGrid();
-    document.getElementById('fileInput').value='';
     const fileWord=files.length>1?' ملفات':' ملف';
     showToast('تم تحميل '+files.length+fileWord+' بنجاح','success');
     if(printTargets&&files.length>1){
@@ -612,22 +523,6 @@ function numVal(v){
 }
 
 function fmt(n){return Number(n).toLocaleString('en-US');}
-
-function cleanPdfDocumentField(value){
-  let s=String(value||'').replace(/\u00a0/g,' ').replace(/\s+/g,' ').trim();
-  if(!s)return '—';
-  const d='[0-9٠-٩۰-۹]';
-  const slashDate=`${d}{1,2}[\\/\-]${d}{1,2}(?:[\\/\-]${d}{2,4})?`;
-  const ymdDate=`${d}{4}[\\/\-]${d}{1,2}[\\/\-]${d}{1,2}`;
-  const trailingDate=new RegExp(`\\s*(?:[-–—]\\s*)?(?:${slashDate}|${ymdDate})\\s*$`,'u');
-  let previous='';
-  while(s!==previous && trailingDate.test(s)){
-    previous=s;
-    s=s.replace(trailingDate,'').replace(/\s*[-–—]\s*$/u,'').trim();
-  }
-  return s||'—';
-}
-
 
 /* ── TYPE DETECTION ── */
 function getType(doc,comm){
@@ -797,7 +692,7 @@ function parseWorkbook(wb,fileName,fileIndex){
 function parseSheet(sheet){
   const rows=XLSX.utils.sheet_to_json(sheet,{header:1,defval:'',raw:true});
   allC=parseRowsToCustomers(rows,{});
-  uploadedFileGroups=allC.length?[{fileName:'',fileIndex:0,customers:allC}]:[];
+  uploadedFileGroups=allC.length?[{fileName:'',customers:allC}]:[];
   if(allC.length===0){
     showToast('لم يتم العثور على عملاء في الملف. تأكد من التنسيق.');
     return;
@@ -876,6 +771,7 @@ function buildStatementHTML(c){
   const today=Date.now();
   const dates=c.txns.map(t=>t.date).filter(Boolean);
   const period=dates.length?dates[0]+' → '+dates[dates.length-1]:'—';
+  const sourceLine=c.sourceFileName?` &nbsp;|&nbsp; الملف: ${c.sourceFileName}`:'';
   let lastInv='—',lastPay='—';
   c.txns.forEach(t=>{if(t.type==='فاتورة')lastInv=t.date;if(t.type==='دفعة')lastPay=t.date;});
   const aging=calcAging(c.txns,c.balance,today);
@@ -898,7 +794,7 @@ function buildStatementHTML(c){
     rowsHTML+=`<tr>
       <td>${i+1}</td><td>${t.date}</td>
       <td class="${tc}">${t.type||'—'}</td>
-      <td>${cleanPdfDocumentField(t.srcDoc||t.doc)}</td>
+      <td>${t.srcDoc||t.doc}</td>
       <td class="desc">${t.desc}</td>
       <td class="deb">${t.debit?fmt(t.debit):''}</td>
       <td class="crd">${t.credit?fmt(t.credit):''}</td>
@@ -908,8 +804,7 @@ function buildStatementHTML(c){
   const tableSection=`
     <div class="ptw">
       <table class="pt">
-        <thead><tr><th>#</th><th>التاريخ<br></th><th>النوع<br></th><th>المستند<br></th><th>البيان<br></th><th>مدين<br></th><th>دائن<br></th><th>الرصيد<br></th></tr></thead>
-        <tbody>${obTableRow}${rowsHTML||'<tr><td colspan="8" style="text-align:center;padding:18px;color:#888;">لا توجد حركات تفصيلية</td></tr>'}</tbody>
+        <thead><tr><th>#</th><th>التاريخ<br></th><th>الحركة<br></th><th>المستند<br></th><th>البيان<br></th><th>مدين<br></th><th>دائن<br></th><th>الرصيد<br></th></tr></thead>        <tbody>${obTableRow}${rowsHTML||'<tr><td colspan="8" style="text-align:center;padding:18px;color:#888;">لا توجد حركات تفصيلية</td></tr>'}</tbody>
       </table>
     </div>`;
   return `
@@ -920,7 +815,7 @@ function buildStatementHTML(c){
       <div class="ph-badge">Account Statement<small>كشف حساب</small></div>
     </div>
     <div class="ptb">كشف حساب | Account Statement</div>
-    <div class="pcb"><h3>${c.name}</h3><div class="per">رقم الحساب: ${c.id} &nbsp;|&nbsp; الفترة: ${period}</div></div>
+    <div class="pcb"><h3>${c.name}</h3><div class="per">رقم الحساب: ${c.id} &nbsp;|&nbsp; الفترة: ${period}${sourceLine}</div></div>
     ${tableSection}
     <div class="pas">
       <div class="pas-ttl">ملخص الحساب </div>
