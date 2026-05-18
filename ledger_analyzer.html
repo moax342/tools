@@ -448,7 +448,7 @@
   }
 </style>
 </head>
-<body data-theme="dark">
+<body>
 
 <header>
   <div class="logo">
@@ -527,10 +527,30 @@
 </div>
 
 <script>
+const LANG_KEY = 'hilalLang';
+const THEME_KEY = 'hilalTheme';
+const LANG_FALLBACKS = ['eastCrescentLang', 'hilalUnifiedLang'];
+const THEME_FALLBACKS = ['eastCrescentTheme', 'hilalUnifiedTheme', 'agedReceivableTheme'];
+
+function readStorage(key, fallbacks, def) {
+  const v = localStorage.getItem(key);
+  if (v) return v;
+  for (const k of fallbacks) { const f = localStorage.getItem(k); if (f) return f; }
+  return def;
+}
+
+function saveSettings(lang, isDark) {
+  const theme = isDark ? 'dark' : 'light';
+  localStorage.setItem(LANG_KEY, lang);
+  localStorage.setItem(THEME_KEY, theme);
+  for (const k of LANG_FALLBACKS) localStorage.setItem(k, lang);
+  for (const k of THEME_FALLBACKS) localStorage.setItem(k, theme);
+}
+
 let customers = [];
 let filters = new Set();
-let lang = 'ar';
-let isDark = true;
+let lang = readStorage(LANG_KEY, LANG_FALLBACKS, 'ar');
+let isDark = readStorage(THEME_KEY, THEME_FALLBACKS, 'dark') !== 'light';
 let openRow = null;
 let sortField = null;
 let sortDir = 1;
@@ -578,14 +598,20 @@ const T = {
 
 function t(key) { return T[lang][key] || key; }
 
-function toggleTheme() {
-  isDark = !isDark;
+function applyTheme() {
   document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
   document.getElementById('theme-btn').textContent = isDark ? '🌙' : '☀️';
 }
 
+function toggleTheme() {
+  isDark = !isDark;
+  applyTheme();
+  saveSettings(lang, isDark);
+}
+
 function toggleLang() {
   lang = lang === 'en' ? 'ar' : 'en';
+  saveSettings(lang, isDark);
   applyLang();
 }
 
@@ -1154,6 +1180,7 @@ function toggleExpand(idx) {
   }
 }
 
+applyTheme();
 applyLang();
 </script>
 </body>
