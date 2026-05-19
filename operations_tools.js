@@ -1,7 +1,7 @@
 
 
-let currentLang = localStorage.getItem('eastCrescentLang') || localStorage.getItem('hilalUnifiedLang') || 'ar';
-let currentTheme = localStorage.getItem('eastCrescentTheme') || localStorage.getItem('hilalUnifiedTheme') || localStorage.getItem('agedReceivableTheme') || 'dark';
+let currentLang = localStorage.getItem('hilalLang') || localStorage.getItem('eastCrescentLang') || localStorage.getItem('hilalUnifiedLang') || 'ar';
+let currentTheme = localStorage.getItem('hilalTheme') || localStorage.getItem('eastCrescentTheme') || localStorage.getItem('hilalUnifiedTheme') || localStorage.getItem('agedReceivableTheme') || 'dark';
 const MONEY_INPUT_IDS = ['priceInput', 'editOrig', 'editTarget', 'editCost', 'editProductAmount'];
 
 const arabicDigitMap = {
@@ -95,6 +95,7 @@ function initMoneyInputFormatters() {
 function applyTheme(theme) {
     currentTheme = theme === 'light' ? 'light' : 'dark';
     document.body.setAttribute('data-theme', currentTheme);
+    localStorage.setItem('hilalTheme', currentTheme);
     localStorage.setItem('eastCrescentTheme', currentTheme);
     localStorage.setItem('hilalUnifiedTheme', currentTheme);
     localStorage.setItem('agedReceivableTheme', currentTheme);
@@ -107,6 +108,7 @@ function toggleTheme() {
 
 function toggleLanguage() {
     currentLang = currentLang === 'ar' ? 'en' : 'ar';
+    localStorage.setItem('hilalLang', currentLang);
     localStorage.setItem('eastCrescentLang', currentLang);
     localStorage.setItem('hilalUnifiedLang', currentLang);
     applyLanguage();

@@ -140,6 +140,8 @@ table.pt tr.ob-tr td{background:#fffbea !important;font-weight:800;color:#7a6000
   </div>
   <div class="header-right">
     <button class="hbtn" id="backBtn" onclick="goBack()">← رجوع</button>
+    <a href="index.html" class="hbtn" id="homeBtn" style="text-decoration:none;">🏠 <span id="homeLbl">الرئيسية</span></a>
+    <button class="hbtn" onclick="toggleLang()" id="langBtn">🌐 EN</button>
     <button class="hbtn" onclick="toggleTheme()"><span id="tIco">☀️</span><span id="tLbl">وضع النهار</span></button>
   </div>
 </header>
@@ -198,15 +200,66 @@ const AR_MONTHS = {
   'يوليو':7,'أغسطس':8,'سبتمبر':9,'أكتوبر':10,'نوفمبر':11,'ديسمبر':12
 };
 
+// ── Storage helpers ─────────────────────────────────────
+const LANG_KEY = 'hilalLang';
+const THEME_KEY = 'hilalTheme';
+const LANG_FALLBACKS = ['eastCrescentLang', 'hilalUnifiedLang'];
+const THEME_FALLBACKS = ['eastCrescentTheme', 'hilalUnifiedTheme', 'agedReceivableTheme'];
+
+function readStorage(key, fallbacks, def) {
+  const v = localStorage.getItem(key);
+  if (v) return v;
+  for (const k of fallbacks) { const f = localStorage.getItem(k); if (f) return f; }
+  return def;
+}
+
+function persistSettings() {
+  const theme = dark ? 'dark' : 'light';
+  localStorage.setItem(LANG_KEY, stmtLang);
+  localStorage.setItem(THEME_KEY, theme);
+  for (const k of LANG_FALLBACKS) localStorage.setItem(k, stmtLang);
+  for (const k of THEME_FALLBACKS) localStorage.setItem(k, theme);
+}
+
 // ── State ───────────────────────────────────────────────
-let dark = true, allC = [], curFilter = 'all', chosen = null;
+let dark = readStorage(THEME_KEY, THEME_FALLBACKS, 'dark') !== 'light';
+let stmtLang = readStorage(LANG_KEY, LANG_FALLBACKS, 'ar');
+let allC = [], curFilter = 'all', chosen = null;
+
+const stmtT = {
+  ar: { home: 'الرئيسية', back: '← رجوع', dayMode: 'وضع النهار', nightMode: 'وضع الليل' },
+  en: { home: 'Home', back: '← Back', dayMode: 'Light Mode', nightMode: 'Dark Mode' }
+};
+
+function applyStmtLang() {
+  const t = stmtT[stmtLang];
+  const isAr = stmtLang === 'ar';
+  document.documentElement.lang = stmtLang;
+  document.getElementById('homeLbl').textContent = t.home;
+  document.getElementById('langBtn').textContent = isAr ? '🌐 EN' : '🌐 عر';
+  document.getElementById('tLbl').textContent = dark ? t.dayMode : t.nightMode;
+  document.getElementById('backBtn').textContent = t.back;
+  document.title = isAr ? 'هلال الشرق - كشف الحساب' : 'Hilal Al-Sharq — Account Statement';
+}
+
+function toggleLang() {
+  stmtLang = stmtLang === 'ar' ? 'en' : 'ar';
+  persistSettings();
+  applyStmtLang();
+}
 
 // ── Theme ───────────────────────────────────────────────
-function toggleTheme(){
-  dark = !dark;
+function applyTheme() {
   document.body.classList.toggle('light', !dark);
   document.getElementById('tIco').textContent = dark ? '☀️' : '🌙';
-  document.getElementById('tLbl').textContent = dark ? 'وضع النهار' : 'وضع الليل';
+  const t = stmtT[stmtLang];
+  document.getElementById('tLbl').textContent = dark ? t.dayMode : t.nightMode;
+}
+
+function toggleTheme(){
+  dark = !dark;
+  applyTheme();
+  persistSettings();
 }
 
 // ── Toast ───────────────────────────────────────────────
@@ -893,6 +946,9 @@ ${allHTML}
   a.click();
   setTimeout(()=>{URL.revokeObjectURL(url);document.body.removeChild(a);},3000);
 }
+
+applyTheme();
+applyStmtLang();
 
 </script>
 </body>

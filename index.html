@@ -6,7 +6,7 @@
 <title>Hilal Al-Sharq — Accounting Tools</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet"/>
 <style>
   :root {
     --purple: #5B5EA6;
@@ -111,7 +111,7 @@
     line-height: 1.2;
   }
   .brand-en {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Cairo', sans-serif;
     font-size: 15px;
     font-weight: 700;
     color: var(--purple);
@@ -199,7 +199,7 @@
   }
 
   .hero h1 {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Cairo', sans-serif;
     font-size: clamp(32px, 5vw, 56px);
     font-weight: 900;
     line-height: 1.15;
@@ -341,13 +341,29 @@
     position: relative;
     z-index: 1;
     text-align: center;
-    padding: 24px;
+    padding: 28px 24px;
     font-size: 12px;
     color: var(--text3);
     border-top: 1px solid var(--card-border);
+    background: var(--bg2);
   }
   footer span { color: var(--purple); font-weight: 600; }
   [data-theme="dark"] footer span { color: var(--yellow); }
+  .footer-credit {
+    margin-top: 10px;
+    font-size: 11.5px;
+    color: var(--text3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .footer-credit strong {
+    color: var(--purple);
+    font-weight: 700;
+  }
+  [data-theme="dark"] .footer-credit strong { color: var(--yellow); }
 
   /* Decorative crescent shape on card */
   .card-deco {
@@ -386,7 +402,7 @@
   }
 </style>
 </head>
-<body data-theme="dark">
+<body>
 
 <div class="bg-deco"></div>
 
@@ -452,11 +468,27 @@
 
 <footer>
   <span id="footer-brand">Hilal Al-Sharq</span> &nbsp;·&nbsp; <span id="footer-copy">Accounting Tools Suite</span>
+  <div class="footer-credit">
+    <span id="footer-credit-pre">Built with ❤️ by the</span>
+    <strong id="footer-team">Accounting &amp; IT Teams</strong>
+  </div>
 </footer>
 
 <script>
-let lang = 'ar';
-let isDark = true;
+const LANG_KEY = 'hilalLang';
+const THEME_KEY = 'hilalTheme';
+const LANG_FALLBACKS = ['eastCrescentLang', 'hilalUnifiedLang'];
+const THEME_FALLBACKS = ['eastCrescentTheme', 'hilalUnifiedTheme', 'agedReceivableTheme'];
+
+function readStorage(key, fallbacks, def) {
+  const v = localStorage.getItem(key);
+  if (v) return v;
+  for (const k of fallbacks) { const f = localStorage.getItem(k); if (f) return f; }
+  return def;
+}
+
+let lang = readStorage(LANG_KEY, LANG_FALLBACKS, 'ar');
+let isDark = readStorage(THEME_KEY, THEME_FALLBACKS, 'dark') !== 'light';
 
 const content = {
   en: {
@@ -480,6 +512,8 @@ const content = {
     c3Arrow: 'Open tool →',
     footerBrand: 'Hilal Al-Sharq',
     footerCopy: 'Accounting Tools Suite',
+    footerCredit: 'Built with ❤️ by the',
+    footerTeam: 'Accounting & IT Teams',
   },
   ar: {
     langBtn: '🌐 English',
@@ -502,6 +536,8 @@ const content = {
     c3Arrow: '← فتح الأداة',
     footerBrand: 'هلال الشرق',
     footerCopy: 'مجموعة أدوات المحاسبة',
+    footerCredit: 'بُني بـ ❤️ من قِبل',
+    footerTeam: 'فريق المحاسبة وتقنية المعلومات',
   }
 };
 
@@ -530,6 +566,8 @@ function applyLang() {
   document.getElementById('c3-arrow').textContent = c.c3Arrow;
   document.getElementById('footer-brand').textContent = c.footerBrand;
   document.getElementById('footer-copy').textContent = c.footerCopy;
+  document.getElementById('footer-credit-pre').textContent = c.footerCredit;
+  document.getElementById('footer-team').textContent = c.footerTeam;
   updateThemeBtn();
 }
 
@@ -538,17 +576,32 @@ function updateThemeBtn() {
   document.getElementById('theme-btn').textContent = isDark ? c.themeBtn[1] : c.themeBtn[0];
 }
 
+function saveSettings() {
+  const theme = isDark ? 'dark' : 'light';
+  localStorage.setItem(LANG_KEY, lang);
+  localStorage.setItem(THEME_KEY, theme);
+  for (const k of LANG_FALLBACKS) localStorage.setItem(k, lang);
+  for (const k of THEME_FALLBACKS) localStorage.setItem(k, theme);
+}
+
 function toggleLang() {
   lang = lang === 'en' ? 'ar' : 'en';
+  saveSettings();
   applyLang();
+}
+
+function applyTheme() {
+  document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
 }
 
 function toggleTheme() {
   isDark = !isDark;
-  document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  applyTheme();
+  saveSettings();
   updateThemeBtn();
 }
 
+applyTheme();
 applyLang();
 </script>
 </body>
