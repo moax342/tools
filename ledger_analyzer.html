@@ -448,7 +448,7 @@
   }
 </style>
 </head>
-<body>
+<body data-theme="dark">
 
 <header>
   <div class="logo">
@@ -512,7 +512,7 @@
       <button onclick="closePrint()">✕ Close</button>
     </div>
     <div class="print-header">
-      <img src="ec-iq.com.png" alt="Hilal Al-Sharq" class="print-logo" onerror="this.style.display='none'"/>
+      <img src="https://raw.githubusercontent.com/moax342/tools/main/ec-iq.com.png" alt="Company Logo" class="print-logo" onerror="this.style.display='none'"/>
       <div class="print-header-text">
         <h2 id="print-title">General Ledger — Customer Analysis</h2>
         <div class="print-meta" id="print-meta"></div>
@@ -527,30 +527,10 @@
 </div>
 
 <script>
-const LANG_KEY = 'hilalLang';
-const THEME_KEY = 'hilalTheme';
-const LANG_FALLBACKS = ['eastCrescentLang', 'hilalUnifiedLang'];
-const THEME_FALLBACKS = ['eastCrescentTheme', 'hilalUnifiedTheme', 'agedReceivableTheme'];
-
-function readStorage(key, fallbacks, def) {
-  const v = localStorage.getItem(key);
-  if (v) return v;
-  for (const k of fallbacks) { const f = localStorage.getItem(k); if (f) return f; }
-  return def;
-}
-
-function saveSettings(lang, isDark) {
-  const theme = isDark ? 'dark' : 'light';
-  localStorage.setItem(LANG_KEY, lang);
-  localStorage.setItem(THEME_KEY, theme);
-  for (const k of LANG_FALLBACKS) localStorage.setItem(k, lang);
-  for (const k of THEME_FALLBACKS) localStorage.setItem(k, theme);
-}
-
 let customers = [];
 let filters = new Set();
-let lang = readStorage(LANG_KEY, LANG_FALLBACKS, 'ar');
-let isDark = readStorage(THEME_KEY, THEME_FALLBACKS, 'dark') !== 'light';
+let lang = 'ar';
+let isDark = true;
 let openRow = null;
 let sortField = null;
 let sortDir = 1;
@@ -598,20 +578,14 @@ const T = {
 
 function t(key) { return T[lang][key] || key; }
 
-function applyTheme() {
+function toggleTheme() {
+  isDark = !isDark;
   document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
   document.getElementById('theme-btn').textContent = isDark ? '🌙' : '☀️';
 }
 
-function toggleTheme() {
-  isDark = !isDark;
-  applyTheme();
-  saveSettings(lang, isDark);
-}
-
 function toggleLang() {
   lang = lang === 'en' ? 'ar' : 'en';
-  saveSettings(lang, isDark);
   applyLang();
 }
 
@@ -713,15 +687,23 @@ function fmtNum(n) {
 }
 
 function detectFormat(rows) {
-  // Format B (partner ledger): col0=date or customer, col1=journal, col11=balance
-  // Format A (general ledger): col0=ref/customer, col1=date, col9=balance
-  for (let i = 0; i < Math.min(10, rows.length); i++) {
+  for (let i = 0; i < Math.min(15, rows.length); i++) {
     const r = rows[i];
+    const c0 = String(r[0] || '').trim();
     const c1 = String(r[1] || '').trim();
-    // If col1 looks like a journal code (CHSJB, INV, RINV, JRNL) → format B
-    if (/^(CHSJB|INV|RINV|RRINV|JRNL|ٌٌINV)/i.test(c1)) return 'B';
-    // If col1 looks like a date → format A
-    if (parseDate(r[1]) && !(/^(CHSJB|INV)/i.test(String(r[0]||'')))) return 'A';
+
+    // Format B (partner ledger): header row has 'JRNL' in col1
+    if (c1 === 'JRNL') return 'B';
+
+    // Format B transaction rows: col1 is B1/ٌٌINV with MM/DD/YYYY date in col0
+    if (/^(B\d+|ٌٌINV|RINV|RRINV)$/i.test(c1) && /^\d{1,2}\/\d{1,2}\/\d{4}/.test(c0)) return 'B';
+
+    // Format A English: col1 is an ISO date string on a transaction row
+    if (c1 && parseDate(c1) && /^(INV\/|CHSJB\/|RRIV\/|RCEV\/)/i.test(c0)) return 'A';
+
+    // Format A Arabic: col1 header is 'التاريخ', or col1 is an Arabic date string like '05 يناير, 2026'
+    if (c1 === 'التاريخ') return 'A';
+    if (/^\d{1,2}\s+[\u0600-\u06FF]+,?\s+\d{4}$/.test(c1)) return 'A';
   }
   return 'A';
 }
@@ -731,38 +713,61 @@ function parseRows(rows) {
   return fmt === 'B' ? parseFormatB(rows) : parseFormatA(rows);
 }
 
-// ── FORMAT A: original general ledger ─────────────────────────────────────
+// Sniff which columns hold debit/credit/balance in Format A
+// Without currency: cols 7/8/9  |  With currency inserted: cols 8/9/10
+// Arabic headers: المدين / الدائن / الرصيد
+function sniffFormatACols(rows) {
+  for (let i = 0; i < Math.min(5, rows.length); i++) {
+    const r = rows[i];
+    const vals = r.map(v => String(v || '').toLowerCase().trim());
+    const debitIdx  = vals.findIndex(v => v === 'debit'   || v === 'مدين'  || v === 'المدين');
+    const creditIdx = vals.findIndex(v => v === 'credit'  || v === 'دائن'  || v === 'الدائن');
+    const balIdx    = vals.findIndex(v => v === 'balance' || v === 'رصيد'  || v === 'الرصيد');
+    if (debitIdx > 0 && creditIdx > 0 && balIdx > 0) {
+      return { debit: debitIdx, credit: creditIdx, bal: balIdx };
+    }
+  }
+  // Default: standard layout (7/8/9)
+  return { debit: 7, credit: 8, bal: 9 };
+}
+
+// ── FORMAT A: original general ledger (with or without currency column) ───
 function parseFormatA(rows) {
   const result = [];
   let currentCustomer = null;
+  const cols = sniffFormatACols(rows);    // dynamic col positions
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
-    const ref = String(row[0] || '').trim();
+    const ref     = String(row[0] || '').trim();
     const dateRaw = row[1];
-    const comm = String(row[2] || '').trim();
-    const debit  = parseFloat(String(row[7] || '').replace(/,/g,'')) || 0;
-    const credit = parseFloat(String(row[8] || '').replace(/,/g,'')) || 0;
-    const balance = parseFloat(String(row[9] || '').replace(/,/g,''));
+    const comm    = String(row[2] || '').trim();
+    const debit   = parseFloat(String(row[cols.debit]  || '').replace(/,/g,'')) || 0;
+    const credit  = parseFloat(String(row[cols.credit] || '').replace(/,/g,'')) || 0;
+    const balance = parseFloat(String(row[cols.bal]    || '').replace(/,/g,''));
 
-    if (ref === '' || ref === 'nan' || /^date$/i.test(ref) || /^التاريخ$/.test(ref)) continue;
+    // Skip blank / header rows (English and Arabic)
+    if (!ref || ref === 'nan' ||
+        /^date$/i.test(ref) || ref === 'التاريخ' ||
+        /^debit$/i.test(ref) || ref === 'المدين') continue;
 
+    // Customer header: no date, has a numeric balance, not a known transaction prefix
     const isCustomerHeader = !dateRaw && !isNaN(balance) &&
       !/^(Total|إجمالي|الإجمالي|Initial|الرصيد)/i.test(ref) &&
-      (row[7] || row[8] || row[9]) &&
+      (row[cols.debit] || row[cols.credit] || row[cols.bal]) &&
       !isInvoice(ref) && !isReturn(ref) && !isPayment(ref, comm, row) &&
       !/^CHSJB|^RCEV|^RCV|^WHKH/i.test(ref);
 
     if (isCustomerHeader) {
       const idMatch = ref.match(/^(\d+)\s+(.+)/);
       currentCustomer = {
-        id: idMatch ? idMatch[1] : '',
+        id:   idMatch ? idMatch[1] : '',
         name: idMatch ? idMatch[2].trim() : ref,
         balance: isNaN(balance) ? 0 : balance,
         transactions: [],
         lastInvoice: null, lastInvoiceDate: null,
         lastPayment: null, lastPaymentDate: null,
-        lastReturn: null, lastReturnDate: null,
+        lastReturn:  null, lastReturnDate:  null,
       };
       result.push(currentCustomer);
       continue;
@@ -776,8 +781,8 @@ function parseFormatA(rows) {
 
     const date = parseDate(dateRaw);
     let type = 'other';
-    if (isInvoice(ref)) type = 'invoice';
-    else if (isReturn(ref)) type = 'return';
+    if (isInvoice(ref))           type = 'invoice';
+    else if (isReturn(ref))       type = 'return';
     else if (isPayment(ref, comm, row)) type = 'payment';
 
     currentCustomer.transactions.push({ ref, date, comm, debit, credit, type, balance: isNaN(balance) ? null : balance });
@@ -786,28 +791,31 @@ function parseFormatA(rows) {
   return result;
 }
 
-// ── FORMAT B: partner ledger (col0=date|name, col1=journal, col4=ref, col8=debit, col9=credit, col11=balance) ──
+// ── FORMAT B: partner ledger ───────────────────────────────────────────────
+// col0=date|name, col1=journal(B1/ٌٌINV/JRNL), col3=branch, col4=ref/desc
+// col7=initial_bal, col8=debit, col9=credit, col10=amt_currency, col11=balance
 function parseFormatB(rows) {
   const result = [];
   let currentCustomer = null;
 
   for (let i = 0; i < rows.length; i++) {
-    const row = rows[i];
+    const row  = rows[i];
     const col0 = String(row[0] || '').trim();
     const col1 = String(row[1] || '').trim();
-    const col4 = String(row[4] || '').trim();  // description / ref
-    const debit  = parseFloat(String(row[8] || '').replace(/,/g,'')) || 0;
-    const credit = parseFloat(String(row[9] || '').replace(/,/g,'')) || 0;
-    const balance = parseFloat(String(row[11] || '').replace(/,/g,''));
+    const col4 = String(row[4] || '').trim();
 
-    // Skip header/total rows
-    if (/^(Total|إجمالي|الإجمالي|JRNL|NaN)/i.test(col0) || col0 === '') continue;
+    // Skip true header rows and empty rows
+    if (!col0 || col0 === 'nan' || col1 === 'JRNL') continue;
+
+    // Skip total / summary rows
     if (/^(Total|إجمالي|الإجمالي)/i.test(col0)) { currentCustomer = null; continue; }
 
-    // Customer header: col1 is empty/NaN and col0 is not a date
-    const isDate = /^\d{1,2}\/\d{1,2}\/\d{4}/.test(col0) || parseDate(col0) !== null;
-    if (!isDate && col1 !== 'JRNL') {
-      // This is a customer name row
+    // Detect if this row is a date-bearing transaction
+    const isDateRow = /^\d{1,2}\/\d{1,2}\/\d{4}/.test(col0) || (!!parseDate(col0) && col0.includes('/'));
+
+    if (!isDateRow) {
+      // Customer header row
+      const balance = parseFloat(String(row[11] || '').replace(/,/g,''));
       currentCustomer = {
         id: '',
         name: col0,
@@ -815,7 +823,7 @@ function parseFormatB(rows) {
         transactions: [],
         lastInvoice: null, lastInvoiceDate: null,
         lastPayment: null, lastPaymentDate: null,
-        lastReturn: null, lastReturnDate: null,
+        lastReturn:  null, lastReturnDate:  null,
       };
       result.push(currentCustomer);
       continue;
@@ -823,15 +831,18 @@ function parseFormatB(rows) {
 
     if (!currentCustomer) continue;
 
-    // Transaction row: col0 = date, col1 = journal code, col4 = ref/description
-    const date = parseDate(col0);
-    const ref = col4 || col1;
+    const date   = parseDate(col0);
+    const debit  = parseFloat(String(row[8]  || '').replace(/,/g,'')) || 0;
+    const credit = parseFloat(String(row[9]  || '').replace(/,/g,'')) || 0;
+    const balance = parseFloat(String(row[11] || '').replace(/,/g,''));
+    const ref  = col4 || col1;
     const comm = col4;
 
+    // Classify: col1 journal code takes priority
     let type = 'other';
-    if (isInvoice(ref) || isInvoice(col1)) type = 'invoice';
-    else if (isReturn(ref) || isReturn(col1) || /^RINV|^RRINV/i.test(col1)) type = 'return';
-    else if (isPayment(ref, comm, row) || /^CHSJB|^RCEV|^RCV/i.test(col1)) type = 'payment';
+    if (/^ٌٌINV$|^INV$/i.test(col1) || isInvoice(ref)) type = 'invoice';
+    else if (/^RINV$|^RRINV$/i.test(col1) || isReturn(ref)) type = 'return';
+    else if (/^B\d+$|^CHSJB|^RCEV|^RCV/i.test(col1) || isPayment(ref, comm, row)) type = 'payment';
 
     currentCustomer.transactions.push({ ref, date, comm, debit, credit, type, balance: isNaN(balance) ? null : balance });
     updateLastTx(currentCustomer, type, date, debit, credit);
@@ -1180,7 +1191,6 @@ function toggleExpand(idx) {
   }
 }
 
-applyTheme();
 applyLang();
 </script>
 </body>
