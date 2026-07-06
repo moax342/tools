@@ -682,22 +682,30 @@ function isPayment(ref, comm, row) {
 
 function parseDate(val) {
   if (!val || val === 'NaN' || val === '' || val === 'null') return null;
-  if (val instanceof Date) return val;
-  // Try direct parse
-  const d = new Date(val);
-  if (!isNaN(d)) return d;
-  // Arabic month names
+  if (val instanceof Date) return isNaN(val) ? null : val;
+  const s = String(val).trim();
+
+  // Arabic month names ("04 يناير, 2026")
   const arMonths = {
     'يناير':0,'فبراير':1,'مارس':2,'أبريل':3,'مايو':4,'يونيو':5,
     'يوليو':6,'أغسطس':7,'سبتمبر':8,'أكتوبر':9,'نوفمبر':10,'ديسمبر':11,
     'كانون الثاني':0,'شباط':1,'آذار':2,'نيسان':3,'أيار':4,'حزيران':5,
     'تموز':6,'آب':7,'أيلول':8,'تشرين الأول':9,'تشرين الثاني':10,'كانون الأول':11
   };
-  const m = String(val).match(/(\d+)\s+(.+?),?\s+(\d{4})$/);
+  const m = s.match(/(\d+)\s+(.+?),?\s+(\d{4})$/);
   if (m) {
-    const monthName = m[2].trim();
-    const monthIdx = arMonths[monthName];
+    const monthIdx = arMonths[m[2].trim()];
     if (monthIdx !== undefined) return new Date(parseInt(m[3]), monthIdx, parseInt(m[1]));
+  }
+
+  // Only fall back to native parsing for strings that actually look like a
+  // machine date (yyyy-mm-dd / dd-mm-yyyy with - / or . separators, optional
+  // time). This prevents customer names ending in a number — e.g.
+  // "…الدورة شارع 60" — from being misread by the very lenient Date() as a year.
+  if (/^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}([ T].*)?$/.test(s) ||
+      /^\d{1,2}[-/.]\d{1,2}[-/.]\d{4}$/.test(s)) {
+    const d = new Date(s);
+    if (!isNaN(d)) return d;
   }
   return null;
 }
@@ -726,13 +734,41 @@ function detectFormat(rows) {
   return 'A';
 }
 
+// Locate the debit / credit / balance columns from the header row by name,
+// so layouts that shift these columns (extra opening-balance or currency
+// columns) still map correctly. Falls back to `def` when a header is absent.
+function detectColumns(rows, def) {
+  const cols = { debit: def.debit, credit: def.credit, balance: def.balance };
+  for (let i = 0; i < Math.min(12, rows.length); i++) {
+    const r = rows[i];
+    if (!r) continue;
+    let found = false;
+    for (let j = 0; j < r.length; j++) {
+      const s = String(row_(r, j)).trim();
+      if (s === 'المدين' || /^debit$/i.test(s)) { cols.debit = j; found = true; }
+      else if (s === 'الدائن' || /^credit$/i.test(s)) { cols.credit = j; found = true; }
+      // Exact match only — must not catch "الرصيد الافتتاحي" (opening balance)
+      else if (s === 'الرصيد' || /^balance$/i.test(s)) { cols.balance = j; found = true; }
+    }
+    if (found) break;
+  }
+  return cols;
+}
+
+function row_(r, j) { return r[j] == null ? '' : r[j]; }
+
 function parseRows(rows) {
   const fmt = detectFormat(rows);
-  return fmt === 'B' ? parseFormatB(rows) : parseFormatA(rows);
+  if (fmt === 'B') {
+    const cols = detectColumns(rows, { debit: 8, credit: 9, balance: 11 });
+    return parseFormatB(rows, cols);
+  }
+  const cols = detectColumns(rows, { debit: 7, credit: 8, balance: 9 });
+  return parseFormatA(rows, cols);
 }
 
 // ── FORMAT A: original general ledger ─────────────────────────────────────
-function parseFormatA(rows) {
+function parseFormatA(rows, cols = { debit: 7, credit: 8, balance: 9 }) {
   const result = [];
   let currentCustomer = null;
 
@@ -741,15 +777,15 @@ function parseFormatA(rows) {
     const ref = String(row[0] || '').trim();
     const dateRaw = row[1];
     const comm = String(row[2] || '').trim();
-    const debit  = parseFloat(String(row[7] || '').replace(/,/g,'')) || 0;
-    const credit = parseFloat(String(row[8] || '').replace(/,/g,'')) || 0;
-    const balance = parseFloat(String(row[9] || '').replace(/,/g,''));
+    const debit  = parseFloat(String(row[cols.debit] || '').replace(/,/g,'')) || 0;
+    const credit = parseFloat(String(row[cols.credit] || '').replace(/,/g,'')) || 0;
+    const balance = parseFloat(String(row[cols.balance] || '').replace(/,/g,''));
 
     if (ref === '' || ref === 'nan' || /^date$/i.test(ref) || /^التاريخ$/.test(ref)) continue;
 
     const isCustomerHeader = !dateRaw && !isNaN(balance) &&
       !/^(Total|إجمالي|الإجمالي|Initial|الرصيد)/i.test(ref) &&
-      (row[7] || row[8] || row[9]) &&
+      (row[cols.debit] || row[cols.credit] || row[cols.balance]) &&
       !isInvoice(ref) && !isReturn(ref) && !isPayment(ref, comm, row) &&
       !/^CHSJB|^RCEV|^RCV|^WHKH/i.test(ref);
 
@@ -786,8 +822,8 @@ function parseFormatA(rows) {
   return result;
 }
 
-// ── FORMAT B: partner ledger (col0=date|name, col1=journal, col4=ref, col8=debit, col9=credit, col11=balance) ──
-function parseFormatB(rows) {
+// ── FORMAT B: partner ledger (col0=date|name, col1=journal, col4=ref; debit/credit/balance columns detected from header) ──
+function parseFormatB(rows, cols = { debit: 8, credit: 9, balance: 11 }) {
   const result = [];
   let currentCustomer = null;
 
@@ -796,9 +832,9 @@ function parseFormatB(rows) {
     const col0 = String(row[0] || '').trim();
     const col1 = String(row[1] || '').trim();
     const col4 = String(row[4] || '').trim();  // description / ref
-    const debit  = parseFloat(String(row[8] || '').replace(/,/g,'')) || 0;
-    const credit = parseFloat(String(row[9] || '').replace(/,/g,'')) || 0;
-    const balance = parseFloat(String(row[11] || '').replace(/,/g,''));
+    const debit  = parseFloat(String(row[cols.debit] || '').replace(/,/g,'')) || 0;
+    const credit = parseFloat(String(row[cols.credit] || '').replace(/,/g,'')) || 0;
+    const balance = parseFloat(String(row[cols.balance] || '').replace(/,/g,''));
 
     // Skip header/total rows
     if (/^(Total|إجمالي|الإجمالي|JRNL|NaN)/i.test(col0) || col0 === '') continue;
