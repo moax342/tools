@@ -47,6 +47,11 @@ main{max-width:1100px;margin:0 auto;padding:32px 18px 60px;}
 .filter-label{font-size:13px;color:var(--muted);white-space:nowrap;}
 .fbtn{background:var(--surf2);border:1.5px solid var(--bdr);color:var(--txt);padding:6px 16px;border-radius:50px;cursor:pointer;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;transition:all .2s;}
 .fbtn:hover,.fbtn.on{background:var(--purple);color:#fff;border-color:var(--purple);}
+.date-range-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;}
+.date-field{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--muted);}
+.date-input{background:var(--surf2);border:1.5px solid var(--bdr);border-radius:10px;padding:7px 12px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;color:var(--txt);outline:none;transition:border-color .2s;color-scheme:dark;}
+body.light .date-input{color-scheme:light;}
+.date-input:focus{border-color:var(--purple);}
 .cust-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(275px,1fr));gap:11px;max-height:500px;overflow-y:auto;padding-bottom:4px;}
 .cust-grid::-webkit-scrollbar{width:5px;}
 .cust-grid::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:4px;}
@@ -176,7 +181,17 @@ table.pt tr.ob-tr td{background:#fffbea !important;font-weight:800;color:#7a6000
       <button class="fbtn"    id="fClear" onclick="setF('clear')">✅ رصيد صفر</button>
     </div>
     <div class="cust-grid" id="custGrid"></div>
-    <div style="display:flex;gap:12px;margin-top:18px;flex-wrap:wrap;">
+    <div class="date-range-row">
+      <span class="filter-label">📅 فترة الكشف:</span>
+      <label class="date-field">من
+        <input type="date" id="dateFrom" class="date-input" onchange="onPeriodChange()">
+      </label>
+      <label class="date-field">إلى
+        <input type="date" id="dateTo" class="date-input" onchange="onPeriodChange()">
+      </label>
+      <button class="fbtn" id="clearDates" onclick="clearDates()" style="display:none;">✕ مسح التواريخ</button>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:4px;flex-wrap:wrap;">
       <button class="btn-gen" id="genBtn" onclick="generate()" style="flex:1;margin-top:0;">🖨️ إنشاء كشف الحساب</button>
       <button class="btn-all" id="allBtn" onclick="dlAllPDF()">⬇️ تحميل كل العملاء ذوي الرصيد المستحق</button>
     </div>
@@ -288,6 +303,7 @@ function goBack(){
   document.getElementById('fileInput').value = '';
   document.getElementById('backBtn').style.display = 'none';
   document.getElementById('allBtn').style.display  = 'none';
+  clearDates();
   setF('all');
   window.scrollTo({top:0, behavior:'smooth'});
 }
@@ -648,6 +664,32 @@ function tsDisp(ts){
   return pad(d.getUTCDate())+'/'+pad(d.getUTCMonth()+1)+'/'+d.getUTCFullYear();
 }
 
+// ── Statement period (user-selected date range overrides sheet dates) ──────
+function fmtSelDate(iso){
+  if(!iso) return '';
+  const [y,m,d] = iso.split('-');
+  return d+'/'+m+'/'+y;
+}
+function getSelectedPeriod(){
+  const from = (document.getElementById('dateFrom')||{}).value || '';
+  const to   = (document.getElementById('dateTo')||{}).value || '';
+  if(from && to) return fmtSelDate(from)+' → '+fmtSelDate(to);
+  if(from) return 'من '+fmtSelDate(from);
+  if(to)   return 'حتى '+fmtSelDate(to);
+  return null;
+}
+function onPeriodChange(){
+  const from = (document.getElementById('dateFrom')||{}).value || '';
+  const to   = (document.getElementById('dateTo')||{}).value || '';
+  const btn = document.getElementById('clearDates');
+  if(btn) btn.style.display = (from||to) ? '' : 'none';
+}
+function clearDates(){
+  const f = document.getElementById('dateFrom'); if(f) f.value='';
+  const t = document.getElementById('dateTo');   if(t) t.value='';
+  onPeriodChange();
+}
+
 // ── Generate ─────────────────────────────────────────────
 function generate(){
   if(!chosen) return;
@@ -655,7 +697,7 @@ function generate(){
   const today = Date.now();
 
   const dates  = c.txns.map(t => t.date).filter(Boolean);
-  const period = dates.length ? dates[0]+' → '+dates[dates.length-1] : '—';
+  const period = getSelectedPeriod() || (dates.length ? dates[0]+' → '+dates[dates.length-1] : '—');
   let lastInv='—', lastPay='—';
   c.txns.forEach(t => {
     if(t.type==='فاتورة') lastInv = t.date;
@@ -876,7 +918,7 @@ function dlAllPDF(){
 
   function buildCustomerHTML(c){
     const dates  = c.txns.map(t=>t.date).filter(Boolean);
-    const period = dates.length ? dates[0]+' → '+dates[dates.length-1] : '—';
+    const period = getSelectedPeriod() || (dates.length ? dates[0]+' → '+dates[dates.length-1] : '—');
     let lastInv='—', lastPay='—';
     c.txns.forEach(t=>{if(t.type==='فاتورة')lastInv=t.date;if(t.type==='دفعة')lastPay=t.date;});
     const aging = calcAging(c.txns, c.balance, today);
