@@ -374,7 +374,7 @@ function parseDate(v){
   if(typeof v === 'string'){
     const s = v.trim();
     if(!s) return null;
-    const arM = s.match(/(\d{1,2})\s+([\u0600-\u06FF]+)[,،]?\s*(\d{4})/);
+    const arM = s.match(/^(\d{1,2})\s+([\u0600-\u06FF]+)[,،]?\s*(\d{4})\s*$/);
     if(arM){
       const day = parseInt(arM[1]), mon = AR_MONTHS[arM[2]] || 1, yr = parseInt(arM[3]);
       const d = new Date(Date.UTC(yr, mon-1, day));
@@ -416,11 +416,25 @@ function getType(doc, comm){
   return '';
 }
 
+// Journal-code column (partner-ledger col1) is the authoritative source for the
+// row type — the reference/description text is only a fallback. Arabic
+// diacritics are stripped first because the export writes "INV" as "ٌٌINV".
+function typeFromJournal(j){
+  const s = String(j == null ? '' : j).replace(/[\u064B-\u0652\u0670\u0640]/g, '').trim();
+  if(!s) return '';
+  if(/^R{1,2}INV$/i.test(s))                                   return 'مرتجع';
+  if(/^INV$/i.test(s))                                         return 'فاتورة';
+  if(/^MISC$/i.test(s))                                        return 'تسوية';
+  if(/^(CHASM|CHSJB|CHHAD|WHKH|CB\d*|B\d+|Pay[A-Za-z]*)$/i.test(s)) return 'دفعة';
+  return '';
+}
+
 function cleanDesc(desc){
   if(!desc) return '';
   return desc
     .replace(/\s*-\s*\d{2}\/\d{2}\/\d{4}\s*$/, '')
     .replace(/\s*-\s*\d{4}-\d{2}-\d{2}\s*$/, '')
+    .replace(/\s*-\s*\d{1,2}\s+[\u0600-\u06FF]+[,،]?\s*\d{4}\s*$/, '')
     .trim();
 }
 
@@ -441,19 +455,19 @@ function parseSheet(sheet){
   const hdrStr = hdr.join('|').toLowerCase();
   const colCount = hdr.filter(v => v !== '').length;
 
-  if(hdr[7]==='Initial Balance' || hdr[7]==='الرصيد الافتتاحي'){
+  const hCell = j => String(hdr[j]==null ? '' : hdr[j]).trim();
+
+  if(hCell(7)==='Initial Balance' || hCell(7)==='الرصيد الافتتاحي'){
     // Format C (English partner ledger) or D (Arabic partner ledger)
     // In these formats: date is in col0 of transaction rows, col8=debit, col9=credit
     // Customer header: c0=name (no digit prefix), c1 empty, col7=initBal
-    if(hdr[1]==='JRNL') fmt = 'C';       // English partner ledger
+    if(hCell(1)==='JRNL') fmt = 'C';       // English partner ledger
     else fmt = 'D';                        // Arabic partner ledger
-  } else if(hdr[6]==='Currency' || hdr[6]==='العملة'){
+  } else if(hCell(6)==='Currency' || hCell(6)==='العملة'){
     fmt = 'A';  // With currency column: debit=col7, credit=col8, bal=col9
   } else {
     fmt = 'B';  // Without currency: debit=col6, credit=col7, bal=col8
   }
-
-  console.log('Detected format:', fmt, '| cols:', hdr.length);
 
   // ── Column index map per format ─────────────────────────
   // Returns {debit, credit, bal, desc, srcDoc, date_is_c0}
@@ -461,9 +475,30 @@ function parseSheet(sheet){
     if(fmt==='A') return {debit:7, credit:8, bal:9,  desc:2, srcDoc:5, dateC0:false};
     if(fmt==='B') return {debit:6, credit:7, bal:8,  desc:2, srcDoc:5, dateC0:false};
     if(fmt==='C') return {debit:8, credit:9, bal:11, desc:4, srcDoc:4, dateC0:true,  initBal:7};
-    if(fmt==='D') return {debit:8, credit:9, bal:10, desc:4, srcDoc:4, dateC0:true,  initBal:7};
+    if(fmt==='D') return {debit:8, credit:9, bal:11, desc:4, srcDoc:4, dateC0:true,  initBal:7};
   }
   const cm = colMap();
+
+  // The positions above are only defaults. Exports vary in how many columns
+  // they carry (an extra "عملة المبلغ" / amount-currency column shifts the
+  // running balance one place to the right), so always re-read the money
+  // columns from the header labels when they are present. Matching is exact
+  // so that "الرصيد الافتتاحي" (opening balance) never claims the "الرصيد"
+  // (running balance) column.
+  (function locateMoneyCols(){
+    let found = false;
+    for(let j = 0; j < hdr.length; j++){
+      const h = hCell(j);
+      if(!h) continue;
+      if(h==='المدين' || /^debit$/i.test(h))                      { cm.debit  = j; found = true; }
+      else if(h==='الدائن' || /^credit$/i.test(h))                { cm.credit = j; found = true; }
+      else if(h==='الرصيد' || /^balance$/i.test(h))               { cm.bal    = j; found = true; }
+      else if(h==='الرصيد الافتتاحي' || /^initial balance$/i.test(h)) { cm.initBal = j; found = true; }
+    }
+    if(!found) console.warn('No money-column headers found — using default positions for format', fmt);
+  })();
+
+  console.log('Detected format:', fmt, '| cols:', hdr.length, '| map:', JSON.stringify(cm));
 
   const OB_KEYS  = ['الرصيد الافتتاحي', 'Initial Balance'];
   const SKIP     = ['الإجمالي', 'Total'];
@@ -544,9 +579,9 @@ function parseSheet(sheet){
           totalDebit:    numVal(r[cm.debit]),
           totalCredit:   numVal(r[cm.credit]),
           balance:       numVal(r[cm.bal]),
-          openingDebit:  numVal(r[cm.initBal]||7),
+          openingDebit:  numVal(r[cm.initBal]),
           openingCredit: 0,
-          openingBalance:numVal(r[cm.initBal]||7),
+          openingBalance:numVal(r[cm.initBal]),
           txns:[]
         };
         allC.push(cur);
@@ -573,7 +608,7 @@ function parseSheet(sheet){
           debit:  numVal(r[cm.debit]),
           credit: numVal(r[cm.credit]),
           bal:    numVal(r[cm.bal]),
-          type:   getType(doc, comm || rawComm)
+          type:   typeFromJournal(r[1]) || getType(doc, comm || rawComm)
         });
       }
     }
@@ -624,7 +659,7 @@ function renderGrid(){
     d.className = 'ctile';
     d.innerHTML = `
       <div class="cn">${c.name}</div>
-      <div class="ci">رقم الحساب: ${c.id}</div>
+      ${c.id ? `<div class="ci">رقم الحساب: ${c.id}</div>` : ''}
       <div class="cb ${pos?'pos':'zero'}">
         <span class="dot ${pos?'pos':'zero'}"></span>
         ${pos ? 'رصيد مستحق: '+fmt(c.balance)+' د.ع' : '✔ لا يوجد رصيد مستحق'}
@@ -757,7 +792,7 @@ function generate(){
     <div class="ptb">كشف حساب</div>
     <div class="pcb">
       <h3>${c.name}</h3>
-      <div class="per">رقم الحساب: ${c.id} &nbsp;|&nbsp; الفترة: ${period}</div>
+      <div class="per">${c.id ? 'رقم الحساب: '+c.id+' &nbsp;|&nbsp; ' : ''}الفترة: ${period}</div>
     </div>
     <div class="ptw">
       <table class="pt">
