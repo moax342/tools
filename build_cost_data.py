@@ -2,17 +2,31 @@
 """
 Rebuild the encrypted cost table embedded in profit_analyzer.html.
 
-The product cost list must not be readable by anyone who views the page
-source or browses this repository, so it ships as AES-256-GCM ciphertext.
-The key is derived from a passphrase with PBKDF2-HMAC-SHA256; the passphrase
-itself is NEVER stored in this repository -- it is supplied at build time and
-typed by the user in the browser.
+The page calculates without asking for anything, so it must be able to
+decrypt the cost list on its own. Two separate secrets are therefore built
+in, and they protect different things:
+
+  1. A random AES-256 data key, embedded in the page, encrypting the product
+     list (AES-GCM). This keeps product names, codes and costs out of the
+     page source, out of `view-source`, out of Ctrl+F and out of this
+     repository -- everything on disk is ciphertext. It does NOT hide the
+     list from someone who runs JavaScript in the page: the key sits beside
+     the data, so devtools can recover it. That is inherent to a page that
+     decrypts unattended, not a flaw in the build.
+
+  2. The Settings passphrase, stored ONLY as a PBKDF2-HMAC-SHA256 hash with
+     its own random salt. The passphrase itself is never written to the page
+     or to this repository, so reading the file cannot reveal it. It gates
+     the panel that views and edits costs. Being a client-side check, a
+     determined user can step around it; it stops casual access, not an
+     attacker.
 
 Usage:
     PROFIT_COST_PASSPHRASE='...' python3 build_cost_data.py path/to/Cost.xlsx
 
-The .xlsx needs a product name, an internal reference and a cost column
-(Arabic or English headers); a product category column is optional.
+PROFIT_COST_PASSPHRASE is the Settings passphrase. The .xlsx needs a product
+name, an internal reference and a cost column (Arabic or English headers); a
+product category column is optional.
 """
 
 import base64
@@ -104,22 +118,30 @@ def main():
         raise SystemExit(__doc__)
     items = read_products(sys.argv[1])
 
-    passphrase = os.environ.get("PROFIT_COST_PASSPHRASE") or getpass.getpass("Passphrase: ")
+    passphrase = os.environ.get("PROFIT_COST_PASSPHRASE") or getpass.getpass("Settings passphrase: ")
     if not passphrase:
-        raise SystemExit("A passphrase is required.")
+        raise SystemExit("A Settings passphrase is required.")
 
-    plaintext = json.dumps({"v": 1, "items": items}, ensure_ascii=False,
+    plaintext = json.dumps({"v": 2, "items": items}, ensure_ascii=False,
                            separators=(",", ":")).encode("utf-8")
 
-    salt = os.urandom(16)
+    # 1. Random data key, embedded so the page can decrypt unattended.
+    data_key = os.urandom(32)
     iv = os.urandom(12)
-    key = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt,
-                     iterations=ITERATIONS).derive(passphrase.encode("utf-8"))
-    ciphertext = AESGCM(key).encrypt(iv, plaintext, None)
+    ciphertext = AESGCM(data_key).encrypt(iv, plaintext, None)
+
+    # 2. Verifier for the Settings passphrase. Only the hash ships.
+    gate_salt = os.urandom(16)
+    gate_hash = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=gate_salt,
+                           iterations=ITERATIONS).derive(passphrase.encode("utf-8"))
 
     b64 = lambda b: base64.b64encode(b).decode("ascii")
-    blob = {"v": 1, "kdf": "PBKDF2-SHA256", "it": ITERATIONS, "cipher": "AES-GCM",
-            "salt": b64(salt), "iv": b64(iv), "ct": b64(ciphertext), "count": len(items)}
+    blob = {
+        "v": 2, "cipher": "AES-GCM", "count": len(items),
+        "key": b64(data_key), "iv": b64(iv), "ct": b64(ciphertext),
+        "gate": {"kdf": "PBKDF2-SHA256", "it": ITERATIONS,
+                 "salt": b64(gate_salt), "hash": b64(gate_hash)},
+    }
 
     block = "%s\nvar COST_BLOB = %s;\n%s" % (
         MARK_START, json.dumps(blob, indent=0).replace("\n", ""), MARK_END)
@@ -135,7 +157,8 @@ def main():
 
     print("Embedded %d products (%d KB of ciphertext) into %s"
           % (len(items), len(blob["ct"]) // 1024, os.path.basename(TARGET)))
-    print("The passphrase is not stored anywhere in this repository.")
+    print("The Settings passphrase ships only as a PBKDF2 hash; the passphrase")
+    print("itself is not stored in this repository.")
 
 
 if __name__ == "__main__":
