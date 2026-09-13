@@ -1,0 +1,1943 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<!--
+  Content Security Policy (OWASP A05 – Security Misconfiguration).
+  The page needs 'unsafe-inline' for its own inline <style>/<script> blocks, but
+  everything else is locked down. Most importantly connect-src 'none' means that
+  even if a crafted spreadsheet managed to inject script, it has no channel to
+  send your cost or sales data anywhere. All processing stays in the browser.
+  When serving this suite over HTTP, also send these as real response headers
+  together with X-Content-Type-Options: nosniff and X-Frame-Options: DENY
+  (frame-ancestors is ignored in a <meta> CSP).
+-->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"/>
+<meta name="referrer" content="no-referrer"/>
+<title>Profit Analyzer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<!--
+  Subresource Integrity (OWASP A08 – Software and Data Integrity Failures).
+  The hash pins the exact byte content of SheetJS 0.18.5; if the CDN ever serves
+  a different file the browser refuses to run it. To regenerate after a version
+  bump:  curl -s <url> | openssl dgst -sha512 -binary | openssl base64 -A
+-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"
+        integrity="sha512-r22gChDnGvBylk90+2e/ycr3RVrDi8DIOkIGNhJlKfuyQM4tIRAI062MaV8sfjQKYVGjOBaZBOA87z+IhZE9DA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --bg2: #1a1d27;
+    --bg3: #22263a;
+    --bg4: #2d3149;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #e8eaf6;
+    --text2: #9fa3c0;
+    --text3: #6b6f8a;
+    --accent: #5c7cfa;
+    --accent2: #4263d0;
+    --green: #40c57a;
+    --green-bg: rgba(64,197,122,0.12);
+    --red: #f06060;
+    --red-bg: rgba(240,96,96,0.12);
+    --amber: #f0a040;
+    --amber-bg: rgba(240,160,64,0.12);
+    --teal: #3ecfb8;
+    --teal-bg: rgba(62,207,184,0.12);
+    --radius: 10px;
+    --radius-sm: 6px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+  [data-theme="light"] {
+    --bg: #f0f2f9;
+    --bg2: #ffffff;
+    --bg3: #f5f6fc;
+    --bg4: #eaecf8;
+    --border: rgba(0,0,0,0.07);
+    --border2: rgba(0,0,0,0.13);
+    --text: #1a1d30;
+    --text2: #52567a;
+    --text3: #9094b0;
+    --accent: #4263d0;
+    --accent2: #3352b0;
+    --green: #1a9951;
+    --green-bg: rgba(26,153,81,0.10);
+    --red: #d03030;
+    --red-bg: rgba(208,48,48,0.10);
+    --amber: #c07000;
+    --amber-bg: rgba(192,112,0,0.10);
+    --teal: #0d9e89;
+    --teal-bg: rgba(13,158,137,0.10);
+    --shadow: 0 4px 24px rgba(0,0,0,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background 0.3s, color 0.3s;
+  }
+  body.rtl { direction: rtl; }
+
+  header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 28px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; letter-spacing: -0.3px; color: var(--text); }
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: var(--accent);
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 16px;
+  }
+  .header-actions { display: flex; align-items: center; gap: 10px; }
+  .btn-icon {
+    width: 36px; height: 36px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border2);
+    background: var(--bg3);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text2); font-size: 16px;
+    transition: all 0.15s;
+  }
+  .btn-icon:hover { background: var(--bg4); color: var(--text); }
+  .btn-lang {
+    height: 36px; padding: 0 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border2);
+    background: var(--bg3);
+    cursor: pointer; color: var(--text2);
+    font-size: 13px; font-weight: 600;
+    transition: all 0.15s;
+  }
+  .btn-lang:hover { background: var(--bg4); color: var(--text); }
+
+  main { padding: 28px; max-width: 1500px; margin: 0 auto; }
+
+  /* ---------- Upload ---------- */
+  .upload-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 18px;
+    margin-bottom: 20px;
+  }
+  .upload-zone {
+    border: 2px dashed var(--border2);
+    border-radius: var(--radius);
+    padding: 36px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--bg2);
+  }
+  .upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: var(--bg3); }
+  .upload-zone.loaded { border-style: solid; border-color: var(--green); background: var(--green-bg); }
+  .upload-icon { font-size: 40px; margin-bottom: 12px; }
+  .upload-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+  .upload-sub { font-size: 13px; color: var(--text2); }
+  .upload-hint { font-size: 12px; color: var(--text3); margin-top: 8px; }
+  .upload-file { font-size: 12px; color: var(--green); margin-top: 10px; font-weight: 600; word-break: break-all; }
+  .upload-step {
+    display: inline-block; font-size: 11px; font-weight: 700;
+    color: var(--accent); background: var(--bg4);
+    padding: 2px 10px; border-radius: 20px; margin-bottom: 12px;
+    letter-spacing: 0.4px;
+  }
+  input[type="file"] { display: none; }
+
+  .btn-primary {
+    height: 44px; padding: 0 28px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: var(--accent);
+    color: #fff; font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .btn-primary:hover:not(:disabled) { background: var(--accent2); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .analyze-row { text-align: center; margin-top: 8px; }
+
+  /* ---------- Alerts ---------- */
+  .alert {
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    font-size: 13px;
+    margin-bottom: 14px;
+    line-height: 1.7;
+    border: 1px solid transparent;
+  }
+  .alert-err { background: var(--red-bg); color: var(--red); border-color: var(--red); }
+  .alert-warn { background: var(--amber-bg); color: var(--amber); border-color: var(--amber); }
+  .alert-info { background: var(--teal-bg); color: var(--teal); border-color: var(--teal); }
+  .alert b { font-weight: 700; }
+  .alert code {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    background: rgba(128,128,128,0.18);
+    padding: 1px 5px; border-radius: 4px; font-size: 12px;
+  }
+
+  /* ---------- Stats ---------- */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+  }
+  .stat-label { font-size: 11px; color: var(--text3); margin-bottom: 6px; letter-spacing: 0.3px; text-transform: uppercase; }
+  .stat-value { font-size: 21px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+  .stat-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+  .stat-value.green { color: var(--green); }
+  .stat-value.red { color: var(--red); }
+  .stat-value.accent { color: var(--accent); }
+  .stat-value.amber { color: var(--amber); }
+  .stat-value.teal { color: var(--teal); }
+
+  /* ---------- Controls ---------- */
+  .controls-row { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
+  .search-box { flex: 1; min-width: 220px; position: relative; }
+  .search-box input {
+    width: 100%; height: 38px;
+    padding: 0 14px 0 38px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border2);
+    background: var(--bg2); color: var(--text);
+    font-size: 14px; outline: none; transition: border 0.15s;
+  }
+  .search-box input:focus { border-color: var(--accent); }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 16px; pointer-events: none; }
+  body.rtl .search-box input { padding: 0 38px 0 14px; }
+  body.rtl .search-icon { left: auto; right: 12px; }
+
+  .filter-btn {
+    height: 38px; padding: 0 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border2);
+    background: var(--bg2); cursor: pointer;
+    color: var(--text2); font-size: 13px; font-weight: 500;
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .filter-btn:hover { background: var(--bg3); }
+  .filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .filter-group { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+
+  .btn-excel {
+    background: linear-gradient(135deg, #1a6e3c, #217346) !important;
+    border-color: #1a6e3c !important; color: #fff !important;
+    font-weight: 700 !important; letter-spacing: 0.3px;
+    box-shadow: 0 2px 8px rgba(26,110,60,0.35); transition: all 0.2s !important;
+  }
+  .btn-excel:hover { background: linear-gradient(135deg, #217346, #2a9059) !important; box-shadow: 0 4px 16px rgba(26,110,60,0.5) !important; transform: translateY(-1px); }
+  .btn-print {
+    background: linear-gradient(135deg, #7c3aed, #5b21b6) !important;
+    border-color: #7c3aed !important; color: #fff !important;
+    font-weight: 700 !important; letter-spacing: 0.3px;
+    box-shadow: 0 2px 8px rgba(124,58,237,0.35); transition: all 0.2s !important;
+  }
+  .btn-print:hover { background: linear-gradient(135deg, #8b5cf6, #7c3aed) !important; box-shadow: 0 4px 16px rgba(124,58,237,0.5) !important; transform: translateY(-1px); }
+
+  /* ---------- Salesperson picker ---------- */
+  .sp-panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 18px;
+  }
+  .sp-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .sp-title { font-size: 13px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.4px; }
+  .sp-actions { display: flex; gap: 6px; }
+  .sp-mini {
+    height: 28px; padding: 0 10px; font-size: 12px; font-weight: 600;
+    border-radius: var(--radius-sm); border: 1px solid var(--border2);
+    background: var(--bg3); color: var(--text2); cursor: pointer;
+  }
+  .sp-mini:hover { background: var(--bg4); color: var(--text); }
+  .sp-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .sp-chip {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 14px;
+    border-radius: 30px;
+    border: 1px solid var(--border2);
+    background: var(--bg3);
+    cursor: pointer; font-size: 13px; color: var(--text2);
+    transition: all 0.15s; user-select: none;
+  }
+  .sp-chip:hover { background: var(--bg4); }
+  .sp-chip.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .sp-chip .sp-amt { font-size: 11px; opacity: 0.8; font-variant-numeric: tabular-nums; }
+  .sp-chip .sp-box {
+    width: 15px; height: 15px; border-radius: 4px;
+    border: 1.5px solid currentColor; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 10px;
+  }
+
+  /* ---------- Tabs ---------- */
+  .tabs { display: flex; gap: 4px; margin-bottom: 18px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .tab {
+    padding: 10px 18px; font-size: 14px; font-weight: 600;
+    color: var(--text3); background: none; border: none;
+    border-bottom: 2px solid transparent; cursor: pointer; transition: all 0.15s;
+  }
+  .tab:hover { color: var(--text2); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ---------- Table ---------- */
+  .table-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead { background: var(--bg3); }
+  thead th {
+    padding: 12px 14px; font-size: 11px; font-weight: 600;
+    color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px;
+    text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap;
+  }
+  body.rtl thead th { text-align: right; }
+  thead th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  body.rtl thead th.num, body.rtl td.num { text-align: left; }
+  thead th.sortable { cursor: pointer; user-select: none; }
+  thead th.sortable:hover { color: var(--text2); background: var(--bg4); }
+  thead th.sort-active { color: var(--accent) !important; }
+  .sort-arrow { display: inline-block; margin-left: 4px; font-size: 10px; opacity: 0.4; }
+  .sort-arrow.active { opacity: 1; color: var(--accent); }
+  body.rtl .sort-arrow { margin-left: 0; margin-right: 4px; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--bg3); }
+  tbody tr.row-warn { background: var(--amber-bg); }
+  tbody tr.row-warn:hover { background: var(--amber-bg); filter: brightness(1.1); }
+  td { padding: 11px 14px; font-size: 13.5px; color: var(--text); vertical-align: middle; }
+  tfoot td {
+    padding: 13px 14px; font-size: 14px; font-weight: 700;
+    background: var(--bg3); border-top: 2px solid var(--border2); color: var(--text);
+  }
+  .p-name { font-weight: 600; font-size: 13.5px; }
+  .p-code { font-size: 11px; color: var(--text3); margin-top: 2px; font-family: ui-monospace, Menlo, Consolas, monospace; }
+  /* Numbers keep a left-to-right run in both languages: without this the
+     minus sign of a negative figure is reordered to the wrong end in RTL. */
+  td.num, tfoot td.num, .amount, .stat-value, .bar-val, .mover-val, .p-code, .sp-amt {
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
+  /* Mixed Arabic/English names follow their own direction, whichever UI
+     language is active. */
+  .p-name, .mover-name, .bar-label, .sp-chip .sp-name, td.bidi, .cmp-table th.num {
+    unicode-bidi: plaintext;
+  }
+  .amount { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .amount.positive { color: var(--green); }
+  .amount.negative { color: var(--red); }
+  .amount.zero { color: var(--text3); }
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 8px; border-radius: 20px;
+    font-size: 11px; font-weight: 600; white-space: nowrap;
+  }
+  .badge-green { background: var(--green-bg); color: var(--green); }
+  .badge-red { background: var(--red-bg); color: var(--red); }
+  .badge-amber { background: var(--amber-bg); color: var(--amber); }
+  .badge-gray { background: var(--bg4); color: var(--text3); }
+  .empty { text-align: center; padding: 60px 20px; color: var(--text3); font-size: 15px; }
+
+  /* ---------- Charts ---------- */
+  .panel-grid { display: grid; grid-template-columns: 1fr; gap: 18px; margin-bottom: 22px; }
+  @media (min-width: 880px) { .panel-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .panel { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
+  .panel-title { font-size: 13px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 16px; }
+  .bar-row { margin-bottom: 13px; }
+  .bar-head { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; margin-bottom: 5px; }
+  .bar-label { color: var(--text2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar-val { font-weight: 700; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+  .bar-track { height: 9px; background: var(--bg4); border-radius: 20px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 20px; transition: width 0.4s ease; }
+  .bar-fill.pos { background: linear-gradient(90deg, var(--teal), var(--green)); }
+  .bar-fill.neg { background: linear-gradient(90deg, var(--red), var(--amber)); }
+  body.rtl .bar-fill { float: right; }
+
+  .mover { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .mover:last-child { border-bottom: none; }
+  .mover-name { font-size: 13px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mover-meta { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .mover-val { font-weight: 700; font-size: 13.5px; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+
+  /* ---------- Comparison ---------- */
+  .cmp-wrap { overflow-x: auto; }
+  .cmp-table th.metric, .cmp-table td.metric { font-weight: 700; color: var(--text2); white-space: nowrap; }
+
+  @media (max-width: 760px) {
+    main { padding: 16px; }
+    header { padding: 0 14px; }
+    .logo span { display: none; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    td, thead th { padding: 9px 10px; font-size: 12.5px; }
+  }
+
+  /* ---------- Print ---------- */
+  #print-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6); z-index: 1000;
+    align-items: center; justify-content: center;
+  }
+  #print-overlay.show { display: flex; }
+  #print-frame {
+    background: #fff; color: #111; border-radius: var(--radius);
+    padding: 32px; width: 94vw; max-width: 1040px; max-height: 88vh;
+    overflow-y: auto; position: relative;
+  }
+  #print-frame h2 { font-size: 18px; font-weight: 700; margin-bottom: 6px; color: #111; }
+  #print-frame .print-meta { font-size: 12px; color: #666; margin-bottom: 18px; }
+  #print-frame .print-header {
+    display: flex; align-items: center; gap: 18px;
+    margin-bottom: 18px; padding-bottom: 16px; border-bottom: 2px solid #5B5EA6;
+  }
+  #print-frame .print-logo { width: 72px; height: 72px; object-fit: contain; flex-shrink: 0; }
+  #print-frame .print-header-text { flex: 1; }
+  #print-frame.rtl { direction: rtl; }
+  #print-frame.rtl .print-header { flex-direction: row-reverse; text-align: right; }
+  #print-frame table { width: 100%; border-collapse: collapse; font-size: 12.5px; border: 2px solid #3f4282; margin-bottom: 18px; }
+  #print-frame thead th {
+    background: #1a1d27; color: #e8eaf6; padding: 9px 10px;
+    text-align: left; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.4px; border: 1px solid #3f4282;
+  }
+  #print-frame.rtl thead th { text-align: right; }
+  #print-frame tbody tr:nth-child(even) { background: #f5f6fc; }
+  #print-frame tbody td { padding: 8px 10px; border: 1px solid #d0d2e8; color: #222; }
+  #print-frame tfoot td { padding: 9px 10px; border: 1px solid #3f4282; background: #eaecf8; font-weight: 700; }
+  #print-frame td.bidi { unicode-bidi: plaintext; }
+  #print-frame td:not(.bidi), #print-frame tfoot td { direction: ltr; unicode-bidi: isolate; }
+  #print-frame .pos { color: #1a7f4b; font-weight: 700; }
+  #print-frame .neg { color: #c02626; font-weight: 700; }
+  #print-frame .print-actions { display: flex; gap: 10px; margin-bottom: 20px; }
+  #print-frame .print-actions button {
+    height: 36px; padding: 0 16px; border-radius: 6px; border: 1px solid #ccd;
+    background: #f0f2f9; cursor: pointer; font-size: 13px; font-weight: 600; color: #333;
+  }
+  #print-frame .print-actions .btn-doit { background: #4263d0; color: #fff; border-color: #4263d0; }
+  #print-frame .print-actions .btn-doit:hover { background: #3352b0; }
+  #print-frame .print-actions button:hover { background: #e0e2ef; }
+  #print-frame .print-summary { display: flex; gap: 14px; margin-bottom: 20px; flex-wrap: wrap; }
+  #print-frame .ps-card { background: #f0f2f9; border-radius: 8px; padding: 10px 16px; min-width: 120px; }
+  #print-frame .ps-label { font-size: 10px; color: #777; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 3px; }
+  #print-frame .ps-val { font-size: 17px; font-weight: 700; color: #111; }
+  #print-frame .print-section-title { font-size: 14px; font-weight: 700; margin: 18px 0 10px; color: #3f4282; }
+
+  @media print {
+    body > * { display: none !important; }
+    #print-overlay { display: block !important; position: static !important; background: none !important; }
+    #print-frame { max-height: none; overflow: visible; box-shadow: none; width: 100%; border-radius: 0; padding: 0; }
+    #print-frame .print-actions { display: none !important; }
+  }
+</style>
+</head>
+<body data-theme="dark" class="rtl">
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">💰</div>
+    <span id="app-title">Profit Analyzer</span>
+  </div>
+  <div class="header-actions">
+    <a href="index.html" class="btn-lang" style="text-decoration:none;display:flex;align-items:center;" id="btn-home">🏠 الرئيسية</a>
+    <button class="btn-lang" id="lang-btn" type="button">AR / عر</button>
+    <button class="btn-icon" id="theme-btn" type="button" title="Toggle theme">🌙</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ UPLOAD ============ -->
+  <section id="upload-section">
+    <div id="upload-alerts"></div>
+
+    <div class="upload-grid">
+      <div class="upload-zone" id="zone-cost" tabindex="0" role="button">
+        <div class="upload-step" id="uz-step1">STEP 1</div>
+        <div class="upload-icon">🏷️</div>
+        <div class="upload-title" id="uz-cost-title">Cost file</div>
+        <div class="upload-sub" id="uz-cost-sub">Product name, internal code, cost, category</div>
+        <div class="upload-hint" id="uz-cost-hint">Click or drop an .xlsx file</div>
+        <div class="upload-file" id="uz-cost-file"></div>
+      </div>
+
+      <div class="upload-zone" id="zone-sales" tabindex="0" role="button">
+        <div class="upload-step" id="uz-step2">STEP 2</div>
+        <div class="upload-icon">🧾</div>
+        <div class="upload-title" id="uz-sales-title">Sales file</div>
+        <div class="upload-sub" id="uz-sales-sub">Sales per salesperson → category → product</div>
+        <div class="upload-hint" id="uz-sales-hint">Click or drop an .xlsx file</div>
+        <div class="upload-file" id="uz-sales-file"></div>
+      </div>
+    </div>
+
+    <input type="file" id="file-cost" accept=".xlsx,.xls,.xlsm,.csv"/>
+    <input type="file" id="file-sales" accept=".xlsx,.xls,.xlsm,.csv"/>
+
+    <div class="analyze-row">
+      <button class="btn-primary" id="btn-analyze" type="button" disabled>Calculate profit</button>
+    </div>
+  </section>
+
+  <!-- ============ RESULTS ============ -->
+  <section id="data-section" style="display:none;">
+    <div id="data-alerts"></div>
+
+    <!-- Salesperson picker -->
+    <div class="sp-panel">
+      <div class="sp-head">
+        <div class="sp-title" id="sp-title">Salespeople</div>
+        <div class="sp-actions">
+          <button class="sp-mini" id="sp-all" type="button">All</button>
+          <button class="sp-mini" id="sp-none" type="button">None</button>
+        </div>
+      </div>
+      <div class="sp-list" id="sp-list"></div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row" id="stats-row"></div>
+
+    <!-- Charts / movers -->
+    <div class="panel-grid" id="panel-grid"></div>
+
+    <!-- Controls -->
+    <div class="controls-row">
+      <div class="search-box">
+        <span class="search-icon">🔎</span>
+        <input type="text" id="search" autocomplete="off" spellcheck="false" placeholder="Search product, code or category…"/>
+      </div>
+      <div class="filter-group">
+        <button class="filter-btn" id="f-profit" type="button">Profitable</button>
+        <button class="filter-btn" id="f-loss" type="button">Loss-making</button>
+        <button class="filter-btn" id="f-nocost" type="button">No cost</button>
+        <button class="filter-btn" id="f-active" type="button">Moved only</button>
+      </div>
+      <div class="filter-group">
+        <button class="filter-btn" id="btn-new" type="button">New files</button>
+        <button class="filter-btn btn-excel" id="btn-export" type="button">⬇ Excel</button>
+        <button class="filter-btn btn-print" id="btn-print" type="button">🖨 Print</button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-view="product" type="button">By product</button>
+      <button class="tab" data-view="category" type="button">By category</button>
+      <button class="tab" data-view="person" type="button">By salesperson</button>
+      <button class="tab" data-view="compare" type="button">Comparison</button>
+    </div>
+
+    <div id="view-body"></div>
+  </section>
+
+</main>
+
+<!-- Print overlay -->
+<div id="print-overlay">
+  <div id="print-frame">
+    <div class="print-actions">
+      <button class="btn-doit" id="pf-print" type="button">🖨 Print</button>
+      <button id="pf-close" type="button">✕ Close</button>
+    </div>
+    <div id="print-content"></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+(function () {
+
+/* =========================================================================
+   SECURITY BASELINE  (OWASP Top 10, client-side single-page tool)
+
+   A01 Broken Access Control    – no server, no session, no shared storage. The
+                                  files never leave the browser tab; nothing is
+                                  written to localStorage except the UI's
+                                  language/theme preference.
+   A02 Cryptographic Failures   – no secrets handled; the suite should be served
+                                  over HTTPS/HSTS so the CDN + page can't be
+                                  tampered with in transit.
+   A03 Injection (XSS)          – every value taken from a spreadsheet is passed
+                                  through esc() before it reaches innerHTML, and
+                                  no inline event handlers are used. Excel export
+                                  neutralises formula injection (=,+,-,@,CR,TAB).
+   A04 Insecure Design          – explicit limits on file size, row count and
+                                  file type; parsing fails closed with a readable
+                                  error instead of half-built results.
+   A05 Misconfiguration         – CSP meta above; connect-src 'none' blocks any
+                                  exfiltration channel; no eval / new Function.
+   A06 Vulnerable Components    – single dependency (SheetJS) pinned to an exact
+                                  version and verified with SRI. Parsed with
+                                  header:1 so rows come back as plain arrays, and
+                                  Object.prototype is checked after every parse
+                                  (defence against CVE-2023-30533-style
+                                  prototype pollution via a crafted workbook).
+   A07 Auth Failures            – not applicable, no authentication surface.
+   A08 Integrity Failures       – SRI hash pins the CDN bundle byte-for-byte.
+   A09 Logging Failures         – no file contents are ever written to the
+                                  console or to any network endpoint.
+   A10 SSRF                     – the page never fetches a user-supplied URL.
+   ========================================================================= */
+
+var MAX_BYTES = 20 * 1024 * 1024;   // 20 MB per file
+var MAX_ROWS  = 100000;             // rows scanned per sheet
+var ALLOWED_EXT = ['xlsx', 'xls', 'xlsm', 'csv'];
+var PROTO_SNAPSHOT = Object.getOwnPropertyNames(Object.prototype).sort().join('|');
+
+function esc(v) {
+  return String(v === null || v === undefined ? '' : v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+/* Fails closed if a crafted workbook managed to touch Object.prototype. */
+function assertCleanPrototype() {
+  if (Object.getOwnPropertyNames(Object.prototype).sort().join('|') !== PROTO_SNAPSHOT) {
+    throw new Error('PROTO_POLLUTION');
+  }
+}
+
+function validateFile(file) {
+  if (!file) throw new Error('NO_FILE');
+  if (file.size === 0) throw new Error('EMPTY_FILE');
+  if (file.size > MAX_BYTES) throw new Error('TOO_BIG');
+  var ext = (file.name.split('.').pop() || '').toLowerCase();
+  if (ALLOWED_EXT.indexOf(ext) === -1) throw new Error('BAD_TYPE');
+  return true;
+}
+
+/* Excel/CSV formula injection guard for exported text cells. */
+function safeCell(v) {
+  if (typeof v !== 'string') return v;
+  return /^[=+\-@\t\r]/.test(v) ? "'" + v : v;
+}
+
+/* =========================  i18n  ========================= */
+
+var T = {
+  en: {
+    appTitle: 'Profit Analyzer', home: '🏠 Home', langBtn: 'AR / عر',
+    step1: 'STEP 1', step2: 'STEP 2',
+    costTitle: 'Cost file', costSub: 'Product name, internal code, cost, category',
+    salesTitle: 'Sales file', salesSub: 'Sales per salesperson → category → product',
+    dropHint: 'Click or drop an .xlsx file',
+    analyze: 'Calculate profit', analyzing: 'Calculating…',
+    loadedRows: 'loaded', products: 'products', rows: 'rows',
+    spTitle: 'Salespeople', selAll: 'All', selNone: 'None',
+    search: 'Search product, code or category…',
+    fProfit: 'Profitable', fLoss: 'Loss-making', fNoCost: 'No cost', fActive: 'Moved only',
+    newFiles: 'New files', excel: '⬇ Excel', print: '🖨 Print',
+    tabProduct: 'By product', tabCategory: 'By category', tabPerson: 'By salesperson', tabCompare: 'Comparison',
+    stSales: 'Sales', stCost: 'Total cost', stProfit: 'Gross profit', stMargin: 'Margin',
+    stItems: 'Products', stQty: 'Quantity', stNoCost: 'Without cost',
+    colProduct: 'Product', colCategory: 'Category', colPerson: 'Salesperson',
+    colQty: 'Qty', colUnitCost: 'Unit cost', colTotalCost: 'Total cost',
+    colSales: 'Sales', colProfit: 'Gross profit', colMargin: 'Margin',
+    colItems: 'Items', colCats: 'Categories', colShare: 'Profit share',
+    total: 'Total', noResults: 'No matching rows',
+    chartCat: 'Gross profit by category', chartPerson: 'Gross profit by salesperson',
+    topItems: 'Most profitable products', bottomItems: 'Least profitable products',
+    multiPersons: 'salespeople', noCostBadge: 'no cost',
+    pickSomeone: 'Select at least one salesperson to see results.',
+    reportTitle: 'Profit report', generated: 'Generated', filterLabel: 'Salespeople',
+    warnNoCost: 'products in the sales file have no matching code in the cost file. They are counted at zero cost and highlighted in the table:',
+    warnDupes: 'duplicate internal codes in the cost file — the last row of each was used:',
+    errBadType: 'Unsupported file type. Upload .xlsx, .xls, .xlsm or .csv.',
+    errTooBig: 'File is larger than 20 MB. Please export a smaller range.',
+    errEmpty: 'That file is empty.',
+    errRead: 'The file could not be read. It may be corrupted or password-protected.',
+    errProto: 'This file was rejected for safety reasons (unexpected structure). Re-export it from your accounting system.',
+    errTooManyRows: 'The sheet has more than 100,000 rows. Please split it.',
+    errCostCols: 'Could not find the cost columns. The sheet needs a product name, an internal reference/code and a cost column (Arabic or English headers).',
+    errSalesRows: 'Could not find any product rows. The sales sheet should list products as "[CODE] product name" grouped under salesperson and category.',
+    errNoOverlap: 'None of the sold products matched a code in the cost file. Check that both files come from the same system.',
+    hintCost: 'Detected columns', hintSheet: 'Sheet'
+  },
+  ar: {
+    appTitle: 'محلل الأرباح', home: '🏠 الرئيسية', langBtn: 'EN',
+    step1: 'الخطوة ١', step2: 'الخطوة ٢',
+    costTitle: 'ملف التكلفة', costSub: 'اسم المنتج والرمز الداخلي والتكلفة والفئة',
+    salesTitle: 'ملف المبيعات', salesSub: 'المبيعات حسب المندوب ← الفئة ← المنتج',
+    dropHint: 'انقر أو اسحب ملف Excel هنا',
+    analyze: 'احسب الربح', analyzing: 'جاري الحساب…',
+    loadedRows: 'تم التحميل', products: 'منتج', rows: 'سطر',
+    spTitle: 'المندوبون', selAll: 'الكل', selNone: 'لا أحد',
+    search: 'ابحث عن منتج أو رمز أو فئة…',
+    fProfit: 'رابحة', fLoss: 'خاسرة', fNoCost: 'بدون تكلفة', fActive: 'المتحركة فقط',
+    newFiles: 'ملفات جديدة', excel: '⬇ إكسل', print: '🖨 طباعة',
+    tabProduct: 'حسب المنتج', tabCategory: 'حسب الفئة', tabPerson: 'حسب المندوب', tabCompare: 'مقارنة',
+    stSales: 'المبيعات', stCost: 'إجمالي التكلفة', stProfit: 'إجمالي الربح', stMargin: 'نسبة الربح',
+    stItems: 'المنتجات', stQty: 'الكمية', stNoCost: 'بدون تكلفة',
+    colProduct: 'المنتج', colCategory: 'الفئة', colPerson: 'المندوب',
+    colQty: 'الكمية', colUnitCost: 'تكلفة الوحدة', colTotalCost: 'إجمالي التكلفة',
+    colSales: 'المبيعات', colProfit: 'إجمالي الربح', colMargin: 'نسبة الربح',
+    colItems: 'الأصناف', colCats: 'الفئات', colShare: 'حصة الربح',
+    total: 'الإجمالي', noResults: 'لا توجد نتائج مطابقة',
+    chartCat: 'الربح حسب الفئة', chartPerson: 'الربح حسب المندوب',
+    topItems: 'أعلى المنتجات ربحاً', bottomItems: 'أقل المنتجات ربحاً',
+    multiPersons: 'مندوبين', noCostBadge: 'بدون تكلفة',
+    pickSomeone: 'اختر مندوباً واحداً على الأقل لعرض النتائج.',
+    reportTitle: 'تقرير الأرباح', generated: 'تاريخ الإصدار', filterLabel: 'المندوبون',
+    warnNoCost: 'منتج في ملف المبيعات بدون رمز مطابق في ملف التكلفة. تم احتسابها بتكلفة صفر وتمييزها في الجدول:',
+    warnDupes: 'رمز داخلي مكرر في ملف التكلفة — تم اعتماد آخر سطر لكل منها:',
+    errBadType: 'نوع ملف غير مدعوم. الرجاء رفع ملف ‎.xlsx أو ‎.xls أو ‎.xlsm أو ‎.csv.',
+    errTooBig: 'حجم الملف أكبر من ٢٠ ميغابايت. الرجاء تصدير نطاق أصغر.',
+    errEmpty: 'هذا الملف فارغ.',
+    errRead: 'تعذّرت قراءة الملف. قد يكون تالفاً أو محمياً بكلمة مرور.',
+    errProto: 'تم رفض هذا الملف لأسباب أمنية (بنية غير متوقعة). الرجاء إعادة تصديره من النظام المحاسبي.',
+    errTooManyRows: 'الورقة تحتوي أكثر من ١٠٠٬٠٠٠ سطر. الرجاء تقسيمها.',
+    errCostCols: 'تعذّر العثور على أعمدة التكلفة. يجب أن تحتوي الورقة على اسم المنتج والمرجع الداخلي والتكلفة (بالعربية أو الإنجليزية).',
+    errSalesRows: 'تعذّر العثور على أسطر المنتجات. يجب أن تظهر المنتجات بصيغة "[الرمز] اسم المنتج" ضمن المندوب والفئة.',
+    errNoOverlap: 'لم يطابق أي منتج مُباع رمزاً في ملف التكلفة. تأكد أن الملفين من نفس النظام.',
+    hintCost: 'الأعمدة المكتشفة', hintSheet: 'الورقة'
+  }
+};
+
+var LANG_KEY = 'hilalLang';
+var THEME_KEY = 'hilalTheme';
+var LANG_FALLBACKS = ['eastCrescentLang', 'hilalUnifiedLang'];
+var THEME_FALLBACKS = ['eastCrescentTheme', 'hilalUnifiedTheme'];
+
+function readStorage(key, fallbacks, def) {
+  try {
+    var v = localStorage.getItem(key);
+    if (v === 'ar' || v === 'en' || v === 'dark' || v === 'light') return v;
+    for (var i = 0; i < fallbacks.length; i++) {
+      var f = localStorage.getItem(fallbacks[i]);
+      if (f === 'ar' || f === 'en' || f === 'dark' || f === 'light') return f;
+    }
+  } catch (e) { /* storage disabled – fall through to default */ }
+  return def;
+}
+
+var lang = readStorage(LANG_KEY, LANG_FALLBACKS, 'ar');
+var isDark = readStorage(THEME_KEY, THEME_FALLBACKS, 'dark') !== 'light';
+
+function t(k) { return (T[lang] && T[lang][k]) || T.en[k] || k; }
+function isAr() { return lang === 'ar'; }
+
+/* =========================  helpers  ========================= */
+
+function $(id) { return document.getElementById(id); }
+
+var ARABIC_DIGITS = /[٠-٩۰-۹]/g;
+
+function num(v) {
+  if (v === null || v === undefined || v === '') return 0;
+  if (typeof v === 'number') return isFinite(v) ? v : 0;
+  var s = String(v).trim();
+  s = s.replace(ARABIC_DIGITS, function (d) {
+    var c = d.charCodeAt(0);
+    return String(c >= 0x06f0 ? c - 0x06f0 : c - 0x0660);
+  });
+  s = s.replace(/\u066b/g, '.').replace(/[\u066c\u060c,\s\u00a0'_]/g, '');
+  var neg = false;
+  if (/^\(.*\)$/.test(s)) { neg = true; s = s.slice(1, -1); }
+  if (/^[-−]/.test(s)) { neg = true; s = s.slice(1); }
+  s = s.replace(/[^0-9.]/g, '');
+  var n = parseFloat(s);
+  if (!isFinite(n)) return 0;
+  return neg ? -n : n;
+}
+
+/* Strips bidi control marks that Excel exports sprinkle into Arabic labels. */
+function clean(v) {
+  return String(v === null || v === undefined ? '' : v)
+    .replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069\u200b]/g, '');
+}
+
+function fmtMoney(n) {
+  if (n === null || n === undefined || !isFinite(n)) return '—';
+  return Math.round(n).toLocaleString('en-GB');
+}
+function fmtQty(n) {
+  if (n === null || n === undefined || !isFinite(n)) return '—';
+  return (Math.round(n * 100) / 100).toLocaleString('en-GB');
+}
+function fmtPct(n) {
+  if (n === null || n === undefined || !isFinite(n)) return '—';
+  return (Math.round(n * 10) / 10).toFixed(1) + '%';
+}
+function signClass(n) { return n > 0 ? 'positive' : (n < 0 ? 'negative' : 'zero'); }
+function margin(profit, sales) { return sales ? (profit / sales) * 100 : null; }
+
+function norm(s) {
+  return clean(s).toLowerCase()
+    .replace(/[\u064b-\u0652\u0640]/g, '')            // harakat + tatweel
+    .replace(/[\u0622\u0623\u0625\u0671]/g, '\u0627')  // alef variants
+    .replace(/\u0629/g, '\u0647')                        // ta marbuta
+    .replace(/[\u064a\u0649]/g, '\u064a')                // ya variants
+    .replace(/[^a-z0-9\u0600-\u06ff]+/g, ' ')
+    .trim();
+}
+
+function matchesAny(value, list) {
+  var v = norm(value);
+  if (!v) return false;
+  for (var i = 0; i < list.length; i++) {
+    if (v === list[i] || v.indexOf(list[i]) !== -1) return true;
+  }
+  return false;
+}
+
+/* =========================  file reading  ========================= */
+
+function readWorkbook(file) {
+  return new Promise(function (resolve, reject) {
+    validateFile(file);
+    var reader = new FileReader();
+    reader.onerror = function () { reject(new Error('READ')); };
+    reader.onload = function (e) {
+      try {
+        if (typeof XLSX === 'undefined' || !XLSX.read) { reject(new Error('LIB')); return; }
+        var wb = XLSX.read(new Uint8Array(e.target.result), {
+          type: 'array',
+          cellDates: false,
+          cellFormula: false,   // never keep formulas from an untrusted file
+          cellHTML: false,      // never let the parser build HTML for us
+          cellStyles: false,
+          sheetStubs: false
+        });
+        assertCleanPrototype();
+        resolve(wb);
+      } catch (err) {
+        reject(err && err.message === 'PROTO_POLLUTION' ? err : new Error('READ'));
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function sheetRows(ws) {
+  var rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null, blankrows: true });
+  assertCleanPrototype();
+  if (rows.length > MAX_ROWS) throw new Error('TOO_MANY_ROWS');
+  return rows;
+}
+
+/* =========================  cost file parser  ========================= */
+
+var COST_HEADERS = {
+  name: ['name', 'product', 'product name', 'item', 'description', 'اسم', 'اسم المنتج', 'المنتج', 'الصنف', 'البيان', 'اسم الصنف'],
+  ref:  ['internal reference', 'reference', 'internal ref', 'code', 'item code', 'product code', 'sku', 'default code',
+         'المرجع الداخلي', 'المرجع', 'الرمز', 'رمز المنتج', 'الكود', 'كود', 'رمز الصنف', 'رقم الصنف'],
+  cost: ['cost', 'unit cost', 'cost price', 'standard price', 'التكلفه', 'تكلفه', 'سعر التكلفه', 'الكلفه', 'كلفه', 'سعر الكلفه'],
+  cat:  ['product category', 'category', 'categ', 'group', 'product group', 'فئه المنتج', 'الفئه', 'فئه', 'التصنيف', 'المجموعه', 'مجموعه المنتج']
+};
+
+function findCostColumns(rows) {
+  var limit = Math.min(rows.length, 25);
+  for (var r = 0; r < limit; r++) {
+    var row = rows[r];
+    if (!row) continue;
+    var found = { name: -1, ref: -1, cost: -1, cat: -1 };
+    for (var c = 0; c < row.length; c++) {
+      var cell = row[c];
+      if (cell === null || cell === undefined || typeof cell === 'number') continue;
+      if (found.ref === -1 && matchesAny(cell, COST_HEADERS.ref)) { found.ref = c; continue; }
+      if (found.cat === -1 && matchesAny(cell, COST_HEADERS.cat)) { found.cat = c; continue; }
+      if (found.cost === -1 && matchesAny(cell, COST_HEADERS.cost)) { found.cost = c; continue; }
+      if (found.name === -1 && matchesAny(cell, COST_HEADERS.name)) { found.name = c; continue; }
+    }
+    if (found.ref !== -1 && found.cost !== -1) {
+      found.headerRow = r;
+      return found;
+    }
+  }
+  return null;
+}
+
+function parseCostWorkbook(wb) {
+  var best = null;
+  for (var i = 0; i < wb.SheetNames.length; i++) {
+    var ws = wb.Sheets[wb.SheetNames[i]];
+    if (!ws) continue;
+    var rows = sheetRows(ws);
+    var cols = findCostColumns(rows);
+    if (cols) { best = { rows: rows, cols: cols, sheet: wb.SheetNames[i] }; break; }
+  }
+  if (!best) throw new Error('COST_COLS');
+
+  var map = Object.create(null);       // null-prototype: no __proto__ surprises
+  var dupes = Object.create(null);
+  var count = 0;
+
+  for (var r = best.cols.headerRow + 1; r < best.rows.length; r++) {
+    var row = best.rows[r];
+    if (!row) continue;
+    var ref = clean(row[best.cols.ref]).trim();
+    if (!ref) continue;
+    var key = ref.toUpperCase();
+    if (map[key]) dupes[key] = (dupes[key] || 1) + 1;
+    map[key] = {
+      code: ref,
+      name: best.cols.name !== -1 ? clean(row[best.cols.name]).trim() : '',
+      cost: num(row[best.cols.cost]),
+      category: best.cols.cat !== -1 ? clean(row[best.cols.cat]).trim() : ''
+    };
+    count++;
+  }
+
+  if (!count) throw new Error('COST_COLS');
+
+  var dupeList = Object.keys(dupes);
+  return { map: map, count: count, unique: Object.keys(map).length, dupes: dupeList, sheet: best.sheet };
+}
+
+/* =========================  sales file parser  =========================
+   The sales export is a tree flattened into one column, where depth is encoded
+   as leading spaces:
+
+       الإجمالي                       <- grand total
+            ياسر علوان - جملة         <- salesperson
+                 عصائر                <- category
+                      [LY1] ...       <- product
+
+   Levels are derived from the data itself rather than hard-coded, so an export
+   without the grand-total row, or without the category level, still parses.
+   ---------------------------------------------------------------------- */
+
+var QTY_HEADERS = ['product quantity', 'quantity', 'qty', 'كميه المنتج', 'الكميه', 'كميه', 'عدد'];
+var AMT_HEADERS = ['amount after discount', 'amount', 'total amount', 'net amount', 'sales', 'turnover',
+                   'المبلغ بعد الخصم', 'المبلغ بعد الحسم', 'المبلغ', 'اجمالي المبلغ', 'المبيعات', 'صافي المبلغ'];
+var TOTAL_WORDS = ['الاجمالي', 'الاجمالى', 'المجموع', 'اجمالي', 'total', 'grand total', 'sum'];
+var CODE_RE = /^\[([^\]]{1,64})\]\s*([\s\S]*)$/;
+
+function findSalesLayout(rows) {
+  var limit = Math.min(rows.length, 25);
+  var layout = { label: 0, qty: -1, amt: -1, headerRow: -1 };
+
+  for (var r = 0; r < limit; r++) {
+    var row = rows[r];
+    if (!row) continue;
+    var qty = -1, amt = -1;
+    for (var c = 0; c < row.length; c++) {
+      var cell = row[c];
+      if (cell === null || cell === undefined || typeof cell === 'number') continue;
+      if (qty === -1 && matchesAny(cell, QTY_HEADERS)) { qty = c; continue; }
+      if (amt === -1 && matchesAny(cell, AMT_HEADERS)) { amt = c; continue; }
+    }
+    if (qty !== -1) {
+      layout.qty = qty;
+      layout.amt = amt !== -1 ? amt : (qty + 1);
+      layout.headerRow = r;
+      break;
+    }
+  }
+
+  // Fall back to the conventional layout: label | quantity | amount.
+  if (layout.qty === -1) { layout.qty = 1; layout.amt = 2; layout.headerRow = -1; }
+
+  // The label column is the first column that actually carries the tree.
+  var labelCol = -1;
+  for (var rr = layout.headerRow + 1; rr < rows.length && labelCol === -1; rr++) {
+    var rw = rows[rr];
+    if (!rw) continue;
+    for (var cc = 0; cc < rw.length; cc++) {
+      if (cc === layout.qty || cc === layout.amt) continue;
+      var v = rw[cc];
+      if (typeof v === 'string' && clean(v).trim()) { labelCol = cc; break; }
+    }
+  }
+  layout.label = labelCol === -1 ? 0 : labelCol;
+  return layout;
+}
+
+function parseSalesWorkbook(wb) {
+  var chosen = null;
+  for (var i = 0; i < wb.SheetNames.length; i++) {
+    var ws = wb.Sheets[wb.SheetNames[i]];
+    if (!ws) continue;
+    var rows = sheetRows(ws);
+    var layout = findSalesLayout(rows);
+    var entries = extractEntries(rows, layout);
+    var productish = 0;
+    for (var k = 0; k < entries.length; k++) if (CODE_RE.test(entries[k].label)) productish++;
+    if (productish > 0) { chosen = { entries: entries, sheet: wb.SheetNames[i], layout: layout }; break; }
+    if (!chosen && entries.length) chosen = { entries: entries, sheet: wb.SheetNames[i], layout: layout };
+  }
+  if (!chosen) throw new Error('SALES_ROWS');
+  var records = buildRecords(chosen.entries);
+  if (!records.length) throw new Error('SALES_ROWS');
+  return { records: records, sheet: chosen.sheet };
+}
+
+function extractEntries(rows, layout) {
+  var out = [];
+  for (var r = layout.headerRow + 1; r < rows.length; r++) {
+    var row = rows[r];
+    if (!row) continue;
+    var raw = row[layout.label];
+    if (raw === null || raw === undefined) continue;
+    var s = clean(raw);
+    var label = s.replace(/^[\s\u00a0]+/, '').trim();
+    if (!label) continue;
+    out.push({
+      indent: s.length - s.replace(/^[\s\u00a0]+/, '').length,
+      label: label,
+      qty: num(row[layout.qty]),
+      amt: num(row[layout.amt])
+    });
+  }
+  return out;
+}
+
+/* Turns the flat, indented entry list into product records carrying their
+   salesperson and category. */
+function buildRecords(entries) {
+  var i, e;
+
+  // 1. Products are the rows tagged with an internal code; if an export drops
+  //    the brackets, fall back to the deepest indentation level.
+  var coded = 0;
+  for (i = 0; i < entries.length; i++) if (CODE_RE.test(entries[i].label)) coded++;
+
+  var maxIndent = 0;
+  for (i = 0; i < entries.length; i++) if (entries[i].indent > maxIndent) maxIndent = entries[i].indent;
+
+  for (i = 0; i < entries.length; i++) {
+    e = entries[i];
+    e.isProduct = coded > 0 ? CODE_RE.test(e.label) : (e.indent === maxIndent && maxIndent > 0);
+  }
+
+  // 2. Drop the grand-total row(s) so they don't get mistaken for a salesperson.
+  var groupIndents = [];
+  var minGroupIndent = Infinity;
+  for (i = 0; i < entries.length; i++) {
+    if (!entries[i].isProduct && entries[i].indent < minGroupIndent) minGroupIndent = entries[i].indent;
+  }
+  for (i = 0; i < entries.length; i++) {
+    e = entries[i];
+    e.isTotal = !e.isProduct && e.indent === minGroupIndent && matchesAny(e.label, TOTAL_WORDS);
+  }
+
+  // 3. Rank the remaining group levels: deepest = category, next = salesperson.
+  var seen = Object.create(null);
+  for (i = 0; i < entries.length; i++) {
+    e = entries[i];
+    if (e.isProduct || e.isTotal) continue;
+    if (!seen[e.indent]) { seen[e.indent] = true; groupIndents.push(e.indent); }
+  }
+  groupIndents.sort(function (a, b) { return a - b; });
+
+  var catIndent = groupIndents.length ? groupIndents[groupIndents.length - 1] : null;
+  var personIndent = groupIndents.length > 1 ? groupIndents[groupIndents.length - 2] : null;
+
+  // 4. No indentation at all (some exporters strip it): infer from structure —
+  //    a group row directly followed by a product is a category, otherwise it
+  //    opens a salesperson.
+  var noIndent = groupIndents.length === 1 && maxIndent === 0;
+  if (noIndent) {
+    for (i = 0; i < entries.length; i++) {
+      e = entries[i];
+      if (e.isProduct || e.isTotal) continue;
+      var nextIsProduct = false;
+      for (var j = i + 1; j < entries.length; j++) {
+        if (entries[j].isTotal) continue;
+        nextIsProduct = entries[j].isProduct;
+        break;
+      }
+      e.level = nextIsProduct ? 'category' : 'person';
+    }
+  } else {
+    for (i = 0; i < entries.length; i++) {
+      e = entries[i];
+      if (e.isProduct || e.isTotal) continue;
+      if (personIndent !== null && e.indent === catIndent) e.level = 'category';
+      else if (personIndent !== null && e.indent === personIndent) e.level = 'person';
+      else if (personIndent === null && e.indent === catIndent) e.level = 'person';
+      else e.level = 'ignore';
+    }
+  }
+
+  // 5. Walk the list keeping the current salesperson / category in scope.
+  var records = [];
+  var person = '', category = '';
+  var unnamed = isAr() ? 'غير محدد' : 'Unspecified';
+
+  for (i = 0; i < entries.length; i++) {
+    e = entries[i];
+    if (e.isTotal) continue;
+    if (!e.isProduct) {
+      if (e.level === 'person') { person = e.label; category = ''; }
+      else if (e.level === 'category') { category = e.label; }
+      continue;
+    }
+    var m = CODE_RE.exec(e.label);
+    records.push({
+      code: m ? m[1].trim() : '',
+      name: m ? (m[2] || '').trim() : e.label,
+      person: person || unnamed,
+      category: category || unnamed,
+      qty: e.qty,
+      sales: e.amt
+    });
+  }
+  return records;
+}
+
+/* =========================  state  ========================= */
+
+var state = {
+  costFile: null, salesFile: null,
+  cost: null, sales: null,
+  records: [],            // one row per sold product, costed
+  persons: [],            // [{name, selected}]
+  unmatched: [],          // codes sold but absent from the cost file
+  dupes: [],
+  view: 'product',
+  search: '',
+  filters: Object.create(null),
+  sort: { product: { f: 'profit', d: -1 }, category: { f: 'profit', d: -1 }, person: { f: 'profit', d: -1 } }
+};
+
+function costRecords() {
+  var map = state.cost.map;
+  var unmatched = [];
+  var seenUnmatched = Object.create(null);
+
+  var out = state.sales.records.map(function (r) {
+    var key = r.code ? r.code.toUpperCase() : '';
+    var c = key ? map[key] : null;
+    var unitCost = c ? c.cost : 0;
+    var totalCost = unitCost * r.qty;
+    var profit = r.sales - totalCost;
+    if (!c && (r.qty !== 0 || r.sales !== 0)) {
+      if (!seenUnmatched[key || r.name]) {
+        seenUnmatched[key || r.name] = true;
+        unmatched.push(r.code || r.name);
+      }
+    }
+    return {
+      code: r.code, name: r.name || (c ? c.name : ''),
+      person: r.person, category: r.category,
+      costCategory: c ? c.category : '',
+      qty: r.qty, sales: r.sales,
+      unitCost: unitCost, totalCost: totalCost,
+      profit: profit, matched: !!c
+    };
+  });
+
+  state.unmatched = unmatched;
+  return out;
+}
+
+function selectedPersons() {
+  return state.persons.filter(function (p) { return p.selected; }).map(function (p) { return p.name; });
+}
+
+function activeRecords() {
+  var picked = Object.create(null);
+  selectedPersons().forEach(function (n) { picked[n] = true; });
+  var q = norm(state.search);
+  var f = state.filters;
+
+  return state.records.filter(function (r) {
+    if (!picked[r.person]) return false;
+    if (q) {
+      var hay = norm(r.name + ' ' + r.code + ' ' + r.category + ' ' + r.person);
+      if (hay.indexOf(q) === -1) return false;
+    }
+    if (state.view === 'product') {
+      if (f.profit && !(r.profit > 0)) return false;
+      if (f.loss && !(r.profit < 0)) return false;
+      if (f.nocost && r.matched) return false;
+      if (f.active && r.qty === 0 && r.sales === 0) return false;
+    }
+    return true;
+  });
+}
+
+function emptyAgg(extra) {
+  var o = { qty: 0, sales: 0, totalCost: 0, profit: 0, items: 0 };
+  if (extra) for (var k in extra) o[k] = extra[k];
+  return o;
+}
+
+function addTo(agg, r) {
+  agg.qty += r.qty; agg.sales += r.sales;
+  agg.totalCost += r.totalCost; agg.profit += r.profit;
+  agg.items++;
+}
+
+function groupBy(records, keyFn, seed) {
+  var map = Object.create(null);
+  var order = [];
+  records.forEach(function (r) {
+    var k = keyFn(r);
+    if (!map[k]) { map[k] = seed(r, k); order.push(k); }
+    addTo(map[k], r);
+    if (map[k].extend) map[k].extend(r);
+  });
+  return order.map(function (k) { return map[k]; });
+}
+
+function productRows(records) {
+  return groupBy(records, function (r) { return (r.code || r.name) + '|' + r.category; }, function (r, k) {
+    var g = emptyAgg({
+      key: k, code: r.code, name: r.name, category: r.category,
+      unitCost: r.unitCost, matched: r.matched,
+      persons: Object.create(null), personCount: 0, firstPerson: r.person
+    });
+    g.extend = function (rec) {
+      if (!g.persons[rec.person]) { g.persons[rec.person] = true; g.personCount++; }
+      if (!g.matched) g.matched = rec.matched;
+      if (!g.unitCost && rec.unitCost) g.unitCost = rec.unitCost;
+    };
+    return g;
+  });
+}
+
+function categoryRows(records) {
+  return groupBy(records, function (r) { return r.category; }, function (r, k) {
+    var g = emptyAgg({ key: k, name: k, products: Object.create(null), productCount: 0 });
+    g.extend = function (rec) {
+      var pk = rec.code || rec.name;
+      if (!g.products[pk]) { g.products[pk] = true; g.productCount++; }
+    };
+    return g;
+  });
+}
+
+function personRows(records) {
+  return groupBy(records, function (r) { return r.person; }, function (r, k) {
+    var g = emptyAgg({ key: k, name: k, cats: Object.create(null), catCount: 0, products: Object.create(null), productCount: 0 });
+    g.extend = function (rec) {
+      if (!g.cats[rec.category]) { g.cats[rec.category] = true; g.catCount++; }
+      var pk = rec.code || rec.name;
+      if (!g.products[pk]) { g.products[pk] = true; g.productCount++; }
+    };
+    return g;
+  });
+}
+
+function totals(rows) {
+  var tt = emptyAgg();
+  rows.forEach(function (r) {
+    tt.qty += r.qty; tt.sales += r.sales; tt.totalCost += r.totalCost;
+    tt.profit += r.profit; tt.items += (r.items || 0);
+  });
+  return tt;
+}
+
+function sortRows(rows, view) {
+  var s = state.sort[view];
+  if (!s) return rows;
+  var f = s.f, d = s.d;
+  return rows.slice().sort(function (a, b) {
+    var av, bv;
+    if (f === 'name') { av = norm(a.name); bv = norm(b.name); }
+    else if (f === 'margin') { av = margin(a.profit, a.sales); bv = margin(b.profit, b.sales); av = (av === null ? -Infinity : av); bv = (bv === null ? -Infinity : bv); }
+    else { av = a[f] || 0; bv = b[f] || 0; }
+    if (av < bv) return -1 * d;
+    if (av > bv) return 1 * d;
+    return 0;
+  });
+}
+
+/* =========================  rendering  ========================= */
+
+function renderAlerts(container, items) {
+  var el = $(container);
+  el.innerHTML = items.map(function (a) {
+    return '<div class="alert alert-' + esc(a.type) + '">' + a.html + '</div>';
+  }).join('');
+}
+
+function renderDataAlerts() {
+  var items = [];
+  if (state.unmatched.length) {
+    var list = state.unmatched.slice(0, 25).map(function (c) { return '<code>' + esc(c) + '</code>'; }).join(' ');
+    if (state.unmatched.length > 25) list += ' …';
+    items.push({ type: 'warn', html: '⚠️ <b>' + state.unmatched.length + '</b> ' + esc(t('warnNoCost')) + ' ' + list });
+  }
+  if (state.dupes.length) {
+    var d = state.dupes.slice(0, 25).map(function (c) { return '<code>' + esc(c) + '</code>'; }).join(' ');
+    if (state.dupes.length > 25) d += ' …';
+    items.push({ type: 'info', html: 'ℹ️ <b>' + state.dupes.length + '</b> ' + esc(t('warnDupes')) + ' ' + d });
+  }
+  renderAlerts('data-alerts', items);
+}
+
+function renderPersons() {
+  var counts = Object.create(null);
+  state.records.forEach(function (r) {
+    if (!counts[r.person]) counts[r.person] = { sales: 0, profit: 0 };
+    counts[r.person].sales += r.sales;
+    counts[r.person].profit += r.profit;
+  });
+  $('sp-list').innerHTML = state.persons.map(function (p, i) {
+    var c = counts[p.name] || { profit: 0 };
+    return '<button type="button" class="sp-chip' + (p.selected ? ' on' : '') + '" data-idx="' + i + '">' +
+      '<span class="sp-box">' + (p.selected ? '✓' : '') + '</span>' +
+      '<span class="sp-name">' + esc(p.name) + '</span>' +
+      '<span class="sp-amt">' + esc(fmtMoney(c.profit)) + '</span>' +
+    '</button>';
+  }).join('');
+}
+
+function statCard(label, value, cls, sub) {
+  return '<div class="stat-card">' +
+    '<div class="stat-label">' + esc(label) + '</div>' +
+    '<div class="stat-value ' + (cls || '') + '">' + esc(value) + '</div>' +
+    (sub ? '<div class="stat-sub">' + esc(sub) + '</div>' : '') +
+  '</div>';
+}
+
+function renderStats(records) {
+  var tt = emptyAgg();
+  var noCost = 0;
+  var prodKeys = Object.create(null), prodCount = 0;
+  records.forEach(function (r) {
+    tt.qty += r.qty; tt.sales += r.sales; tt.totalCost += r.totalCost; tt.profit += r.profit;
+    if (!r.matched) noCost++;
+    var k = r.code || r.name;
+    if (!prodKeys[k]) { prodKeys[k] = true; prodCount++; }
+  });
+  var m = margin(tt.profit, tt.sales);
+  $('stats-row').innerHTML =
+    statCard(t('stSales'), fmtMoney(tt.sales), 'accent') +
+    statCard(t('stCost'), fmtMoney(tt.totalCost), 'amber') +
+    statCard(t('stProfit'), fmtMoney(tt.profit), tt.profit >= 0 ? 'green' : 'red') +
+    statCard(t('stMargin'), fmtPct(m), tt.profit >= 0 ? 'green' : 'red') +
+    statCard(t('stQty'), fmtQty(tt.qty), 'teal') +
+    statCard(t('stItems'), String(prodCount), '', noCost ? noCost + ' ' + t('stNoCost') : '');
+}
+
+function barPanel(title, rows, limit) {
+  var top = rows.slice().sort(function (a, b) { return Math.abs(b.profit) - Math.abs(a.profit); }).slice(0, limit);
+  var max = 0;
+  top.forEach(function (r) { if (Math.abs(r.profit) > max) max = Math.abs(r.profit); });
+  var body = top.length ? top.map(function (r) {
+    var w = max ? (Math.abs(r.profit) / max) * 100 : 0;
+    return '<div class="bar-row">' +
+      '<div class="bar-head">' +
+        '<span class="bar-label" title="' + esc(r.name) + '">' + esc(r.name) + '</span>' +
+        '<span class="bar-val ' + (r.profit >= 0 ? 'amount positive' : 'amount negative') + '">' + esc(fmtMoney(r.profit)) + '</span>' +
+      '</div>' +
+      '<div class="bar-track"><div class="bar-fill ' + (r.profit >= 0 ? 'pos' : 'neg') + '" style="width:' + w.toFixed(2) + '%"></div></div>' +
+    '</div>';
+  }).join('') : '<div class="empty">' + esc(t('noResults')) + '</div>';
+  return '<div class="panel"><div class="panel-title">' + esc(title) + '</div>' + body + '</div>';
+}
+
+function moverPanel(title, rows, limit, worst) {
+  var sorted = rows.slice().sort(function (a, b) { return worst ? a.profit - b.profit : b.profit - a.profit; }).slice(0, limit);
+  var body = sorted.length ? sorted.map(function (r) {
+    var m = margin(r.profit, r.sales);
+    return '<div class="mover">' +
+      '<div style="min-width:0">' +
+        '<div class="mover-name" title="' + esc(r.name) + '">' + esc(r.name) + '</div>' +
+        '<div class="mover-meta">' + esc(r.code || r.category) + ' · ' + esc(fmtPct(m)) + '</div>' +
+      '</div>' +
+      '<div class="mover-val ' + (r.profit >= 0 ? 'amount positive' : 'amount negative') + '">' + esc(fmtMoney(r.profit)) + '</div>' +
+    '</div>';
+  }).join('') : '<div class="empty">' + esc(t('noResults')) + '</div>';
+  return '<div class="panel"><div class="panel-title">' + esc(title) + '</div>' + body + '</div>';
+}
+
+function renderPanels(records) {
+  var cats = categoryRows(records);
+  var people = personRows(records);
+  var prods = productRows(records);
+  $('panel-grid').innerHTML =
+    barPanel(t('chartCat'), cats, 10) +
+    barPanel(t('chartPerson'), people, 10) +
+    moverPanel(t('topItems'), prods, 6, false) +
+    moverPanel(t('bottomItems'), prods, 6, true);
+}
+
+function sortArrow(view, field) {
+  var s = state.sort[view];
+  var active = s && s.f === field;
+  return '<span class="sort-arrow' + (active ? ' active' : '') + '">' + (active ? (s.d === 1 ? '▲' : '▼') : '▲') + '</span>';
+}
+
+function th(view, field, label, isNum) {
+  return '<th class="sortable' + (isNum ? ' num' : '') +
+    (state.sort[view] && state.sort[view].f === field ? ' sort-active' : '') +
+    '" data-sort="' + esc(field) + '">' + esc(label) + sortArrow(view, field) + '</th>';
+}
+
+function moneyTd(n) {
+  return '<td class="num"><span class="amount ' + signClass(n) + '">' + esc(fmtMoney(n)) + '</span></td>';
+}
+
+function marginTd(profit, sales) {
+  var m = margin(profit, sales);
+  var cls = m === null ? 'badge-gray' : (m > 0 ? 'badge-green' : (m < 0 ? 'badge-red' : 'badge-gray'));
+  return '<td class="num"><span class="badge ' + cls + '">' + esc(fmtPct(m)) + '</span></td>';
+}
+
+function tableShell(head, body, foot) {
+  return '<div class="table-wrap"><table><thead><tr>' + head + '</tr></thead>' +
+    '<tbody>' + body + '</tbody>' + (foot ? '<tfoot><tr>' + foot + '</tr></tfoot>' : '') +
+    '</table></div>';
+}
+
+function renderProductTable(records) {
+  var rows = sortRows(productRows(records), 'product');
+  var head =
+    th('product', 'name', t('colProduct')) +
+    th('product', 'category', t('colCategory')) +
+    '<th>' + esc(t('colPerson')) + '</th>' +
+    th('product', 'qty', t('colQty'), true) +
+    th('product', 'unitCost', t('colUnitCost'), true) +
+    th('product', 'totalCost', t('colTotalCost'), true) +
+    th('product', 'sales', t('colSales'), true) +
+    th('product', 'profit', t('colProfit'), true) +
+    th('product', 'margin', t('colMargin'), true);
+
+  if (!rows.length) return tableShell(head, '<tr><td colspan="9"><div class="empty">' + esc(t('noResults')) + '</div></td></tr>', '');
+
+  var body = rows.map(function (r) {
+    var who = r.personCount > 1 ? (r.personCount + ' ' + t('multiPersons')) : r.firstPerson;
+    return '<tr' + (r.matched ? '' : ' class="row-warn"') + '>' +
+      '<td><div class="p-name">' + esc(r.name) +
+        (r.matched ? '' : ' <span class="badge badge-amber">⚠ ' + esc(t('noCostBadge')) + '</span>') +
+      '</div>' + (r.code ? '<div class="p-code">' + esc(r.code) + '</div>' : '') + '</td>' +
+      '<td class="bidi">' + esc(r.category) + '</td>' +
+      '<td class="bidi">' + esc(who) + '</td>' +
+      '<td class="num">' + esc(fmtQty(r.qty)) + '</td>' +
+      '<td class="num">' + esc(r.matched ? fmtMoney(r.unitCost) : '—') + '</td>' +
+      moneyTd(r.totalCost) +
+      moneyTd(r.sales) +
+      moneyTd(r.profit) +
+      marginTd(r.profit, r.sales) +
+    '</tr>';
+  }).join('');
+
+  var tt = totals(rows);
+  var foot = '<td>' + esc(t('total')) + '</td><td></td><td></td>' +
+    '<td class="num">' + esc(fmtQty(tt.qty)) + '</td><td></td>' +
+    '<td class="num">' + esc(fmtMoney(tt.totalCost)) + '</td>' +
+    '<td class="num">' + esc(fmtMoney(tt.sales)) + '</td>' +
+    '<td class="num"><span class="amount ' + signClass(tt.profit) + '">' + esc(fmtMoney(tt.profit)) + '</span></td>' +
+    '<td class="num">' + esc(fmtPct(margin(tt.profit, tt.sales))) + '</td>';
+
+  return tableShell(head, body, foot);
+}
+
+function renderGroupTable(records, view) {
+  var rows = sortRows(view === 'category' ? categoryRows(records) : personRows(records), view);
+  var isCat = view === 'category';
+  var head =
+    th(view, 'name', isCat ? t('colCategory') : t('colPerson')) +
+    (isCat ? '' : th(view, 'catCount', t('colCats'), true)) +
+    th(view, 'productCount', t('colItems'), true) +
+    th(view, 'qty', t('colQty'), true) +
+    th(view, 'totalCost', t('colTotalCost'), true) +
+    th(view, 'sales', t('colSales'), true) +
+    th(view, 'profit', t('colProfit'), true) +
+    th(view, 'margin', t('colMargin'), true);
+
+  var span = isCat ? 7 : 8;
+  if (!rows.length) return tableShell(head, '<tr><td colspan="' + span + '"><div class="empty">' + esc(t('noResults')) + '</div></td></tr>', '');
+
+  var body = rows.map(function (r) {
+    return '<tr>' +
+      '<td><div class="p-name">' + esc(r.name) + '</div></td>' +
+      (isCat ? '' : '<td class="num">' + esc(String(r.catCount)) + '</td>') +
+      '<td class="num">' + esc(String(r.productCount)) + '</td>' +
+      '<td class="num">' + esc(fmtQty(r.qty)) + '</td>' +
+      moneyTd(r.totalCost) + moneyTd(r.sales) + moneyTd(r.profit) +
+      marginTd(r.profit, r.sales) +
+    '</tr>';
+  }).join('');
+
+  var tt = totals(rows);
+  var foot = '<td>' + esc(t('total')) + '</td>' + (isCat ? '' : '<td></td>') + '<td></td>' +
+    '<td class="num">' + esc(fmtQty(tt.qty)) + '</td>' +
+    '<td class="num">' + esc(fmtMoney(tt.totalCost)) + '</td>' +
+    '<td class="num">' + esc(fmtMoney(tt.sales)) + '</td>' +
+    '<td class="num"><span class="amount ' + signClass(tt.profit) + '">' + esc(fmtMoney(tt.profit)) + '</span></td>' +
+    '<td class="num">' + esc(fmtPct(margin(tt.profit, tt.sales))) + '</td>';
+
+  return tableShell(head, body, foot);
+}
+
+function renderCompare(records) {
+  var people = personRows(records).sort(function (a, b) { return b.profit - a.profit; });
+  if (!people.length) return '<div class="table-wrap"><div class="empty">' + esc(t('noResults')) + '</div></div>';
+  var tt = totals(people);
+
+  var metrics = [
+    { label: t('colSales'), get: function (p) { return fmtMoney(p.sales); }, tot: fmtMoney(tt.sales) },
+    { label: t('colTotalCost'), get: function (p) { return fmtMoney(p.totalCost); }, tot: fmtMoney(tt.totalCost) },
+    { label: t('colProfit'), get: function (p) { return fmtMoney(p.profit); }, tot: fmtMoney(tt.profit), sign: true },
+    { label: t('colMargin'), get: function (p) { return fmtPct(margin(p.profit, p.sales)); }, tot: fmtPct(margin(tt.profit, tt.sales)) },
+    { label: t('colShare'), get: function (p) { return tt.profit ? fmtPct((p.profit / tt.profit) * 100) : '—'; }, tot: '100.0%' },
+    { label: t('colQty'), get: function (p) { return fmtQty(p.qty); }, tot: fmtQty(tt.qty) },
+    { label: t('colItems'), get: function (p) { return String(p.productCount); }, tot: '' },
+    { label: t('colCats'), get: function (p) { return String(p.catCount); }, tot: '' }
+  ];
+
+  var head = '<th class="metric">' + esc(t('colPerson')) + '</th>' +
+    people.map(function (p) { return '<th class="num">' + esc(p.name) + '</th>'; }).join('') +
+    '<th class="num">' + esc(t('total')) + '</th>';
+
+  var body = metrics.map(function (m) {
+    return '<tr><td class="metric">' + esc(m.label) + '</td>' +
+      people.map(function (p) {
+        var v = m.get(p);
+        var cls = m.sign ? ' class="amount ' + signClass(p.profit) + '"' : '';
+        return '<td class="num"><span' + cls + '>' + esc(v) + '</span></td>';
+      }).join('') +
+      '<td class="num"><b>' + esc(m.tot) + '</b></td>' +
+    '</tr>';
+  }).join('');
+
+  return '<div class="table-wrap cmp-wrap"><table class="cmp-table"><thead><tr>' + head + '</tr></thead><tbody>' + body + '</tbody></table></div>';
+}
+
+function renderView() {
+  var records = activeRecords();
+
+  if (!selectedPersons().length) {
+    $('stats-row').innerHTML = '';
+    $('panel-grid').innerHTML = '';
+    $('view-body').innerHTML = '<div class="table-wrap"><div class="empty">' + esc(t('pickSomeone')) + '</div></div>';
+    return;
+  }
+
+  renderStats(records);
+  renderPanels(records);
+
+  var html;
+  if (state.view === 'product') html = renderProductTable(records);
+  else if (state.view === 'compare') html = renderCompare(records);
+  else html = renderGroupTable(records, state.view);
+  $('view-body').innerHTML = html;
+
+  var group = $('f-profit').parentNode;
+  group.style.display = state.view === 'product' ? '' : 'none';
+}
+
+function renderAll() {
+  renderDataAlerts();
+  renderPersons();
+  renderView();
+}
+
+/* =========================  Excel export  ========================= */
+
+function aoaSheet(aoa, widths) {
+  var safe = aoa.map(function (row) { return row.map(safeCell); });
+  var ws = XLSX.utils.aoa_to_sheet(safe);
+  if (widths) ws['!cols'] = widths.map(function (w) { return { wch: w }; });
+  return ws;
+}
+
+function exportExcel() {
+  var records = activeRecords();
+  var wb = XLSX.utils.book_new();
+  var ar = isAr();
+
+  var tt = emptyAgg();
+  records.forEach(function (r) { tt.qty += r.qty; tt.sales += r.sales; tt.totalCost += r.totalCost; tt.profit += r.profit; });
+
+  // Summary
+  var summary = [
+    [t('reportTitle'), ''],
+    [t('generated'), new Date().toLocaleString(ar ? 'ar-EG' : 'en-GB')],
+    [t('filterLabel'), selectedPersons().join(' , ')],
+    ['', ''],
+    [t('stSales'), tt.sales],
+    [t('stCost'), tt.totalCost],
+    [t('stProfit'), tt.profit],
+    [t('stMargin'), margin(tt.profit, tt.sales) === null ? '' : Math.round(margin(tt.profit, tt.sales) * 10) / 10],
+    [t('stQty'), tt.qty],
+    [t('stNoCost'), state.unmatched.length]
+  ];
+  XLSX.utils.book_append_sheet(wb, aoaSheet(summary, [28, 40]), ar ? 'الملخص' : 'Summary');
+
+  // Products
+  var pHead = [t('colProduct'), t('colCategory'), t('colPerson'), t('colQty'), t('colUnitCost'), t('colTotalCost'), t('colSales'), t('colProfit'), t('colMargin')];
+  var pRows = sortRows(productRows(records), 'product').map(function (r) {
+    var m = margin(r.profit, r.sales);
+    return [
+      (r.code ? '[' + r.code + '] ' : '') + r.name,
+      r.category,
+      r.personCount > 1 ? (r.personCount + ' ' + t('multiPersons')) : r.firstPerson,
+      r.qty, r.matched ? r.unitCost : '', r.totalCost, r.sales, r.profit,
+      m === null ? '' : Math.round(m * 10) / 10
+    ];
+  });
+  XLSX.utils.book_append_sheet(wb, aoaSheet([pHead].concat(pRows), [46, 20, 24, 10, 13, 15, 15, 15, 10]), ar ? 'المنتجات' : 'Products');
+
+  // Categories
+  var cHead = [t('colCategory'), t('colItems'), t('colQty'), t('colTotalCost'), t('colSales'), t('colProfit'), t('colMargin')];
+  var cRows = sortRows(categoryRows(records), 'category').map(function (r) {
+    var m = margin(r.profit, r.sales);
+    return [r.name, r.productCount, r.qty, r.totalCost, r.sales, r.profit, m === null ? '' : Math.round(m * 10) / 10];
+  });
+  XLSX.utils.book_append_sheet(wb, aoaSheet([cHead].concat(cRows), [28, 10, 12, 15, 15, 15, 10]), ar ? 'الفئات' : 'Categories');
+
+  // Salespeople
+  var sHead = [t('colPerson'), t('colCats'), t('colItems'), t('colQty'), t('colTotalCost'), t('colSales'), t('colProfit'), t('colMargin')];
+  var sRows = sortRows(personRows(records), 'person').map(function (r) {
+    var m = margin(r.profit, r.sales);
+    return [r.name, r.catCount, r.productCount, r.qty, r.totalCost, r.sales, r.profit, m === null ? '' : Math.round(m * 10) / 10];
+  });
+  XLSX.utils.book_append_sheet(wb, aoaSheet([sHead].concat(sRows), [30, 10, 10, 12, 15, 15, 15, 10]), ar ? 'المندوبون' : 'Salespeople');
+
+  var now = new Date();
+  XLSX.writeFile(wb, 'profit-analysis-' + now.getFullYear() + '-' + (now.getMonth() + 1) + '-' + now.getDate() + '.xlsx');
+}
+
+/* =========================  print  ========================= */
+
+function printRow(cells) { return '<tr>' + cells.join('') + '</tr>'; }
+
+function buildPrint() {
+  var records = activeRecords();
+  var ar = isAr();
+  var tt = emptyAgg();
+  records.forEach(function (r) { tt.qty += r.qty; tt.sales += r.sales; tt.totalCost += r.totalCost; tt.profit += r.profit; });
+
+  var frame = $('print-frame');
+  frame.className = ar ? 'rtl' : '';
+
+  var head = '<div class="print-header">' +
+    '<img class="print-logo" src="ec-iq.com.png" alt=""/>' +
+    '<div class="print-header-text">' +
+      '<h2>' + esc(t('reportTitle')) + '</h2>' +
+      '<div class="print-meta">' + esc(t('generated')) + ': ' + esc(new Date().toLocaleString(ar ? 'ar-EG' : 'en-GB')) + '<br/>' +
+      esc(t('filterLabel')) + ': ' + esc(selectedPersons().join(' · ')) + '</div>' +
+    '</div></div>';
+
+  var cards = '<div class="print-summary">' +
+    '<div class="ps-card"><div class="ps-label">' + esc(t('stSales')) + '</div><div class="ps-val">' + esc(fmtMoney(tt.sales)) + '</div></div>' +
+    '<div class="ps-card"><div class="ps-label">' + esc(t('stCost')) + '</div><div class="ps-val">' + esc(fmtMoney(tt.totalCost)) + '</div></div>' +
+    '<div class="ps-card"><div class="ps-label">' + esc(t('stProfit')) + '</div><div class="ps-val ' + (tt.profit >= 0 ? 'pos' : 'neg') + '">' + esc(fmtMoney(tt.profit)) + '</div></div>' +
+    '<div class="ps-card"><div class="ps-label">' + esc(t('stMargin')) + '</div><div class="ps-val">' + esc(fmtPct(margin(tt.profit, tt.sales))) + '</div></div>' +
+  '</div>';
+
+  function sectionTable(title, headers, rows) {
+    return '<div class="print-section-title">' + esc(title) + '</div>' +
+      '<table><thead>' + printRow(headers.map(function (h) { return '<th>' + esc(h) + '</th>'; })) + '</thead><tbody>' +
+      rows.map(function (r) { return printRow(r); }).join('') + '</tbody></table>';
+  }
+
+  function moneyCell(n) { return '<td class="' + (n > 0 ? 'pos' : (n < 0 ? 'neg' : '')) + '">' + esc(fmtMoney(n)) + '</td>'; }
+
+  var people = sortRows(personRows(records), 'person');
+  var peopleRows = people.map(function (r) {
+    return ['<td class="bidi">' + esc(r.name) + '</td>', '<td>' + esc(fmtQty(r.qty)) + '</td>',
+      moneyCell(r.totalCost), moneyCell(r.sales), moneyCell(r.profit),
+      '<td>' + esc(fmtPct(margin(r.profit, r.sales))) + '</td>'];
+  });
+
+  var cats = sortRows(categoryRows(records), 'category');
+  var catRows = cats.map(function (r) {
+    return ['<td class="bidi">' + esc(r.name) + '</td>', '<td>' + esc(fmtQty(r.qty)) + '</td>',
+      moneyCell(r.totalCost), moneyCell(r.sales), moneyCell(r.profit),
+      '<td>' + esc(fmtPct(margin(r.profit, r.sales))) + '</td>'];
+  });
+
+  var prods = sortRows(productRows(records), 'product').slice(0, 300);
+  var prodRows = prods.map(function (r) {
+    return ['<td class="bidi">' + esc((r.code ? '[' + r.code + '] ' : '') + r.name) + '</td>',
+      '<td class="bidi">' + esc(r.category) + '</td>', '<td>' + esc(fmtQty(r.qty)) + '</td>',
+      moneyCell(r.totalCost), moneyCell(r.sales), moneyCell(r.profit),
+      '<td>' + esc(fmtPct(margin(r.profit, r.sales))) + '</td>'];
+  });
+
+  var gh = [t('colQty'), t('colTotalCost'), t('colSales'), t('colProfit'), t('colMargin')];
+
+  $('print-content').innerHTML = head + cards +
+    sectionTable(t('tabPerson'), [t('colPerson')].concat(gh), peopleRows) +
+    sectionTable(t('tabCategory'), [t('colCategory')].concat(gh), catRows) +
+    sectionTable(t('tabProduct'), [t('colProduct'), t('colCategory')].concat(gh), prodRows);
+
+  $('print-overlay').classList.add('show');
+}
+
+/* =========================  language & theme  ========================= */
+
+function applyTheme() {
+  document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  $('theme-btn').textContent = isDark ? '🌙' : '☀️';
+  try { localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light'); } catch (e) {}
+}
+
+function applyLang() {
+  var ar = isAr();
+  document.body.classList.toggle('rtl', ar);
+  document.documentElement.setAttribute('lang', lang);
+  document.documentElement.setAttribute('dir', ar ? 'rtl' : 'ltr');
+  document.title = t('appTitle');
+
+  var text = {
+    'app-title': 'appTitle', 'btn-home': 'home', 'lang-btn': 'langBtn',
+    'uz-step1': 'step1', 'uz-step2': 'step2',
+    'uz-cost-title': 'costTitle', 'uz-cost-sub': 'costSub', 'uz-cost-hint': 'dropHint',
+    'uz-sales-title': 'salesTitle', 'uz-sales-sub': 'salesSub', 'uz-sales-hint': 'dropHint',
+    'btn-analyze': 'analyze', 'sp-title': 'spTitle', 'sp-all': 'selAll', 'sp-none': 'selNone',
+    'f-profit': 'fProfit', 'f-loss': 'fLoss', 'f-nocost': 'fNoCost', 'f-active': 'fActive',
+    'btn-new': 'newFiles', 'btn-export': 'excel', 'btn-print': 'print'
+  };
+  Object.keys(text).forEach(function (id) {
+    var el = $(id);
+    if (el) el.textContent = t(text[id]);
+  });
+
+  $('search').placeholder = t('search');
+  $('pf-print').textContent = t('print');
+  $('pf-close').textContent = isAr() ? '✕ إغلاق' : '✕ Close';
+
+  var tabs = document.querySelectorAll('#tabs .tab');
+  var tabKeys = { product: 'tabProduct', category: 'tabCategory', person: 'tabPerson', compare: 'tabCompare' };
+  for (var i = 0; i < tabs.length; i++) tabs[i].textContent = t(tabKeys[tabs[i].getAttribute('data-view')]);
+
+  if (state.costFile) $('uz-cost-file').textContent = state.costFile.name + ' · ' + state.cost.unique + ' ' + t('products');
+  if (state.salesFile) $('uz-sales-file').textContent = state.salesFile.name + ' · ' + state.sales.records.length + ' ' + t('rows');
+
+  try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+  if (state.records.length) renderAll();
+}
+
+/* =========================  errors  ========================= */
+
+function errorText(err) {
+  var code = err && err.message;
+  switch (code) {
+    case 'BAD_TYPE': return t('errBadType');
+    case 'TOO_BIG': return t('errTooBig');
+    case 'EMPTY_FILE': case 'NO_FILE': return t('errEmpty');
+    case 'TOO_MANY_ROWS': return t('errTooManyRows');
+    case 'PROTO_POLLUTION': return t('errProto');
+    case 'COST_COLS': return t('errCostCols');
+    case 'SALES_ROWS': return t('errSalesRows');
+    case 'NO_OVERLAP': return t('errNoOverlap');
+    default: return t('errRead');
+  }
+}
+
+function showUploadError(err) {
+  renderAlerts('upload-alerts', [{ type: 'err', html: '⛔ ' + esc(errorText(err)) }]);
+}
+
+/* =========================  file handling  ========================= */
+
+function handleCost(file) {
+  renderAlerts('upload-alerts', []);
+  readWorkbook(file).then(function (wb) {
+    var parsed = parseCostWorkbook(wb);
+    state.costFile = file;
+    state.cost = parsed;
+    state.dupes = parsed.dupes;
+    $('zone-cost').classList.add('loaded');
+    $('uz-cost-file').textContent = file.name + ' · ' + parsed.unique + ' ' + t('products');
+    refreshAnalyzeButton();
+  }).catch(function (err) {
+    state.costFile = null; state.cost = null;
+    $('zone-cost').classList.remove('loaded');
+    $('uz-cost-file').textContent = '';
+    refreshAnalyzeButton();
+    showUploadError(err);
+  });
+}
+
+function handleSales(file) {
+  renderAlerts('upload-alerts', []);
+  readWorkbook(file).then(function (wb) {
+    var parsed = parseSalesWorkbook(wb);
+    state.salesFile = file;
+    state.sales = parsed;
+    $('zone-sales').classList.add('loaded');
+    $('uz-sales-file').textContent = file.name + ' · ' + parsed.records.length + ' ' + t('rows');
+    refreshAnalyzeButton();
+  }).catch(function (err) {
+    state.salesFile = null; state.sales = null;
+    $('zone-sales').classList.remove('loaded');
+    $('uz-sales-file').textContent = '';
+    refreshAnalyzeButton();
+    showUploadError(err);
+  });
+}
+
+function refreshAnalyzeButton() {
+  $('btn-analyze').disabled = !(state.cost && state.sales);
+}
+
+function analyze() {
+  try {
+    state.records = costRecords();
+    var matched = 0;
+    state.records.forEach(function (r) { if (r.matched) matched++; });
+    if (!matched) throw new Error('NO_OVERLAP');
+
+    var seen = Object.create(null);
+    state.persons = [];
+    state.records.forEach(function (r) {
+      if (!seen[r.person]) { seen[r.person] = true; state.persons.push({ name: r.person, selected: true }); }
+    });
+    state.persons.sort(function (a, b) { return norm(a.name) < norm(b.name) ? -1 : 1; });
+
+    $('upload-section').style.display = 'none';
+    $('data-section').style.display = 'block';
+    renderAll();
+    window.scrollTo(0, 0);
+  } catch (err) {
+    showUploadError(err);
+  }
+}
+
+function resetAll() {
+  state.costFile = state.salesFile = null;
+  state.cost = state.sales = null;
+  state.records = []; state.persons = []; state.unmatched = []; state.dupes = [];
+  state.search = ''; state.filters = Object.create(null); state.view = 'product';
+  $('search').value = '';
+  $('file-cost').value = ''; $('file-sales').value = '';
+  $('uz-cost-file').textContent = ''; $('uz-sales-file').textContent = '';
+  $('zone-cost').classList.remove('loaded');
+  $('zone-sales').classList.remove('loaded');
+  renderAlerts('upload-alerts', []);
+  renderAlerts('data-alerts', []);
+  ['f-profit', 'f-loss', 'f-nocost', 'f-active'].forEach(function (id) { $(id).classList.remove('active'); });
+  var tabs = document.querySelectorAll('#tabs .tab');
+  for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle('active', tabs[i].getAttribute('data-view') === 'product');
+  $('data-section').style.display = 'none';
+  $('upload-section').style.display = 'block';
+  refreshAnalyzeButton();
+}
+
+/* =========================  wiring  ========================= */
+
+function wireZone(zoneId, inputId, handler) {
+  var zone = $(zoneId), input = $(inputId);
+  zone.addEventListener('click', function () { input.click(); });
+  zone.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); }
+  });
+  zone.addEventListener('dragover', function (e) { e.preventDefault(); zone.classList.add('drag'); });
+  zone.addEventListener('dragleave', function () { zone.classList.remove('drag'); });
+  zone.addEventListener('drop', function (e) {
+    e.preventDefault();
+    zone.classList.remove('drag');
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) handler(e.dataTransfer.files[0]);
+  });
+  input.addEventListener('change', function (e) {
+    if (e.target.files && e.target.files[0]) handler(e.target.files[0]);
+  });
+}
+
+function toggleFilter(id, key) {
+  $(id).addEventListener('click', function () {
+    state.filters[key] = !state.filters[key];
+    // "profitable" and "loss-making" are mutually exclusive
+    if (key === 'profit' && state.filters.profit) { state.filters.loss = false; $('f-loss').classList.remove('active'); }
+    if (key === 'loss' && state.filters.loss) { state.filters.profit = false; $('f-profit').classList.remove('active'); }
+    $(id).classList.toggle('active', !!state.filters[key]);
+    renderView();
+  });
+}
+
+var searchTimer = null;
+
+function init() {
+  if (typeof XLSX === 'undefined' || !XLSX.read) {
+    renderAlerts('upload-alerts', [{ type: 'err', html: '⛔ ' + esc(t('errRead')) }]);
+  }
+
+  wireZone('zone-cost', 'file-cost', handleCost);
+  wireZone('zone-sales', 'file-sales', handleSales);
+
+  $('btn-analyze').addEventListener('click', analyze);
+  $('btn-new').addEventListener('click', resetAll);
+  $('btn-export').addEventListener('click', exportExcel);
+  $('btn-print').addEventListener('click', buildPrint);
+  $('pf-print').addEventListener('click', function () { window.print(); });
+  $('pf-close').addEventListener('click', function () { $('print-overlay').classList.remove('show'); });
+  $('print-overlay').addEventListener('click', function (e) {
+    if (e.target === $('print-overlay')) $('print-overlay').classList.remove('show');
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') $('print-overlay').classList.remove('show');
+  });
+
+  $('lang-btn').addEventListener('click', function () { lang = isAr() ? 'en' : 'ar'; applyLang(); });
+  $('theme-btn').addEventListener('click', function () { isDark = !isDark; applyTheme(); });
+
+  $('sp-all').addEventListener('click', function () {
+    state.persons.forEach(function (p) { p.selected = true; });
+    renderPersons(); renderView();
+  });
+  $('sp-none').addEventListener('click', function () {
+    state.persons.forEach(function (p) { p.selected = false; });
+    renderPersons(); renderView();
+  });
+  $('sp-list').addEventListener('click', function (e) {
+    var chip = e.target.closest ? e.target.closest('.sp-chip') : null;
+    if (!chip) return;
+    var idx = parseInt(chip.getAttribute('data-idx'), 10);
+    if (isNaN(idx) || !state.persons[idx]) return;
+    state.persons[idx].selected = !state.persons[idx].selected;
+    renderPersons(); renderView();
+  });
+
+  $('search').addEventListener('input', function (e) {
+    var v = e.target.value;
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(function () { state.search = v; renderView(); }, 180);
+  });
+
+  toggleFilter('f-profit', 'profit');
+  toggleFilter('f-loss', 'loss');
+  toggleFilter('f-nocost', 'nocost');
+  toggleFilter('f-active', 'active');
+
+  $('tabs').addEventListener('click', function (e) {
+    var tab = e.target.closest ? e.target.closest('.tab') : null;
+    if (!tab) return;
+    var tabs = document.querySelectorAll('#tabs .tab');
+    for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+    tab.classList.add('active');
+    state.view = tab.getAttribute('data-view');
+    renderView();
+  });
+
+  $('view-body').addEventListener('click', function (e) {
+    var header = e.target.closest ? e.target.closest('th[data-sort]') : null;
+    if (!header) return;
+    var view = state.view;
+    if (!state.sort[view]) return;
+    var f = header.getAttribute('data-sort');
+    if (state.sort[view].f === f) state.sort[view].d *= -1;
+    else state.sort[view] = { f: f, d: f === 'name' ? 1 : -1 };
+    renderView();
+  });
+
+  applyTheme();
+  applyLang();
+  refreshAnalyzeButton();
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+else init();
+
+})();
+</script>
+</body>
+</html>

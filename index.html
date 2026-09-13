@@ -239,7 +239,8 @@
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 24px;
     width: 100%;
-    max-width: 1100px;
+    /* Four tools sit as a balanced 2x2 instead of a 3 + 1 row. */
+    max-width: 900px;
   }
 
   .tool-card {
@@ -262,6 +263,7 @@
   }
   .tool-card:nth-child(2) { animation-delay: 0.12s; }
   .tool-card:nth-child(3) { animation-delay: 0.24s; }
+  .tool-card:nth-child(4) { animation-delay: 0.36s; }
 
   .tool-card::before {
     content: '';
@@ -463,6 +465,18 @@
       </div>
       <div class="tool-arrow" id="c3-arrow">Open tool →</div>
     </a>
+
+    <!-- Card 4: Profit Analyzer -->
+    <a href="profit_analyzer.html" class="tool-card">
+      <div class="card-deco"></div>
+      <div class="tool-icon">💰</div>
+      <div class="tool-body">
+        <div class="tool-name" id="c4-name">Profit Analyzer</div>
+        <div class="tool-name-ar" id="c4-ar">محلل الأرباح</div>
+        <div class="tool-desc" id="c4-desc">Combine your product cost file with sales per salesperson to see gross profit and margin for every product, category and salesperson.</div>
+      </div>
+      <div class="tool-arrow" id="c4-arrow">Open tool →</div>
+    </a>
   </div>
 </main>
 
@@ -510,6 +524,10 @@ const content = {
     c3Ar: 'حاسبة المردود',
     c3Desc: 'To calculate returns, the number of cake slices, and to create special offers.',
     c3Arrow: 'Open tool →',
+    c4Name: 'Profit Analyzer',
+    c4Ar: 'محلل الأرباح',
+    c4Desc: 'Combine your product cost file with sales per salesperson to see gross profit and margin for every product, category and salesperson.',
+    c4Arrow: 'Open tool →',
     footerBrand: 'Hilal Al-Sharq',
     footerCopy: 'Accounting Tools Suite',
     footerCredit: 'Built with ❤️ by the',
@@ -534,6 +552,10 @@ const content = {
     c3Ar: 'Accounting Calculator',
     c3Desc: 'لحساب المردودات وعدد قطع الكيك وانشاء العروض الخاصة .',
     c3Arrow: '← فتح الأداة',
+    c4Name: 'محلل الأرباح',
+    c4Ar: 'Profit Analyzer',
+    c4Desc: 'ادمج ملف تكلفة المنتجات مع مبيعات المندوبين لمعرفة إجمالي الربح ونسبته لكل منتج وفئة ومندوب.',
+    c4Arrow: '← فتح الأداة',
     footerBrand: 'هلال الشرق',
     footerCopy: 'مجموعة أدوات المحاسبة',
     footerCredit: 'بُني بـ 🤞 من قِبل',
@@ -564,6 +586,10 @@ function applyLang() {
   document.getElementById('c3-ar').textContent = c.c3Ar;
   document.getElementById('c3-desc').textContent = c.c3Desc;
   document.getElementById('c3-arrow').textContent = c.c3Arrow;
+  document.getElementById('c4-name').textContent = c.c4Name;
+  document.getElementById('c4-ar').textContent = c.c4Ar;
+  document.getElementById('c4-desc').textContent = c.c4Desc;
+  document.getElementById('c4-arrow').textContent = c.c4Arrow;
   document.getElementById('footer-brand').textContent = c.footerBrand;
   document.getElementById('footer-copy').textContent = c.footerCopy;
   document.getElementById('footer-credit-pre').textContent = c.footerCredit;
