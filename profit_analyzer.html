@@ -165,6 +165,87 @@
   .cm-gate #cm-gate-input:focus { border-color: var(--accent); }
   .cm-hidden { display: none !important; }
 
+  /* ---------- Locked banner ---------- */
+  .locked-banner {
+    display: none;
+    align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+    background: var(--amber-bg); border: 1px solid var(--amber);
+    border-radius: var(--radius); padding: 12px 18px; margin-bottom: 18px;
+  }
+  .locked-banner.show { display: flex; }
+  .lb-text { display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--amber); font-weight: 600; }
+  .lb-icon { font-size: 17px; }
+  .lb-btn {
+    height: 34px; padding: 0 16px; border-radius: var(--radius-sm);
+    border: 1px solid var(--amber); background: var(--amber); color: #1a1400;
+    font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap;
+  }
+  .lb-btn:hover { filter: brightness(1.1); }
+
+  /* ---------- Expenses ---------- */
+  #exp-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6); z-index: 950;
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  #exp-overlay.show { display: flex; }
+  #exp-modal {
+    background: var(--bg2); border: 1px solid var(--border2);
+    border-radius: var(--radius); width: 100%; max-width: 620px;
+    max-height: 88vh; display: flex; flex-direction: column;
+    box-shadow: var(--shadow); overflow: hidden;
+  }
+  .exp-tools {
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    padding: 14px 22px; border-bottom: 1px solid var(--border);
+  }
+  .exp-label { font-size: 12.5px; color: var(--text3); font-weight: 600; }
+  #exp-person {
+    flex: 1; min-width: 180px; height: 36px; padding: 0 10px;
+    border-radius: var(--radius-sm); border: 1px solid var(--border2);
+    background: var(--bg3); color: var(--text); font-size: 13.5px; outline: none;
+  }
+  #exp-person:focus { border-color: var(--accent); }
+  .exp-body { overflow-y: auto; flex: 1; padding: 8px 22px 16px; }
+  .exp-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border);
+  }
+  .exp-row:last-child { border-bottom: none; }
+  .exp-name { font-size: 13.5px; color: var(--text); unicode-bidi: plaintext; }
+  .exp-input {
+    width: 150px; height: 34px; padding: 0 10px; flex-shrink: 0;
+    border-radius: var(--radius-sm); border: 1px solid var(--border2);
+    background: var(--bg3); color: var(--text);
+    font-size: 13.5px; text-align: right; outline: none;
+    direction: ltr; font-variant-numeric: tabular-nums;
+  }
+  .exp-input:focus { border-color: var(--accent); }
+  .exp-input.filled { border-color: var(--teal); color: var(--teal); font-weight: 700; }
+  .exp-foot { padding: 14px 22px 18px; border-top: 1px solid var(--border); background: var(--bg3); }
+  .exp-total-row, .exp-net-row {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+    font-size: 14px; margin-bottom: 8px; color: var(--text2);
+  }
+  .exp-total, .exp-net {
+    font-weight: 700; font-size: 18px; font-variant-numeric: tabular-nums;
+    direction: ltr; unicode-bidi: isolate;
+  }
+  .exp-total { color: var(--amber); }
+  .exp-net.positive { color: var(--green); }
+  .exp-net.negative { color: var(--red); }
+  .exp-net.zero { color: var(--text3); }
+  .exp-verdict {
+    margin-top: 10px; padding: 11px 14px; border-radius: var(--radius-sm);
+    font-size: 13.5px; font-weight: 700; text-align: center; line-height: 1.6;
+  }
+  .exp-verdict.good { background: var(--green-bg); color: var(--green); border: 1px solid var(--green); }
+  .exp-verdict.bad { background: var(--red-bg); color: var(--red); border: 1px solid var(--red); }
+  .exp-verdict.flat { background: var(--bg4); color: var(--text2); border: 1px solid var(--border2); }
+  .exp-hint { margin-top: 10px; font-size: 11.5px; color: var(--text3); text-align: center; line-height: 1.6; }
+
+  .verdict-table td.vd { font-weight: 700; }
+
   .upload-zone.solo { max-width: 560px; margin: 0 auto; }
   .cost-note {
     max-width: 560px; margin: 16px auto 0; text-align: center;
@@ -597,6 +678,14 @@
   <section id="data-section" style="display:none;">
     <div id="data-alerts"></div>
 
+    <div class="locked-banner" id="locked-banner">
+      <div class="lb-text">
+        <span class="lb-icon">🔒</span>
+        <span id="lb-msg">Costs and profit are hidden.</span>
+      </div>
+      <button class="lb-btn" id="btn-unlock-costs" type="button">Show costs</button>
+    </div>
+
     <div class="sp-panel">
       <div class="sp-head">
         <div class="sp-title" id="sp-title">Salespeople</div>
@@ -623,6 +712,7 @@
         <button class="filter-btn" id="f-active" type="button">Moved only</button>
       </div>
       <div class="filter-group">
+        <button class="filter-btn" id="btn-expenses" type="button">💵 Expenses</button>
         <button class="filter-btn" id="btn-new" type="button">New file</button>
         <button class="filter-btn btn-excel" id="btn-export" type="button">⬇ Excel</button>
         <button class="filter-btn btn-print" id="btn-print" type="button">🖨 Print</button>
@@ -678,6 +768,40 @@
     <div id="cm-alerts"></div>
     <div class="cm-list" id="cm-list"></div>
     <div class="cm-foot" id="cm-foot"></div>
+  </div>
+</div>
+
+<!-- ============ EXPENSES ============ -->
+<div id="exp-overlay">
+  <div id="exp-modal">
+    <div class="cm-head">
+      <div>
+        <div class="cm-title" id="exp-title">Salesperson expenses</div>
+        <div class="cm-sub" id="exp-sub"></div>
+      </div>
+      <button class="btn-icon" id="exp-close" type="button">✕</button>
+    </div>
+
+    <div class="exp-tools">
+      <label class="exp-label" id="exp-person-label">Salesperson</label>
+      <select id="exp-person"></select>
+      <button class="filter-btn" id="exp-clear" type="button">Clear</button>
+    </div>
+
+    <div class="exp-body" id="exp-body"></div>
+
+    <div class="exp-foot">
+      <div class="exp-total-row">
+        <span id="exp-total-label">Total expenses</span>
+        <span class="exp-total" id="exp-total">0</span>
+      </div>
+      <div class="exp-net-row">
+        <span id="exp-net-label">Net after expenses</span>
+        <span class="exp-net" id="exp-net">—</span>
+      </div>
+      <div class="exp-verdict" id="exp-verdict"></div>
+      <div class="exp-hint" id="exp-hint"></div>
+    </div>
   </div>
 </div>
 
@@ -796,13 +920,19 @@ var COST_BLOB = {"v": 2,"cipher": "AES-GCM","count": 308,"key": "lKoK+ymueEPxMg1
 /* COST-DATA-END */
 
 var COSTS_STORE = 'hilalProfitCosts';   // the user's own cost edits, encrypted
-var GATE_STORE = 'hilalProfitGate';     // "settings unlocked" flag, per session
+var EXP_STORE = 'hilalProfitExpenses';  // per-salesperson running costs, encrypted
+var GATE_STORE = 'hilalProfitGate';     // "costs unlocked" flag, per session
 
 var dataKey = null;                     // CryptoKey for the built-in table
 var builtIn = Object.create(null);      // CODE -> {code, name, cost, cat}
 var builtInOrder = [];
 var localCosts = { overrides: Object.create(null), added: Object.create(null) };
-var settingsUnlocked = false;
+var expenses = Object.create(null);     // salesperson -> {field: amount}
+
+/* Nothing cost-related is decrypted until the passphrase is accepted, so a
+   locked session never holds the cost list in memory and never computes a
+   cost, a profit or a margin. Without it the tool is a sales report. */
+var costsUnlocked = false;
 
 function b64ToBytes(b64) {
   var bin = atob(String(b64));
@@ -888,18 +1018,18 @@ function checkSettingsPassphrase(passphrase) {
     });
 }
 
-function markSettingsUnlocked() {
-  settingsUnlocked = true;
+function markCostsUnlocked() {
+  costsUnlocked = true;
   try { sessionStorage.setItem(GATE_STORE, '1'); } catch (e) {}
 }
 
-function lockSettings() {
-  settingsUnlocked = false;
+function lockCosts() {
+  costsUnlocked = false;
   try { sessionStorage.removeItem(GATE_STORE); } catch (e) {}
 }
 
-function restoreSettingsUnlock() {
-  try { settingsUnlocked = sessionStorage.getItem(GATE_STORE) === '1'; } catch (e) {}
+function wasUnlockedThisSession() {
+  try { return sessionStorage.getItem(GATE_STORE) === '1'; } catch (e) { return false; }
 }
 
 /* The user's own cost edits never leave their browser, and are stored
@@ -927,6 +1057,91 @@ function saveLocalCosts() {
   return aesEncrypt(dataKey, plain).then(function (packed) {
     try { localStorage.setItem(COSTS_STORE, packed); } catch (e) {}
   });
+}
+
+/* ---- per-salesperson running costs ---- */
+
+var EXPENSE_FIELDS = ['salaryRep', 'bonusRep', 'salaryDriver', 'bonusDriver',
+                      'fuel', 'maintenance', 'other'];
+
+function expenseKey(person) { return String(person || '').trim(); }
+
+function expenseFor(person) {
+  var e = expenses[expenseKey(person)];
+  var out = Object.create(null);
+  for (var i = 0; i < EXPENSE_FIELDS.length; i++) {
+    var f = EXPENSE_FIELDS[i];
+    out[f] = e && isFinite(e[f]) ? Number(e[f]) : 0;
+  }
+  return out;
+}
+
+function expenseTotal(person) {
+  var e = expenseFor(person), sum = 0;
+  for (var i = 0; i < EXPENSE_FIELDS.length; i++) sum += e[EXPENSE_FIELDS[i]];
+  return sum;
+}
+
+function hasExpenses(person) {
+  var e = expenses[expenseKey(person)];
+  if (!e) return false;
+  for (var i = 0; i < EXPENSE_FIELDS.length; i++) if (Number(e[EXPENSE_FIELDS[i]])) return true;
+  return false;
+}
+
+function setExpense(person, field, value) {
+  var k = expenseKey(person);
+  if (EXPENSE_FIELDS.indexOf(field) === -1) return false;
+  var v = num(value);
+  if (!isFinite(v) || v < 0) return false;
+  if (!expenses[k]) expenses[k] = Object.create(null);
+  expenses[k][field] = v;
+  saveExpenses();
+  return true;
+}
+
+function clearExpenses(person) {
+  delete expenses[expenseKey(person)];
+  saveExpenses();
+}
+
+function loadExpenses() {
+  var packed = null;
+  try { packed = localStorage.getItem(EXP_STORE); } catch (e) {}
+  if (!packed || !dataKey) return Promise.resolve();
+  return aesDecryptPacked(dataKey, packed).then(function (plain) {
+    var d = JSON.parse(new TextDecoder().decode(plain));
+    expenses = Object.create(null);
+    for (var k in d) {
+      var row = Object.create(null);
+      for (var i = 0; i < EXPENSE_FIELDS.length; i++) {
+        var f = EXPENSE_FIELDS[i];
+        row[f] = isFinite(d[k][f]) ? Number(d[k][f]) : 0;
+      }
+      expenses[k] = row;
+    }
+  }).catch(function () {
+    try { localStorage.removeItem(EXP_STORE); } catch (e) {}
+  });
+}
+
+function saveExpenses() {
+  if (!dataKey) return Promise.resolve();
+  var plain = new TextEncoder().encode(JSON.stringify(expenses));
+  return aesEncrypt(dataKey, plain).then(function (packed) {
+    try { localStorage.setItem(EXP_STORE, packed); } catch (e) {}
+  });
+}
+
+/* profit - running costs. Positive means the salesperson pays for themselves. */
+function netFor(person, grossProfit) {
+  return grossProfit - expenseTotal(person);
+}
+
+function verdictOf(net) { return net > 0 ? 'good' : (net < 0 ? 'bad' : 'flat'); }
+
+function verdictLabel(net) {
+  return net > 0 ? t('verdictProfit') : (net < 0 ? t('verdictLoss') : t('verdictBreak'));
 }
 
 function productCount() {
@@ -1040,7 +1255,27 @@ var T = {
     cmInvalid: 'Enter a positive number.',
     cmSavedLocal: 'Your cost edits are saved encrypted in this browser only.',
     cmNone: 'No products match.',
-    unknownNote: 'Products missing from the cost list are counted at zero cost. Add them with ⚙ Costs.'
+    unknownNote: 'Products missing from the cost list are counted at zero cost. Add them with ⚙ Costs.',
+    lockedMsg: 'Costs and profit are hidden until the passphrase is entered.',
+    btnShowCosts: 'Show costs',
+    costNoteLocked: 'Upload the sales file to see quantities and sales. Costs and profit need the passphrase.',
+    chartCatSales: 'Sales by category', chartPersonSales: 'Sales by salesperson',
+    topSales: 'Best selling products', bottomSales: 'Slowest products',
+    stExpenses: 'Running costs', stNet: 'Net after costs', stNoExpenses: 'none entered yet',
+    colExpenses: 'Running costs', colNet: 'Net', colVerdict: 'Result',
+    verdictProfit: 'Earning', verdictLoss: 'Losing money', verdictBreak: 'Break-even',
+    btnExpenses: '💵 Expenses',
+    expTitle: 'Salesperson running costs',
+    expSub: 'For the same period as the sales file. Saved encrypted on this device only.',
+    expSalaryRep: 'Salesperson salary', expBonusRep: 'Salesperson bonus',
+    expSalaryDriver: 'Driver salary', expBonusDriver: 'Driver bonus',
+    expFuel: 'Fuel', expMaint: 'Vehicle maintenance', expOther: 'Other expenses',
+    expTotal: 'Total expenses', expClear: 'Clear', 
+    expClearConfirm: 'Clear all expense figures for this salesperson?',
+    expHint: 'Net = gross profit − total expenses.',
+    verdictGoodMsg: '✅ This salesperson covers their costs and earns money.',
+    verdictBadMsg: '⛔ This salesperson costs more than they bring in.',
+    verdictFlatMsg: '➖ This salesperson exactly breaks even.'
   },
   ar: {
     appTitle: 'محلل الأرباح', home: '🏠 الرئيسية', langBtn: 'EN',
@@ -1101,7 +1336,27 @@ var T = {
     cmInvalid: 'أدخل رقماً موجباً.',
     cmSavedLocal: 'تعديلاتك على التكاليف محفوظة مشفّرة في هذا المتصفح فقط.',
     cmNone: 'لا توجد منتجات مطابقة.',
-    unknownNote: 'المنتجات غير الموجودة في قائمة التكاليف تُحتسب بتكلفة صفر. أضفها من ⚙ التكاليف.'
+    unknownNote: 'المنتجات غير الموجودة في قائمة التكاليف تُحتسب بتكلفة صفر. أضفها من ⚙ التكاليف.',
+    lockedMsg: 'التكاليف والأرباح مخفية حتى إدخال كلمة المرور.',
+    btnShowCosts: 'عرض التكاليف',
+    costNoteLocked: 'ارفع ملف المبيعات لعرض الكميات والمبيعات. أما التكاليف والأرباح فتتطلب كلمة المرور.',
+    chartCatSales: 'المبيعات حسب الفئة', chartPersonSales: 'المبيعات حسب المندوب',
+    topSales: 'أكثر المنتجات مبيعاً', bottomSales: 'أقل المنتجات مبيعاً',
+    stExpenses: 'المصاريف', stNet: 'الصافي بعد المصاريف', stNoExpenses: 'لم تُدخل بعد',
+    colExpenses: 'المصاريف', colNet: 'الصافي', colVerdict: 'النتيجة',
+    verdictProfit: 'رابح', verdictLoss: 'خاسر', verdictBreak: 'متعادل',
+    btnExpenses: '💵 المصاريف',
+    expTitle: 'مصاريف المندوب',
+    expSub: 'لنفس فترة ملف المبيعات. تُحفظ مشفّرة على هذا الجهاز فقط.',
+    expSalaryRep: 'راتب المندوب', expBonusRep: 'حافز المندوب',
+    expSalaryDriver: 'راتب السائق', expBonusDriver: 'حافز السائق',
+    expFuel: 'قاز', expMaint: 'صيانة سيارة', expOther: 'مصاريف أخرى',
+    expTotal: 'مجموع المصاريف', expClear: 'مسح',
+    expClearConfirm: 'مسح جميع مبالغ المصاريف لهذا المندوب؟',
+    expHint: 'الصافي = إجمالي الربح − مجموع المصاريف.',
+    verdictGoodMsg: '✅ هذا المندوب يغطي مصاريفه ويحقق ربحاً.',
+    verdictBadMsg: '⛔ هذا المندوب يكلّفك أكثر مما يدرّه.',
+    verdictFlatMsg: '➖ هذا المندوب متعادل تماماً.'
   }
 };
 
@@ -1514,6 +1769,16 @@ function costRecords() {
   var seenUnmatched = Object.create(null);
 
   var out = state.sales.records.map(function (r) {
+    var base = {
+      code: r.code, name: r.name, person: r.person, category: r.category,
+      qty: r.qty, sales: r.sales
+    };
+    if (!costsUnlocked) {
+      // Locked: no cost is read and no profit is derived.
+      base.unitCost = null; base.totalCost = null; base.profit = null;
+      base.matched = true; base.costEdited = false; base.costCategory = '';
+      return base;
+    }
     var c = lookupCost(r.code);
     var unitCost = c ? c.cost : 0;
     var totalCost = unitCost * r.qty;
@@ -1521,18 +1786,17 @@ function costRecords() {
       var k = r.code || r.name;
       if (!seenUnmatched[k]) { seenUnmatched[k] = true; unmatched.push(r.code || r.name); }
     }
-    return {
-      code: r.code, name: r.name || (c ? c.name : ''),
-      person: r.person, category: r.category,
-      costCategory: c ? c.cat : '',
-      qty: r.qty, sales: r.sales,
-      unitCost: unitCost, totalCost: totalCost,
-      profit: r.sales - totalCost,
-      matched: !!c, costEdited: !!(c && c.edited)
-    };
+    base.name = r.name || (c ? c.name : '');
+    base.costCategory = c ? c.cat : '';
+    base.unitCost = unitCost;
+    base.totalCost = totalCost;
+    base.profit = r.sales - totalCost;
+    base.matched = !!c;
+    base.costEdited = !!(c && c.edited);
+    return base;
   });
 
-  state.unmatched = unmatched;
+  state.unmatched = costsUnlocked ? unmatched : [];
   return out;
 }
 
@@ -1570,7 +1834,7 @@ function emptyAgg(extra) {
 
 function addTo(agg, r) {
   agg.qty += r.qty; agg.sales += r.sales;
-  agg.totalCost += r.totalCost; agg.profit += r.profit;
+  agg.totalCost += (r.totalCost || 0); agg.profit += (r.profit || 0);
   agg.items++;
 }
 
@@ -1699,48 +1963,73 @@ function renderStats(records) {
   var noCost = 0;
   var prodKeys = Object.create(null), prodCount = 0;
   records.forEach(function (r) {
-    tt.qty += r.qty; tt.sales += r.sales; tt.totalCost += r.totalCost; tt.profit += r.profit;
-    if (!r.matched) noCost++;
+    tt.qty += r.qty; tt.sales += r.sales;
+    tt.totalCost += (r.totalCost || 0); tt.profit += (r.profit || 0);
+    if (costsUnlocked && !r.matched) noCost++;
     var k = r.code || r.name;
     if (!prodKeys[k]) { prodKeys[k] = true; prodCount++; }
   });
-  var m = margin(tt.profit, tt.sales);
-  $('stats-row').innerHTML =
-    statCard(t('stSales'), fmtMoney(tt.sales), 'accent') +
-    statCard(t('stCost'), fmtMoney(tt.totalCost), 'amber') +
-    statCard(t('stProfit'), fmtMoney(tt.profit), tt.profit >= 0 ? 'green' : 'red') +
-    statCard(t('stMargin'), fmtPct(m), tt.profit >= 0 ? 'green' : 'red') +
-    statCard(t('stQty'), fmtQty(tt.qty), 'teal') +
-    statCard(t('stItems'), String(prodCount), '', noCost ? noCost + ' ' + t('stNoCost') : '');
+
+  var html = statCard(t('stSales'), fmtMoney(tt.sales), 'accent') +
+             statCard(t('stQty'), fmtQty(tt.qty), 'teal') +
+             statCard(t('stItems'), String(prodCount), '',
+                      costsUnlocked && noCost ? noCost + ' ' + t('stNoCost') : '');
+
+  if (costsUnlocked) {
+    var exp = 0;
+    selectedPersons().forEach(function (n) { exp += expenseTotal(n); });
+    var net = tt.profit - exp;
+    var m = margin(tt.profit, tt.sales);
+    html = statCard(t('stSales'), fmtMoney(tt.sales), 'accent') +
+           statCard(t('stCost'), fmtMoney(tt.totalCost), 'amber') +
+           statCard(t('stProfit'), fmtMoney(tt.profit), tt.profit >= 0 ? 'green' : 'red') +
+           statCard(t('stMargin'), fmtPct(m), tt.profit >= 0 ? 'green' : 'red') +
+           statCard(t('stExpenses'), fmtMoney(exp), 'amber',
+                    exp ? '' : t('stNoExpenses')) +
+           statCard(t('stNet'), fmtMoney(net), net > 0 ? 'green' : (net < 0 ? 'red' : ''),
+                    verdictLabel(net)) +
+           statCard(t('stQty'), fmtQty(tt.qty), 'teal') +
+           statCard(t('stItems'), String(prodCount), '',
+                    noCost ? noCost + ' ' + t('stNoCost') : '');
+  }
+  $('stats-row').innerHTML = html;
 }
 
-function barPanel(title, rows, limit) {
-  var top = rows.slice().sort(function (a, b) { return Math.abs(b.profit) - Math.abs(a.profit); }).slice(0, limit);
+function barPanel(title, rows, limit, metric) {
+  metric = metric || 'profit';
+  var top = rows.slice().sort(function (a, b) {
+    return Math.abs(b[metric]) - Math.abs(a[metric]);
+  }).slice(0, limit);
   var max = 0;
-  top.forEach(function (r) { if (Math.abs(r.profit) > max) max = Math.abs(r.profit); });
+  top.forEach(function (r) { if (Math.abs(r[metric]) > max) max = Math.abs(r[metric]); });
   var body = top.length ? top.map(function (r) {
-    var w = max ? (Math.abs(r.profit) / max) * 100 : 0;
+    var v = r[metric];
+    var w = max ? (Math.abs(v) / max) * 100 : 0;
     return '<div class="bar-row">' +
       '<div class="bar-head">' +
         '<span class="bar-label" title="' + esc(r.name) + '">' + esc(r.name) + '</span>' +
-        '<span class="bar-val ' + (r.profit >= 0 ? 'amount positive' : 'amount negative') + '">' + esc(fmtMoney(r.profit)) + '</span>' +
+        '<span class="bar-val ' + (v >= 0 ? 'amount positive' : 'amount negative') + '">' + esc(fmtMoney(v)) + '</span>' +
       '</div>' +
-      '<div class="bar-track"><div class="bar-fill ' + (r.profit >= 0 ? 'pos' : 'neg') + '" style="width:' + w.toFixed(2) + '%"></div></div>' +
+      '<div class="bar-track"><div class="bar-fill ' + (v >= 0 ? 'pos' : 'neg') + '" style="width:' + w.toFixed(2) + '%"></div></div>' +
     '</div>';
   }).join('') : '<div class="empty">' + esc(t('noResults')) + '</div>';
   return '<div class="panel"><div class="panel-title">' + esc(title) + '</div>' + body + '</div>';
 }
 
-function moverPanel(title, rows, limit, worst) {
-  var sorted = rows.slice().sort(function (a, b) { return worst ? a.profit - b.profit : b.profit - a.profit; }).slice(0, limit);
+function moverPanel(title, rows, limit, worst, metric) {
+  metric = metric || 'profit';
+  var sorted = rows.slice().sort(function (a, b) {
+    return worst ? a[metric] - b[metric] : b[metric] - a[metric];
+  }).slice(0, limit);
   var body = sorted.length ? sorted.map(function (r) {
-    var m = margin(r.profit, r.sales);
+    var v = r[metric];
+    var sub = metric === 'profit' ? fmtPct(margin(r.profit, r.sales)) : fmtQty(r.qty);
     return '<div class="mover">' +
       '<div style="min-width:0">' +
         '<div class="mover-name" title="' + esc(r.name) + '">' + esc(r.name) + '</div>' +
-        '<div class="mover-meta">' + esc(r.code || r.category) + ' · ' + esc(fmtPct(m)) + '</div>' +
+        '<div class="mover-meta">' + esc(r.code || r.category) + ' · ' + esc(sub) + '</div>' +
       '</div>' +
-      '<div class="mover-val ' + (r.profit >= 0 ? 'amount positive' : 'amount negative') + '">' + esc(fmtMoney(r.profit)) + '</div>' +
+      '<div class="mover-val ' + (v >= 0 ? 'amount positive' : 'amount negative') + '">' + esc(fmtMoney(v)) + '</div>' +
     '</div>';
   }).join('') : '<div class="empty">' + esc(t('noResults')) + '</div>';
   return '<div class="panel"><div class="panel-title">' + esc(title) + '</div>' + body + '</div>';
@@ -1750,11 +2039,22 @@ function renderPanels(records) {
   var cats = categoryRows(records);
   var people = personRows(records);
   var prods = productRows(records);
+
+  if (!costsUnlocked) {
+    // Profit charts would leak cost, so show the same shapes by sales value.
+    $('panel-grid').innerHTML =
+      barPanel(t('chartCatSales'), cats, 10, 'sales') +
+      barPanel(t('chartPersonSales'), people, 10, 'sales') +
+      moverPanel(t('topSales'), prods, 6, false, 'sales') +
+      moverPanel(t('bottomSales'), prods, 6, true, 'sales');
+    return;
+  }
+
   $('panel-grid').innerHTML =
-    barPanel(t('chartCat'), cats, 10) +
-    barPanel(t('chartPerson'), people, 10) +
-    moverPanel(t('topItems'), prods, 6, false) +
-    moverPanel(t('bottomItems'), prods, 6, true);
+    barPanel(t('chartCat'), cats, 10, 'profit') +
+    barPanel(t('chartPerson'), people, 10, 'profit') +
+    moverPanel(t('topItems'), prods, 6, false, 'profit') +
+    moverPanel(t('bottomItems'), prods, 6, true, 'profit');
 }
 
 function sortArrow(view, field) {
@@ -1787,45 +2087,51 @@ function tableShell(head, body, foot) {
 
 function renderProductTable(records) {
   var rows = sortRows(productRows(records), 'product');
+  var locked = !costsUnlocked;
+
   var head =
     th('product', 'name', t('colProduct')) +
     th('product', 'category', t('colCategory')) +
     '<th>' + esc(t('colPerson')) + '</th>' +
     th('product', 'qty', t('colQty'), true) +
-    th('product', 'unitCost', t('colUnitCost'), true) +
-    th('product', 'totalCost', t('colTotalCost'), true) +
+    (locked ? '' :
+      th('product', 'unitCost', t('colUnitCost'), true) +
+      th('product', 'totalCost', t('colTotalCost'), true)) +
     th('product', 'sales', t('colSales'), true) +
-    th('product', 'profit', t('colProfit'), true) +
-    th('product', 'margin', t('colMargin'), true);
+    (locked ? '' :
+      th('product', 'profit', t('colProfit'), true) +
+      th('product', 'margin', t('colMargin'), true));
 
-  if (!rows.length) return tableShell(head, '<tr><td colspan="9"><div class="empty">' + esc(t('noResults')) + '</div></td></tr>', '');
+  var cols = locked ? 5 : 9;
+  if (!rows.length) return tableShell(head, '<tr><td colspan="' + cols + '"><div class="empty">' + esc(t('noResults')) + '</div></td></tr>', '');
 
   var body = rows.map(function (r) {
     var who = r.personCount > 1 ? (r.personCount + ' ' + t('multiPersons')) : r.firstPerson;
-    return '<tr' + (r.matched ? '' : ' class="row-warn"') + '>' +
+    return '<tr' + (!locked && !r.matched ? ' class="row-warn"' : '') + '>' +
       '<td><div class="p-name">' + esc(r.name) +
-        (r.matched ? '' : ' <span class="badge badge-amber">⚠ ' + esc(t('noCostBadge')) + '</span>') +
+        (!locked && !r.matched ? ' <span class="badge badge-amber">⚠ ' + esc(t('noCostBadge')) + '</span>' : '') +
       '</div>' + (r.code ? '<div class="p-code">' + esc(r.code) + '</div>' : '') + '</td>' +
       '<td class="bidi">' + esc(r.category) + '</td>' +
       '<td class="bidi">' + esc(who) + '</td>' +
       '<td class="num">' + esc(fmtQty(r.qty)) + '</td>' +
-      '<td class="num">' + (r.matched
-          ? esc(fmtCost(r.unitCost)) + (r.costEdited ? ' <span class="badge badge-teal">✎</span>' : '')
-          : '—') + '</td>' +
-      moneyTd(r.totalCost) +
+      (locked ? '' :
+        '<td class="num">' + (r.matched
+            ? esc(fmtCost(r.unitCost)) + (r.costEdited ? ' <span class="badge badge-teal">✎</span>' : '')
+            : '—') + '</td>' +
+        moneyTd(r.totalCost)) +
       moneyTd(r.sales) +
-      moneyTd(r.profit) +
-      marginTd(r.profit, r.sales) +
+      (locked ? '' : moneyTd(r.profit) + marginTd(r.profit, r.sales)) +
     '</tr>';
   }).join('');
 
   var tt = totals(rows);
   var foot = '<td>' + esc(t('total')) + '</td><td></td><td></td>' +
-    '<td class="num">' + esc(fmtQty(tt.qty)) + '</td><td></td>' +
-    '<td class="num">' + esc(fmtMoney(tt.totalCost)) + '</td>' +
+    '<td class="num">' + esc(fmtQty(tt.qty)) + '</td>' +
+    (locked ? '' : '<td></td><td class="num">' + esc(fmtMoney(tt.totalCost)) + '</td>') +
     '<td class="num">' + esc(fmtMoney(tt.sales)) + '</td>' +
-    '<td class="num"><span class="amount ' + signClass(tt.profit) + '">' + esc(fmtMoney(tt.profit)) + '</span></td>' +
-    '<td class="num">' + esc(fmtPct(margin(tt.profit, tt.sales))) + '</td>';
+    (locked ? '' :
+      '<td class="num"><span class="amount ' + signClass(tt.profit) + '">' + esc(fmtMoney(tt.profit)) + '</span></td>' +
+      '<td class="num">' + esc(fmtPct(margin(tt.profit, tt.sales))) + '</td>');
 
   return tableShell(head, body, foot);
 }
@@ -1833,56 +2139,98 @@ function renderProductTable(records) {
 function renderGroupTable(records, view) {
   var rows = sortRows(view === 'category' ? categoryRows(records) : personRows(records), view);
   var isCat = view === 'category';
+  var locked = !costsUnlocked;
+  var withExp = !locked && !isCat;   // running costs belong to a salesperson
+
   var head =
     th(view, 'name', isCat ? t('colCategory') : t('colPerson')) +
     (isCat ? '' : th(view, 'catCount', t('colCats'), true)) +
     th(view, 'productCount', t('colItems'), true) +
     th(view, 'qty', t('colQty'), true) +
-    th(view, 'totalCost', t('colTotalCost'), true) +
+    (locked ? '' : th(view, 'totalCost', t('colTotalCost'), true)) +
     th(view, 'sales', t('colSales'), true) +
-    th(view, 'profit', t('colProfit'), true) +
-    th(view, 'margin', t('colMargin'), true);
+    (locked ? '' : th(view, 'profit', t('colProfit'), true) + th(view, 'margin', t('colMargin'), true)) +
+    (withExp ? '<th class="num">' + esc(t('colExpenses')) + '</th>' +
+               '<th class="num">' + esc(t('colNet')) + '</th>' +
+               '<th>' + esc(t('colVerdict')) + '</th>' : '');
 
-  var span = isCat ? 7 : 8;
-  if (!rows.length) return tableShell(head, '<tr><td colspan="' + span + '"><div class="empty">' + esc(t('noResults')) + '</div></td></tr>', '');
+  var cols = (isCat ? 4 : 5) + (locked ? 0 : 3) + (withExp ? 3 : 0);
+  if (!rows.length) return tableShell(head, '<tr><td colspan="' + cols + '"><div class="empty">' + esc(t('noResults')) + '</div></td></tr>', '');
 
+  var expSum = 0;
   var body = rows.map(function (r) {
+    var exp = withExp ? expenseTotal(r.name) : 0;
+    var net = r.profit - exp;
+    if (withExp) expSum += exp;
     return '<tr>' +
       '<td><div class="p-name">' + esc(r.name) + '</div></td>' +
       (isCat ? '' : '<td class="num">' + esc(String(r.catCount)) + '</td>') +
       '<td class="num">' + esc(String(r.productCount)) + '</td>' +
       '<td class="num">' + esc(fmtQty(r.qty)) + '</td>' +
-      moneyTd(r.totalCost) + moneyTd(r.sales) + moneyTd(r.profit) +
-      marginTd(r.profit, r.sales) +
+      (locked ? '' : moneyTd(r.totalCost)) +
+      moneyTd(r.sales) +
+      (locked ? '' : moneyTd(r.profit) + marginTd(r.profit, r.sales)) +
+      (withExp ? '<td class="num"><span class="amount">' + esc(fmtMoney(exp)) + '</span></td>' +
+                 moneyTd(net) +
+                 '<td><span class="badge badge-' +
+                   (net > 0 ? 'green' : (net < 0 ? 'red' : 'gray')) + '">' +
+                   esc(verdictLabel(net)) + '</span></td>' : '') +
     '</tr>';
   }).join('');
 
   var tt = totals(rows);
+  var netAll = tt.profit - expSum;
   var foot = '<td>' + esc(t('total')) + '</td>' + (isCat ? '' : '<td></td>') + '<td></td>' +
     '<td class="num">' + esc(fmtQty(tt.qty)) + '</td>' +
-    '<td class="num">' + esc(fmtMoney(tt.totalCost)) + '</td>' +
+    (locked ? '' : '<td class="num">' + esc(fmtMoney(tt.totalCost)) + '</td>') +
     '<td class="num">' + esc(fmtMoney(tt.sales)) + '</td>' +
-    '<td class="num"><span class="amount ' + signClass(tt.profit) + '">' + esc(fmtMoney(tt.profit)) + '</span></td>' +
-    '<td class="num">' + esc(fmtPct(margin(tt.profit, tt.sales))) + '</td>';
+    (locked ? '' :
+      '<td class="num"><span class="amount ' + signClass(tt.profit) + '">' + esc(fmtMoney(tt.profit)) + '</span></td>' +
+      '<td class="num">' + esc(fmtPct(margin(tt.profit, tt.sales))) + '</td>') +
+    (withExp ? '<td class="num">' + esc(fmtMoney(expSum)) + '</td>' +
+               '<td class="num"><span class="amount ' + signClass(netAll) + '">' + esc(fmtMoney(netAll)) + '</span></td>' +
+               '<td><span class="badge badge-' + (netAll > 0 ? 'green' : (netAll < 0 ? 'red' : 'gray')) + '">' +
+                 esc(verdictLabel(netAll)) + '</span></td>' : '');
 
   return tableShell(head, body, foot);
 }
 
 function renderCompare(records) {
-  var people = personRows(records).sort(function (a, b) { return b.profit - a.profit; });
+  var people = personRows(records).sort(function (a, b) { return b.sales - a.sales; });
   if (!people.length) return '<div class="table-wrap"><div class="empty">' + esc(t('noResults')) + '</div></div>';
   var tt = totals(people);
+  var locked = !costsUnlocked;
 
   var metrics = [
     { label: t('colSales'), get: function (p) { return fmtMoney(p.sales); }, tot: fmtMoney(tt.sales) },
-    { label: t('colTotalCost'), get: function (p) { return fmtMoney(p.totalCost); }, tot: fmtMoney(tt.totalCost) },
-    { label: t('colProfit'), get: function (p) { return fmtMoney(p.profit); }, tot: fmtMoney(tt.profit), sign: true },
-    { label: t('colMargin'), get: function (p) { return fmtPct(margin(p.profit, p.sales)); }, tot: fmtPct(margin(tt.profit, tt.sales)) },
-    { label: t('colShare'), get: function (p) { return tt.profit ? fmtPct((p.profit / tt.profit) * 100) : '—'; }, tot: '100.0%' },
     { label: t('colQty'), get: function (p) { return fmtQty(p.qty); }, tot: fmtQty(tt.qty) },
     { label: t('colItems'), get: function (p) { return String(p.productCount); }, tot: '' },
     { label: t('colCats'), get: function (p) { return String(p.catCount); }, tot: '' }
   ];
+
+  var expSum = 0;
+  people.forEach(function (p) { expSum += expenseTotal(p.name); });
+  var netAll = tt.profit - expSum;
+
+  if (!locked) {
+    metrics = [
+      { label: t('colSales'), get: function (p) { return fmtMoney(p.sales); }, tot: fmtMoney(tt.sales) },
+      { label: t('colTotalCost'), get: function (p) { return fmtMoney(p.totalCost); }, tot: fmtMoney(tt.totalCost) },
+      { label: t('colProfit'), get: function (p) { return fmtMoney(p.profit); }, tot: fmtMoney(tt.profit),
+        sign: function (p) { return p.profit; } },
+      { label: t('colMargin'), get: function (p) { return fmtPct(margin(p.profit, p.sales)); },
+        tot: fmtPct(margin(tt.profit, tt.sales)) },
+      { label: t('colExpenses'), get: function (p) { return fmtMoney(expenseTotal(p.name)); }, tot: fmtMoney(expSum) },
+      { label: t('colNet'), get: function (p) { return fmtMoney(p.profit - expenseTotal(p.name)); },
+        tot: fmtMoney(netAll), sign: function (p) { return p.profit - expenseTotal(p.name); } },
+      { label: t('colVerdict'), get: function (p) { return verdictLabel(p.profit - expenseTotal(p.name)); },
+        tot: verdictLabel(netAll), verdict: true },
+      { label: t('colShare'), get: function (p) { return tt.profit ? fmtPct((p.profit / tt.profit) * 100) : '—'; }, tot: '100.0%' },
+      { label: t('colQty'), get: function (p) { return fmtQty(p.qty); }, tot: fmtQty(tt.qty) },
+      { label: t('colItems'), get: function (p) { return String(p.productCount); }, tot: '' },
+      { label: t('colCats'), get: function (p) { return String(p.catCount); }, tot: '' }
+    ];
+  }
 
   var head = '<th class="metric">' + esc(t('colPerson')) + '</th>' +
     people.map(function (p) { return '<th class="num">' + esc(p.name) + '</th>'; }).join('') +
@@ -1892,7 +2240,12 @@ function renderCompare(records) {
     return '<tr><td class="metric">' + esc(m.label) + '</td>' +
       people.map(function (p) {
         var v = m.get(p);
-        var cls = m.sign ? ' class="amount ' + signClass(p.profit) + '"' : '';
+        if (m.verdict) {
+          var n = p.profit - expenseTotal(p.name);
+          return '<td class="num"><span class="badge badge-' +
+            (n > 0 ? 'green' : (n < 0 ? 'red' : 'gray')) + '">' + esc(v) + '</span></td>';
+        }
+        var cls = m.sign ? ' class="amount ' + signClass(m.sign(p)) + '"' : '';
         return '<td class="num"><span' + cls + '>' + esc(v) + '</span></td>';
       }).join('') +
       '<td class="num"><b>' + esc(m.tot) + '</b></td>' +
@@ -1902,7 +2255,29 @@ function renderCompare(records) {
   return '<div class="table-wrap cmp-wrap"><table class="cmp-table"><thead><tr>' + head + '</tr></thead><tbody>' + body + '</tbody></table></div>';
 }
 
+function applyLockedChrome() {
+  var locked = !costsUnlocked;
+  $('locked-banner').classList.toggle('show', locked);
+  // Anything that would expose a cost, a profit or let it be exported.
+  ['f-profit', 'f-loss', 'f-nocost', 'btn-expenses', 'btn-export', 'btn-print'].forEach(function (id) {
+    var el = $(id);
+    if (el) el.style.display = locked ? 'none' : '';
+  });
+  if (locked) {
+    state.filters.profit = false; state.filters.loss = false; state.filters.nocost = false;
+    ['f-profit', 'f-loss', 'f-nocost'].forEach(function (id) { $(id).classList.remove('active'); });
+    // A sort on a hidden column would still order by it, so fall back.
+    ['product', 'category', 'person'].forEach(function (v) {
+      var f = state.sort[v] && state.sort[v].f;
+      if (f === 'profit' || f === 'margin' || f === 'totalCost' || f === 'unitCost') {
+        state.sort[v] = { f: 'sales', d: -1 };
+      }
+    });
+  }
+}
+
 function renderView() {
+  applyLockedChrome();
   var records = activeRecords();
 
   if (!selectedPersons().length) {
@@ -1922,7 +2297,7 @@ function renderView() {
   $('view-body').innerHTML = html;
 
   var group = $('f-profit').parentNode;
-  group.style.display = state.view === 'product' ? '' : 'none';
+  group.style.display = state.view === 'product' && costsUnlocked ? '' : 'none';
 }
 
 function renderAll() {
@@ -1946,7 +2321,9 @@ function exportExcel() {
   var ar = isAr();
 
   var tt = emptyAgg();
-  records.forEach(function (r) { tt.qty += r.qty; tt.sales += r.sales; tt.totalCost += r.totalCost; tt.profit += r.profit; });
+  records.forEach(function (r) { tt.qty += r.qty; tt.sales += r.sales; tt.totalCost += (r.totalCost || 0); tt.profit += (r.profit || 0); });
+  var expAll = 0;
+  selectedPersons().forEach(function (n) { expAll += expenseTotal(n); });
 
   // Summary
   var summary = [
@@ -1959,7 +2336,11 @@ function exportExcel() {
     [t('stProfit'), tt.profit],
     [t('stMargin'), margin(tt.profit, tt.sales) === null ? '' : Math.round(margin(tt.profit, tt.sales) * 10) / 10],
     [t('stQty'), tt.qty],
-    [t('stNoCost'), state.unmatched.length]
+    [t('stNoCost'), state.unmatched.length],
+    ['', ''],
+    [t('stExpenses'), expAll],
+    [t('stNet'), tt.profit - expAll],
+    [t('colVerdict'), verdictLabel(tt.profit - expAll)]
   ];
   XLSX.utils.book_append_sheet(wb, aoaSheet(summary, [28, 40]), ar ? 'الملخص' : 'Summary');
 
@@ -1986,12 +2367,33 @@ function exportExcel() {
   XLSX.utils.book_append_sheet(wb, aoaSheet([cHead].concat(cRows), [28, 10, 12, 15, 15, 15, 10]), ar ? 'الفئات' : 'Categories');
 
   // Salespeople
-  var sHead = [t('colPerson'), t('colCats'), t('colItems'), t('colQty'), t('colTotalCost'), t('colSales'), t('colProfit'), t('colMargin')];
+  var sHead = [t('colPerson'), t('colCats'), t('colItems'), t('colQty'), t('colTotalCost'),
+               t('colSales'), t('colProfit'), t('colMargin'),
+               t('colExpenses'), t('colNet'), t('colVerdict')];
   var sRows = sortRows(personRows(records), 'person').map(function (r) {
     var m = margin(r.profit, r.sales);
-    return [r.name, r.catCount, r.productCount, r.qty, r.totalCost, r.sales, r.profit, m === null ? '' : Math.round(m * 10) / 10];
+    var exp = expenseTotal(r.name);
+    var net = r.profit - exp;
+    return [r.name, r.catCount, r.productCount, r.qty, r.totalCost, r.sales, r.profit,
+            m === null ? '' : Math.round(m * 10) / 10, exp, net, verdictLabel(net)];
   });
-  XLSX.utils.book_append_sheet(wb, aoaSheet([sHead].concat(sRows), [30, 10, 10, 12, 15, 15, 15, 10]), ar ? 'المندوبون' : 'Salespeople');
+  XLSX.utils.book_append_sheet(wb, aoaSheet([sHead].concat(sRows),
+    [30, 10, 10, 12, 15, 15, 15, 10, 15, 15, 14]), ar ? 'المندوبون' : 'Salespeople');
+
+  // One sheet per salesperson's running costs, so the figures are auditable.
+  var labels = expenseLabels();
+  var eHead = [t('colPerson')].concat(EXPENSE_FIELDS.map(function (f) { return labels[f]; }))
+                              .concat([t('expTotal'), t('colProfit'), t('colNet'), t('colVerdict')]);
+  var eRows = state.persons.filter(function (p) { return p.selected; }).map(function (p) {
+    var v = expenseFor(p.name);
+    var tot = expenseTotal(p.name);
+    var gross = profitOfPerson(p.name);
+    var net = gross - tot;
+    return [p.name].concat(EXPENSE_FIELDS.map(function (f) { return v[f]; }))
+                   .concat([tot, gross, net, verdictLabel(net)]);
+  });
+  XLSX.utils.book_append_sheet(wb, aoaSheet([eHead].concat(eRows),
+    [30, 15, 15, 15, 15, 13, 15, 15, 16, 16, 16, 14]), ar ? 'المصاريف' : 'Expenses');
 
   var now = new Date();
   XLSX.writeFile(wb, 'profit-analysis-' + now.getFullYear() + '-' + (now.getMonth() + 1) + '-' + now.getDate() + '.xlsx');
@@ -2005,7 +2407,10 @@ function buildPrint() {
   var records = activeRecords();
   var ar = isAr();
   var tt = emptyAgg();
-  records.forEach(function (r) { tt.qty += r.qty; tt.sales += r.sales; tt.totalCost += r.totalCost; tt.profit += r.profit; });
+  records.forEach(function (r) { tt.qty += r.qty; tt.sales += r.sales; tt.totalCost += (r.totalCost || 0); tt.profit += (r.profit || 0); });
+  var expAll = 0;
+  selectedPersons().forEach(function (n) { expAll += expenseTotal(n); });
+  var netAll = tt.profit - expAll;
 
   var frame = $('print-frame');
   frame.className = ar ? 'rtl' : '';
@@ -2023,6 +2428,8 @@ function buildPrint() {
     '<div class="ps-card"><div class="ps-label">' + esc(t('stCost')) + '</div><div class="ps-val">' + esc(fmtMoney(tt.totalCost)) + '</div></div>' +
     '<div class="ps-card"><div class="ps-label">' + esc(t('stProfit')) + '</div><div class="ps-val ' + (tt.profit >= 0 ? 'pos' : 'neg') + '">' + esc(fmtMoney(tt.profit)) + '</div></div>' +
     '<div class="ps-card"><div class="ps-label">' + esc(t('stMargin')) + '</div><div class="ps-val">' + esc(fmtPct(margin(tt.profit, tt.sales))) + '</div></div>' +
+    '<div class="ps-card"><div class="ps-label">' + esc(t('stExpenses')) + '</div><div class="ps-val">' + esc(fmtMoney(expAll)) + '</div></div>' +
+    '<div class="ps-card"><div class="ps-label">' + esc(t('stNet')) + '</div><div class="ps-val ' + (netAll >= 0 ? 'pos' : 'neg') + '">' + esc(fmtMoney(netAll)) + ' · ' + esc(verdictLabel(netAll)) + '</div></div>' +
   '</div>';
 
   function sectionTable(title, headers, rows) {
@@ -2035,9 +2442,13 @@ function buildPrint() {
 
   var people = sortRows(personRows(records), 'person');
   var peopleRows = people.map(function (r) {
+    var exp = expenseTotal(r.name);
+    var net = r.profit - exp;
     return ['<td class="bidi">' + esc(r.name) + '</td>', '<td>' + esc(fmtQty(r.qty)) + '</td>',
       moneyCell(r.totalCost), moneyCell(r.sales), moneyCell(r.profit),
-      '<td>' + esc(fmtPct(margin(r.profit, r.sales))) + '</td>'];
+      '<td>' + esc(fmtPct(margin(r.profit, r.sales))) + '</td>',
+      moneyCell(exp), moneyCell(net),
+      '<td class="' + (net > 0 ? 'pos' : (net < 0 ? 'neg' : '')) + '">' + esc(verdictLabel(net)) + '</td>'];
   });
 
   var cats = sortRows(categoryRows(records), 'category');
@@ -2058,7 +2469,9 @@ function buildPrint() {
   var gh = [t('colQty'), t('colTotalCost'), t('colSales'), t('colProfit'), t('colMargin')];
 
   $('print-content').innerHTML = head + cards +
-    sectionTable(t('tabPerson'), [t('colPerson')].concat(gh), peopleRows) +
+    sectionTable(t('tabPerson'),
+      [t('colPerson')].concat(gh).concat([t('colExpenses'), t('colNet'), t('colVerdict')]),
+      peopleRows) +
     sectionTable(t('tabCategory'), [t('colCategory')].concat(gh), catRows) +
     sectionTable(t('tabProduct'), [t('colProduct'), t('colCategory')].concat(gh), prodRows);
 
@@ -2086,7 +2499,8 @@ function applyLang() {
     'uz-sales-title': 'salesTitle', 'uz-sales-sub': 'salesSub', 'uz-sales-hint': 'dropHint',
     'btn-analyze': 'analyze', 'sp-title': 'spTitle', 'sp-all': 'selAll', 'sp-none': 'selNone',
     'f-profit': 'fProfit', 'f-loss': 'fLoss', 'f-nocost': 'fNoCost', 'f-active': 'fActive',
-    'btn-new': 'newFiles', 'btn-export': 'excel', 'btn-print': 'print'
+    'btn-new': 'newFiles', 'btn-export': 'excel', 'btn-print': 'print',
+    'btn-expenses': 'btnExpenses', 'btn-unlock-costs': 'btnShowCosts', 'lb-msg': 'lockedMsg'
   };
   Object.keys(text).forEach(function (id) {
     var el = $(id);
@@ -2102,32 +2516,87 @@ function applyLang() {
   for (var i = 0; i < tabs.length; i++) tabs[i].textContent = t(tabKeys[tabs[i].getAttribute('data-view')]);
 
   if (state.salesFile) $('uz-sales-file').textContent = state.salesFile.name + ' · ' + state.sales.records.length + ' ' + t('rows');
-  if (builtInOrder.length) $('cost-note').innerHTML = '<b>' + productCount() + '</b> ' + esc(t('costNote'));
+  if ($('upload-section').style.display !== 'none') showUpload();
   if ($('cost-overlay').classList.contains('show')) openCostSettings();
+  if ($('exp-overlay').classList.contains('show')) openExpenses();
 
   try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
   if (state.records.length) renderAll();
 }
 
-/* =========================  errors  ========================= */
+/* =========================  expenses  ========================= */
 
-function errorText(err) {
-  var code = err && err.message;
-  switch (code) {
-    case 'BAD_TYPE': return t('errBadType');
-    case 'TOO_BIG': return t('errTooBig');
-    case 'EMPTY_FILE': case 'NO_FILE': return t('errEmpty');
-    case 'TOO_MANY_ROWS': return t('errTooManyRows');
-    case 'PROTO_POLLUTION': return t('errProto');
-    case 'COST_COLS': return t('errCostCols');
-    case 'SALES_ROWS': return t('errSalesRows');
-    case 'NO_OVERLAP': return t('errNoOverlap');
-    default: return t('errRead');
-  }
+var expPerson = null;
+
+function expenseLabels() {
+  return {
+    salaryRep: t('expSalaryRep'), bonusRep: t('expBonusRep'),
+    salaryDriver: t('expSalaryDriver'), bonusDriver: t('expBonusDriver'),
+    fuel: t('expFuel'), maintenance: t('expMaint'), other: t('expOther')
+  };
 }
 
-function showUploadError(err) {
-  renderAlerts('upload-alerts', [{ type: 'err', html: '⛔ ' + esc(errorText(err)) }]);
+function profitOfPerson(person) {
+  var sum = 0;
+  state.records.forEach(function (r) { if (r.person === person) sum += (r.profit || 0); });
+  return sum;
+}
+
+function renderExpenseBody() {
+  var labels = expenseLabels();
+  var vals = expenseFor(expPerson);
+  $('exp-body').innerHTML = EXPENSE_FIELDS.map(function (f) {
+    var v = vals[f];
+    return '<div class="exp-row">' +
+      '<label class="exp-name" for="exp-f-' + esc(f) + '">' + esc(labels[f]) + '</label>' +
+      '<input class="exp-input' + (v ? ' filled' : '') + '" id="exp-f-' + esc(f) + '" ' +
+        'type="text" inputmode="decimal" data-field="' + esc(f) + '" value="' + esc(v ? fmtMoney(v) : '') + '" ' +
+        'placeholder="0"/>' +
+    '</div>';
+  }).join('');
+  renderExpenseTotals();
+}
+
+function renderExpenseTotals() {
+  var total = expenseTotal(expPerson);
+  var gross = profitOfPerson(expPerson);
+  var net = gross - total;
+
+  $('exp-total-label').textContent = t('expTotal');
+  $('exp-total').textContent = fmtMoney(total);
+  $('exp-net-label').textContent = t('colNet');
+  var netEl = $('exp-net');
+  netEl.textContent = fmtMoney(net);
+  netEl.className = 'exp-net ' + signClass(net);
+
+  var v = $('exp-verdict');
+  v.className = 'exp-verdict ' + verdictOf(net);
+  v.textContent = net > 0 ? t('verdictGoodMsg')
+                : (net < 0 ? t('verdictBadMsg') : t('verdictFlatMsg'));
+  $('exp-hint').textContent = t('expHint');
+  $('exp-sub').textContent = t('expSub');
+}
+
+function openExpenses() {
+  if (!costsUnlocked) { openCostSettings(); return; }
+  var people = state.persons.map(function (p) { return p.name; });
+  if (!people.length) return;
+  if (people.indexOf(expPerson) === -1) expPerson = people[0];
+
+  $('exp-title').textContent = t('expTitle');
+  $('exp-person-label').textContent = t('colPerson');
+  $('exp-clear').textContent = t('expClear');
+  $('exp-person').innerHTML = people.map(function (n) {
+    return '<option value="' + esc(n) + '"' + (n === expPerson ? ' selected' : '') + '>' + esc(n) + '</option>';
+  }).join('');
+
+  renderExpenseBody();
+  $('exp-overlay').classList.add('show');
+}
+
+function closeExpenses() {
+  $('exp-overlay').classList.remove('show');
+  if (state.records.length) renderAll();
 }
 
 /* =========================  cost settings  ========================= */
@@ -2193,7 +2662,7 @@ function openCostSettings() {
 
   $('cost-overlay').classList.add('show');
 
-  if (settingsUnlocked) {
+  if (costsUnlocked) {
     renderGate(false);
     $('cm-changed').classList.toggle('active', cmFilter.changedOnly);
     $('cm-search').value = cmFilter.q;
@@ -2203,6 +2672,18 @@ function openCostSettings() {
     renderGate(true);
     $('cm-gate-input').focus();
   }
+}
+
+function applyUnlock() {
+  markCostsUnlocked();
+  return openCostTable()
+    .then(loadLocalCosts)
+    .then(loadExpenses)
+    .then(function () {
+      if (state.sales) state.records = costRecords();
+      applyLang();
+      if (state.records.length) renderAll();
+    });
 }
 
 function submitGate(e) {
@@ -2216,7 +2697,8 @@ function submitGate(e) {
 
   checkSettingsPassphrase(pass).then(function () {
     input.value = '';
-    markSettingsUnlocked();
+    return applyUnlock();
+  }).then(function () {
     openCostSettings();
   }).catch(function (err) {
     var m = err && err.message;
@@ -2233,8 +2715,16 @@ function closeCostSettings() {
 }
 
 function lockSettingsPanel() {
-  lockSettings();
-  openCostSettings();
+  lockCosts();
+  builtIn = Object.create(null);
+  builtInOrder = [];
+  localCosts = { overrides: Object.create(null), added: Object.create(null) };
+  expenses = Object.create(null);
+  if (state.sales) state.records = costRecords();
+  $('cost-overlay').classList.remove('show');
+  $('exp-overlay').classList.remove('show');
+  applyLang();
+  if (state.records.length) renderAll();
 }
 
 function setCost(key, raw) {
@@ -2322,7 +2812,9 @@ function showScreen(name) {
 
 function showUpload() {
   showScreen('upload');
-  $('cost-note').innerHTML = '<b>' + productCount() + '</b> ' + esc(t('costNote'));
+  $('cost-note').innerHTML = costsUnlocked
+    ? '<b>' + productCount() + '</b> ' + esc(t('costNote'))
+    : esc(t('costNoteLocked'));
   window.scrollTo(0, 0);
 }
 
@@ -2347,15 +2839,17 @@ function handleSales(file) {
 }
 
 function refreshAnalyzeButton() {
-  $('btn-analyze').disabled = !(state.sales && builtInOrder.length);
+  $('btn-analyze').disabled = !state.sales;
 }
 
 function analyze() {
   try {
     state.records = costRecords();
-    var matched = 0;
-    state.records.forEach(function (r) { if (r.matched) matched++; });
-    if (!matched) throw new Error('NO_OVERLAP');
+    if (costsUnlocked) {
+      var matched = 0;
+      state.records.forEach(function (r) { if (r.matched) matched++; });
+      if (!matched) throw new Error('NO_OVERLAP');
+    }
 
     var seen = Object.create(null);
     state.persons = [];
@@ -2391,21 +2885,17 @@ function resetUpload() {
 
 /* =========================  start-up  ========================= */
 
-function bootCostTable() {
-  return openCostTable()
-    .then(loadLocalCosts)
-    .then(function () {
-      restoreSettingsUnlock();
-      showUpload();
-      refreshAnalyzeButton();
-      applyLang();
-    })
-    .catch(function (err) {
-      var m = err && err.message;
-      renderAlerts('upload-alerts', [{ type: 'err', html: '⛔ ' + esc(
-        m === 'NO_CRYPTO' ? t('lockNoCrypto') : t('lockNoBlob')) }]);
-      $('btn-settings').style.display = 'none';
+function boot() {
+  if (wasUnlockedThisSession()) {
+    return applyUnlock().then(function () {
+      showUpload(); refreshAnalyzeButton();
+    }).catch(function () {
+      lockCosts(); showUpload(); refreshAnalyzeButton();
     });
+  }
+  showUpload();
+  refreshAnalyzeButton();
+  return Promise.resolve();
 }
 
 /* =========================  wiring  ========================= */
@@ -2477,6 +2967,32 @@ function init() {
   });
   $('cm-reset').addEventListener('click', resetAllCosts);
   $('cm-lock').addEventListener('click', lockSettingsPanel);
+
+  $('btn-unlock-costs').addEventListener('click', openCostSettings);
+  $('btn-expenses').addEventListener('click', openExpenses);
+  $('exp-close').addEventListener('click', closeExpenses);
+  $('exp-overlay').addEventListener('click', function (e) {
+    if (e.target === $('exp-overlay')) closeExpenses();
+  });
+  $('exp-person').addEventListener('change', function (e) {
+    expPerson = e.target.value;
+    renderExpenseBody();
+  });
+  $('exp-clear').addEventListener('click', function () {
+    if (!window.confirm(t('expClearConfirm'))) return;
+    clearExpenses(expPerson);
+    renderExpenseBody();
+  });
+  $('exp-body').addEventListener('change', function (e) {
+    var input = e.target.closest ? e.target.closest('.exp-input') : null;
+    if (!input) return;
+    var field = input.getAttribute('data-field');
+    if (setExpense(expPerson, field, input.value)) renderExpenseBody();
+    else { input.value = ''; setExpense(expPerson, field, 0); renderExpenseBody(); }
+  });
+  $('exp-body').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && e.target.classList.contains('exp-input')) { e.preventDefault(); e.target.blur(); }
+  });
   $('cm-import').addEventListener('click', function () { $('cm-file').click(); });
   $('cm-file').addEventListener('change', function (e) {
     if (e.target.files && e.target.files[0]) importCostFile(e.target.files[0]);
@@ -2503,6 +3019,7 @@ function init() {
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape') return;
     if ($('print-overlay').classList.contains('show')) $('print-overlay').classList.remove('show');
+    else if ($('exp-overlay').classList.contains('show')) closeExpenses();
     else if ($('cost-overlay').classList.contains('show')) closeCostSettings();
   });
 
@@ -2564,7 +3081,7 @@ function init() {
 
   // The cost table opens with the key that ships in the page, so the report
   // is usable straight away; only the Costs panel asks for the passphrase.
-  bootCostTable();
+  boot();
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
