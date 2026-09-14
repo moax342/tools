@@ -165,23 +165,6 @@
   .cm-gate #cm-gate-input:focus { border-color: var(--accent); }
   .cm-hidden { display: none !important; }
 
-  /* ---------- Locked banner ---------- */
-  .locked-banner {
-    display: none;
-    align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
-    background: var(--amber-bg); border: 1px solid var(--amber);
-    border-radius: var(--radius); padding: 12px 18px; margin-bottom: 18px;
-  }
-  .locked-banner.show { display: flex; }
-  .lb-text { display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--amber); font-weight: 600; }
-  .lb-icon { font-size: 17px; }
-  .lb-btn {
-    height: 34px; padding: 0 16px; border-radius: var(--radius-sm);
-    border: 1px solid var(--amber); background: var(--amber); color: #1a1400;
-    font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap;
-  }
-  .lb-btn:hover { filter: brightness(1.1); }
-
   /* ---------- Expenses ---------- */
   #exp-overlay {
     display: none; position: fixed; inset: 0;
@@ -191,58 +174,55 @@
   #exp-overlay.show { display: flex; }
   #exp-modal {
     background: var(--bg2); border: 1px solid var(--border2);
-    border-radius: var(--radius); width: 100%; max-width: 620px;
+    border-radius: var(--radius); width: 100%; max-width: 1160px;
     max-height: 88vh; display: flex; flex-direction: column;
     box-shadow: var(--shadow); overflow: hidden;
   }
-  .exp-tools {
-    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
-    padding: 14px 22px; border-bottom: 1px solid var(--border);
+  .exp-wrap { overflow: auto; flex: 1; }
+  .exp-table { width: 100%; border-collapse: collapse; }
+  .exp-table thead th {
+    position: sticky; top: 0; z-index: 1;
+    background: var(--bg3); padding: 11px 6px;
+    font-size: 11px; font-weight: 600; color: var(--text3);
+    text-transform: uppercase; letter-spacing: 0.4px;
+    border-bottom: 1px solid var(--border); white-space: nowrap; text-align: center;
   }
-  .exp-label { font-size: 12.5px; color: var(--text3); font-weight: 600; }
-  #exp-person {
-    flex: 1; min-width: 180px; height: 36px; padding: 0 10px;
-    border-radius: var(--radius-sm); border: 1px solid var(--border2);
-    background: var(--bg3); color: var(--text); font-size: 13.5px; outline: none;
+  .exp-table thead th.who { text-align: left; min-width: 150px; }
+  body.rtl .exp-table thead th.who { text-align: right; }
+  .exp-table tbody td { padding: 8px 6px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .exp-table tbody tr:last-child td { border-bottom: none; }
+  .exp-table td.who {
+    font-size: 13.5px; font-weight: 600; color: var(--text);
+    unicode-bidi: plaintext; white-space: nowrap;
   }
-  #exp-person:focus { border-color: var(--accent); }
-  .exp-body { overflow-y: auto; flex: 1; padding: 8px 22px 16px; }
-  .exp-row {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border);
-  }
-  .exp-row:last-child { border-bottom: none; }
-  .exp-name { font-size: 13.5px; color: var(--text); unicode-bidi: plaintext; }
   .exp-input {
-    width: 150px; height: 34px; padding: 0 10px; flex-shrink: 0;
+    width: 94px; height: 34px; padding: 0 8px;
     border-radius: var(--radius-sm); border: 1px solid var(--border2);
     background: var(--bg3); color: var(--text);
-    font-size: 13.5px; text-align: right; outline: none;
+    font-size: 13px; text-align: right; outline: none;
     direction: ltr; font-variant-numeric: tabular-nums;
   }
   .exp-input:focus { border-color: var(--accent); }
   .exp-input.filled { border-color: var(--teal); color: var(--teal); font-weight: 700; }
-  .exp-foot { padding: 14px 22px 18px; border-top: 1px solid var(--border); background: var(--bg3); }
-  .exp-total-row, .exp-net-row {
-    display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
-    font-size: 14px; margin-bottom: 8px; color: var(--text2);
+  .exp-table th:last-child, .exp-table td:last-child {
+    position: sticky; inset-inline-end: 0; background: var(--bg2);
+    box-shadow: -6px 0 8px -6px rgba(0,0,0,0.45);
   }
-  .exp-total, .exp-net {
-    font-weight: 700; font-size: 18px; font-variant-numeric: tabular-nums;
-    direction: ltr; unicode-bidi: isolate;
+  .exp-table thead th:last-child { background: var(--bg3); }
+  .exp-rowtotal {
+    font-weight: 700; font-size: 13.5px; color: var(--amber);
+    font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate;
+    white-space: nowrap; text-align: center; display: block;
   }
-  .exp-total { color: var(--amber); }
-  .exp-net.positive { color: var(--green); }
-  .exp-net.negative { color: var(--red); }
-  .exp-net.zero { color: var(--text3); }
-  .exp-verdict {
-    margin-top: 10px; padding: 11px 14px; border-radius: var(--radius-sm);
-    font-size: 13.5px; font-weight: 700; text-align: center; line-height: 1.6;
+  .exp-foot {
+    padding: 14px 22px; border-top: 1px solid var(--border); background: var(--bg3);
+    display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
   }
-  .exp-verdict.good { background: var(--green-bg); color: var(--green); border: 1px solid var(--green); }
-  .exp-verdict.bad { background: var(--red-bg); color: var(--red); border: 1px solid var(--red); }
-  .exp-verdict.flat { background: var(--bg4); color: var(--text2); border: 1px solid var(--border2); }
-  .exp-hint { margin-top: 10px; font-size: 11.5px; color: var(--text3); text-align: center; line-height: 1.6; }
+  .exp-actions { display: flex; gap: 10px; align-items: center; }
+  #exp-save { height: 38px; padding: 0 26px; font-size: 14px; }
+  .exp-msg { font-size: 12.5px; color: var(--text3); line-height: 1.6; }
+  .exp-msg.saved { color: var(--green); font-weight: 700; }
+  .exp-msg.dirty { color: var(--amber); font-weight: 700; }
 
   .verdict-table td.vd { font-weight: 700; }
 
@@ -644,6 +624,7 @@
   </div>
   <div class="header-actions">
     <button class="btn-lang" id="btn-back" type="button" style="display:none;">← Upload</button>
+    <button class="btn-lang" id="btn-expenses" type="button">💵 Expenses</button>
     <button class="btn-lang" id="btn-settings" type="button">⚙ Costs</button>
     <a href="index.html" class="btn-lang" style="text-decoration:none;display:flex;align-items:center;" id="btn-home">🏠 الرئيسية</a>
     <button class="btn-lang" id="lang-btn" type="button">AR / عر</button>
@@ -678,14 +659,6 @@
   <section id="data-section" style="display:none;">
     <div id="data-alerts"></div>
 
-    <div class="locked-banner" id="locked-banner">
-      <div class="lb-text">
-        <span class="lb-icon">🔒</span>
-        <span id="lb-msg">Costs and profit are hidden.</span>
-      </div>
-      <button class="lb-btn" id="btn-unlock-costs" type="button">Show costs</button>
-    </div>
-
     <div class="sp-panel">
       <div class="sp-head">
         <div class="sp-title" id="sp-title">Salespeople</div>
@@ -712,7 +685,6 @@
         <button class="filter-btn" id="f-active" type="button">Moved only</button>
       </div>
       <div class="filter-group">
-        <button class="filter-btn" id="btn-expenses" type="button">💵 Expenses</button>
         <button class="filter-btn" id="btn-new" type="button">New file</button>
         <button class="filter-btn btn-excel" id="btn-export" type="button">⬇ Excel</button>
         <button class="filter-btn btn-print" id="btn-print" type="button">🖨 Print</button>
@@ -782,25 +754,16 @@
       <button class="btn-icon" id="exp-close" type="button">✕</button>
     </div>
 
-    <div class="exp-tools">
-      <label class="exp-label" id="exp-person-label">Salesperson</label>
-      <select id="exp-person"></select>
-      <button class="filter-btn" id="exp-clear" type="button">Clear</button>
+    <div class="exp-wrap">
+      <table class="exp-table" id="exp-table"></table>
     </div>
 
-    <div class="exp-body" id="exp-body"></div>
-
     <div class="exp-foot">
-      <div class="exp-total-row">
-        <span id="exp-total-label">Total expenses</span>
-        <span class="exp-total" id="exp-total">0</span>
+      <div class="exp-msg" id="exp-msg"></div>
+      <div class="exp-actions">
+        <button class="filter-btn" id="exp-clear" type="button">Clear</button>
+        <button class="btn-primary" id="exp-save" type="button">Save</button>
       </div>
-      <div class="exp-net-row">
-        <span id="exp-net-label">Net after expenses</span>
-        <span class="exp-net" id="exp-net">—</span>
-      </div>
-      <div class="exp-verdict" id="exp-verdict"></div>
-      <div class="exp-hint" id="exp-hint"></div>
     </div>
   </div>
 </div>
@@ -1256,9 +1219,8 @@ var T = {
     cmSavedLocal: 'Your cost edits are saved encrypted in this browser only.',
     cmNone: 'No products match.',
     unknownNote: 'Products missing from the cost list are counted at zero cost. Add them with ⚙ Costs.',
-    lockedMsg: 'Costs and profit are hidden until the passphrase is entered.',
-    btnShowCosts: 'Show costs',
-    costNoteLocked: 'Upload the sales file to see quantities and sales. Costs and profit need the passphrase.',
+    costNoteLocked: 'Upload the sales file. Item costs stay hidden until the passphrase is entered.',
+    settingsLocked: '🔒 Costs',
     chartCatSales: 'Sales by category', chartPersonSales: 'Sales by salesperson',
     topSales: 'Best selling products', bottomSales: 'Slowest products',
     stExpenses: 'Running costs', stNet: 'Net after costs', stNoExpenses: 'none entered yet',
@@ -1266,11 +1228,15 @@ var T = {
     verdictProfit: 'Earning', verdictLoss: 'Losing money', verdictBreak: 'Break-even',
     btnExpenses: '💵 Expenses',
     expTitle: 'Salesperson running costs',
-    expSub: 'For the same period as the sales file. Saved encrypted on this device only.',
+    expSub: 'One row per salesperson, for the same period as the sales file. Saved encrypted on this device only.',
     expSalaryRep: 'Salesperson salary', expBonusRep: 'Salesperson bonus',
     expSalaryDriver: 'Driver salary', expBonusDriver: 'Driver bonus',
     expFuel: 'Fuel', expMaint: 'Vehicle maintenance', expOther: 'Other expenses',
-    expTotal: 'Total expenses', expClear: 'Clear', 
+    expTotal: 'Total expenses', expClear: 'Clear all', expSave: 'Save',
+    expSaved: '✅ Saved — the salesperson view has been updated.',
+    expUnsaved: '⚠ Unsaved changes — press Save to apply them.',
+    expDiscardConfirm: 'Close without saving? Your changes will be lost.',
+    expSub2: '', 
     expClearConfirm: 'Clear all expense figures for this salesperson?',
     expHint: 'Net = gross profit − total expenses.',
     verdictGoodMsg: '✅ This salesperson covers their costs and earns money.',
@@ -1337,9 +1303,8 @@ var T = {
     cmSavedLocal: 'تعديلاتك على التكاليف محفوظة مشفّرة في هذا المتصفح فقط.',
     cmNone: 'لا توجد منتجات مطابقة.',
     unknownNote: 'المنتجات غير الموجودة في قائمة التكاليف تُحتسب بتكلفة صفر. أضفها من ⚙ التكاليف.',
-    lockedMsg: 'التكاليف والأرباح مخفية حتى إدخال كلمة المرور.',
-    btnShowCosts: 'عرض التكاليف',
-    costNoteLocked: 'ارفع ملف المبيعات لعرض الكميات والمبيعات. أما التكاليف والأرباح فتتطلب كلمة المرور.',
+    costNoteLocked: 'ارفع ملف المبيعات. تبقى تكاليف الأصناف مخفية حتى إدخال كلمة المرور.',
+    settingsLocked: '🔒 التكاليف',
     chartCatSales: 'المبيعات حسب الفئة', chartPersonSales: 'المبيعات حسب المندوب',
     topSales: 'أكثر المنتجات مبيعاً', bottomSales: 'أقل المنتجات مبيعاً',
     stExpenses: 'المصاريف', stNet: 'الصافي بعد المصاريف', stNoExpenses: 'لم تُدخل بعد',
@@ -1347,11 +1312,14 @@ var T = {
     verdictProfit: 'رابح', verdictLoss: 'خاسر', verdictBreak: 'متعادل',
     btnExpenses: '💵 المصاريف',
     expTitle: 'مصاريف المندوب',
-    expSub: 'لنفس فترة ملف المبيعات. تُحفظ مشفّرة على هذا الجهاز فقط.',
+    expSub: 'سطر لكل مندوب، لنفس فترة ملف المبيعات. تُحفظ مشفّرة على هذا الجهاز فقط.',
     expSalaryRep: 'راتب المندوب', expBonusRep: 'حافز المندوب',
     expSalaryDriver: 'راتب السائق', expBonusDriver: 'حافز السائق',
     expFuel: 'قاز', expMaint: 'صيانة سيارة', expOther: 'مصاريف أخرى',
-    expTotal: 'مجموع المصاريف', expClear: 'مسح',
+    expTotal: 'مجموع المصاريف', expClear: 'مسح الكل', expSave: 'حفظ',
+    expSaved: '✅ تم الحفظ — تم تحديث عرض المندوبين.',
+    expUnsaved: '⚠ تغييرات غير محفوظة — اضغط حفظ لتطبيقها.',
+    expDiscardConfirm: 'الإغلاق بدون حفظ؟ ستفقد تغييراتك.',
     expClearConfirm: 'مسح جميع مبالغ المصاريف لهذا المندوب؟',
     expHint: 'الصافي = إجمالي الربح − مجموع المصاريف.',
     verdictGoodMsg: '✅ هذا المندوب يغطي مصاريفه ويحقق ربحاً.',
@@ -1773,12 +1741,6 @@ function costRecords() {
       code: r.code, name: r.name, person: r.person, category: r.category,
       qty: r.qty, sales: r.sales
     };
-    if (!costsUnlocked) {
-      // Locked: no cost is read and no profit is derived.
-      base.unitCost = null; base.totalCost = null; base.profit = null;
-      base.matched = true; base.costEdited = false; base.costCategory = '';
-      return base;
-    }
     var c = lookupCost(r.code);
     var unitCost = c ? c.cost : 0;
     var totalCost = unitCost * r.qty;
@@ -1796,7 +1758,7 @@ function costRecords() {
     return base;
   });
 
-  state.unmatched = costsUnlocked ? unmatched : [];
+  state.unmatched = unmatched;
   return out;
 }
 
@@ -1965,34 +1927,26 @@ function renderStats(records) {
   records.forEach(function (r) {
     tt.qty += r.qty; tt.sales += r.sales;
     tt.totalCost += (r.totalCost || 0); tt.profit += (r.profit || 0);
-    if (costsUnlocked && !r.matched) noCost++;
+    if (!r.matched) noCost++;
     var k = r.code || r.name;
     if (!prodKeys[k]) { prodKeys[k] = true; prodCount++; }
   });
 
-  var html = statCard(t('stSales'), fmtMoney(tt.sales), 'accent') +
-             statCard(t('stQty'), fmtQty(tt.qty), 'teal') +
-             statCard(t('stItems'), String(prodCount), '',
-                      costsUnlocked && noCost ? noCost + ' ' + t('stNoCost') : '');
+  var exp = 0;
+  selectedPersons().forEach(function (n) { exp += expenseTotal(n); });
+  var net = tt.profit - exp;
+  var m = margin(tt.profit, tt.sales);
 
-  if (costsUnlocked) {
-    var exp = 0;
-    selectedPersons().forEach(function (n) { exp += expenseTotal(n); });
-    var net = tt.profit - exp;
-    var m = margin(tt.profit, tt.sales);
-    html = statCard(t('stSales'), fmtMoney(tt.sales), 'accent') +
-           statCard(t('stCost'), fmtMoney(tt.totalCost), 'amber') +
-           statCard(t('stProfit'), fmtMoney(tt.profit), tt.profit >= 0 ? 'green' : 'red') +
-           statCard(t('stMargin'), fmtPct(m), tt.profit >= 0 ? 'green' : 'red') +
-           statCard(t('stExpenses'), fmtMoney(exp), 'amber',
-                    exp ? '' : t('stNoExpenses')) +
-           statCard(t('stNet'), fmtMoney(net), net > 0 ? 'green' : (net < 0 ? 'red' : ''),
-                    verdictLabel(net)) +
-           statCard(t('stQty'), fmtQty(tt.qty), 'teal') +
-           statCard(t('stItems'), String(prodCount), '',
-                    noCost ? noCost + ' ' + t('stNoCost') : '');
-  }
-  $('stats-row').innerHTML = html;
+  // Only the cost card is gated; profit is public.
+  $('stats-row').innerHTML =
+    statCard(t('stSales'), fmtMoney(tt.sales), 'accent') +
+    (costsUnlocked ? statCard(t('stCost'), fmtMoney(tt.totalCost), 'amber') : '') +
+    statCard(t('stProfit'), fmtMoney(tt.profit), tt.profit >= 0 ? 'green' : 'red') +
+    statCard(t('stMargin'), fmtPct(m), tt.profit >= 0 ? 'green' : 'red') +
+    statCard(t('stExpenses'), fmtMoney(exp), 'amber', exp ? '' : t('stNoExpenses')) +
+    statCard(t('stNet'), fmtMoney(net), net > 0 ? 'green' : (net < 0 ? 'red' : ''), verdictLabel(net)) +
+    statCard(t('stQty'), fmtQty(tt.qty), 'teal') +
+    statCard(t('stItems'), String(prodCount), '', noCost ? noCost + ' ' + t('stNoCost') : '');
 }
 
 function barPanel(title, rows, limit, metric) {
@@ -2036,25 +1990,11 @@ function moverPanel(title, rows, limit, worst, metric) {
 }
 
 function renderPanels(records) {
-  var cats = categoryRows(records);
-  var people = personRows(records);
-  var prods = productRows(records);
-
-  if (!costsUnlocked) {
-    // Profit charts would leak cost, so show the same shapes by sales value.
-    $('panel-grid').innerHTML =
-      barPanel(t('chartCatSales'), cats, 10, 'sales') +
-      barPanel(t('chartPersonSales'), people, 10, 'sales') +
-      moverPanel(t('topSales'), prods, 6, false, 'sales') +
-      moverPanel(t('bottomSales'), prods, 6, true, 'sales');
-    return;
-  }
-
   $('panel-grid').innerHTML =
-    barPanel(t('chartCat'), cats, 10, 'profit') +
-    barPanel(t('chartPerson'), people, 10, 'profit') +
-    moverPanel(t('topItems'), prods, 6, false, 'profit') +
-    moverPanel(t('bottomItems'), prods, 6, true, 'profit');
+    barPanel(t('chartCat'), categoryRows(records), 10, 'profit') +
+    barPanel(t('chartPerson'), personRows(records), 10, 'profit') +
+    moverPanel(t('topItems'), productRows(records), 6, false, 'profit') +
+    moverPanel(t('bottomItems'), productRows(records), 6, true, 'profit');
 }
 
 function sortArrow(view, field) {
@@ -2087,51 +2027,46 @@ function tableShell(head, body, foot) {
 
 function renderProductTable(records) {
   var rows = sortRows(productRows(records), 'product');
-  var locked = !costsUnlocked;
+  var showCost = costsUnlocked;   // the only thing the passphrase hides
 
   var head =
     th('product', 'name', t('colProduct')) +
     th('product', 'category', t('colCategory')) +
     '<th>' + esc(t('colPerson')) + '</th>' +
     th('product', 'qty', t('colQty'), true) +
-    (locked ? '' :
-      th('product', 'unitCost', t('colUnitCost'), true) +
-      th('product', 'totalCost', t('colTotalCost'), true)) +
+    (showCost ? th('product', 'unitCost', t('colUnitCost'), true) +
+                th('product', 'totalCost', t('colTotalCost'), true) : '') +
     th('product', 'sales', t('colSales'), true) +
-    (locked ? '' :
-      th('product', 'profit', t('colProfit'), true) +
-      th('product', 'margin', t('colMargin'), true));
+    th('product', 'profit', t('colProfit'), true) +
+    th('product', 'margin', t('colMargin'), true);
 
-  var cols = locked ? 5 : 9;
+  var cols = showCost ? 9 : 7;
   if (!rows.length) return tableShell(head, '<tr><td colspan="' + cols + '"><div class="empty">' + esc(t('noResults')) + '</div></td></tr>', '');
 
   var body = rows.map(function (r) {
     var who = r.personCount > 1 ? (r.personCount + ' ' + t('multiPersons')) : r.firstPerson;
-    return '<tr' + (!locked && !r.matched ? ' class="row-warn"' : '') + '>' +
+    return '<tr' + (!r.matched ? ' class="row-warn"' : '') + '>' +
       '<td><div class="p-name">' + esc(r.name) +
-        (!locked && !r.matched ? ' <span class="badge badge-amber">⚠ ' + esc(t('noCostBadge')) + '</span>' : '') +
+        (!r.matched ? ' <span class="badge badge-amber">⚠ ' + esc(t('noCostBadge')) + '</span>' : '') +
       '</div>' + (r.code ? '<div class="p-code">' + esc(r.code) + '</div>' : '') + '</td>' +
       '<td class="bidi">' + esc(r.category) + '</td>' +
       '<td class="bidi">' + esc(who) + '</td>' +
       '<td class="num">' + esc(fmtQty(r.qty)) + '</td>' +
-      (locked ? '' :
+      (showCost ?
         '<td class="num">' + (r.matched
             ? esc(fmtCost(r.unitCost)) + (r.costEdited ? ' <span class="badge badge-teal">✎</span>' : '')
-            : '—') + '</td>' +
-        moneyTd(r.totalCost)) +
-      moneyTd(r.sales) +
-      (locked ? '' : moneyTd(r.profit) + marginTd(r.profit, r.sales)) +
+            : '—') + '</td>' + moneyTd(r.totalCost) : '') +
+      moneyTd(r.sales) + moneyTd(r.profit) + marginTd(r.profit, r.sales) +
     '</tr>';
   }).join('');
 
   var tt = totals(rows);
   var foot = '<td>' + esc(t('total')) + '</td><td></td><td></td>' +
     '<td class="num">' + esc(fmtQty(tt.qty)) + '</td>' +
-    (locked ? '' : '<td></td><td class="num">' + esc(fmtMoney(tt.totalCost)) + '</td>') +
+    (showCost ? '<td></td><td class="num">' + esc(fmtMoney(tt.totalCost)) + '</td>' : '') +
     '<td class="num">' + esc(fmtMoney(tt.sales)) + '</td>' +
-    (locked ? '' :
-      '<td class="num"><span class="amount ' + signClass(tt.profit) + '">' + esc(fmtMoney(tt.profit)) + '</span></td>' +
-      '<td class="num">' + esc(fmtPct(margin(tt.profit, tt.sales))) + '</td>');
+    '<td class="num"><span class="amount ' + signClass(tt.profit) + '">' + esc(fmtMoney(tt.profit)) + '</span></td>' +
+    '<td class="num">' + esc(fmtPct(margin(tt.profit, tt.sales))) + '</td>';
 
   return tableShell(head, body, foot);
 }
@@ -2139,22 +2074,23 @@ function renderProductTable(records) {
 function renderGroupTable(records, view) {
   var rows = sortRows(view === 'category' ? categoryRows(records) : personRows(records), view);
   var isCat = view === 'category';
-  var locked = !costsUnlocked;
-  var withExp = !locked && !isCat;   // running costs belong to a salesperson
+  var showCost = costsUnlocked;
+  var withExp = !isCat;            // running costs belong to a salesperson
 
   var head =
     th(view, 'name', isCat ? t('colCategory') : t('colPerson')) +
     (isCat ? '' : th(view, 'catCount', t('colCats'), true)) +
     th(view, 'productCount', t('colItems'), true) +
     th(view, 'qty', t('colQty'), true) +
-    (locked ? '' : th(view, 'totalCost', t('colTotalCost'), true)) +
+    (showCost ? th(view, 'totalCost', t('colTotalCost'), true) : '') +
     th(view, 'sales', t('colSales'), true) +
-    (locked ? '' : th(view, 'profit', t('colProfit'), true) + th(view, 'margin', t('colMargin'), true)) +
+    th(view, 'profit', t('colProfit'), true) +
+    th(view, 'margin', t('colMargin'), true) +
     (withExp ? '<th class="num">' + esc(t('colExpenses')) + '</th>' +
                '<th class="num">' + esc(t('colNet')) + '</th>' +
                '<th>' + esc(t('colVerdict')) + '</th>' : '');
 
-  var cols = (isCat ? 4 : 5) + (locked ? 0 : 3) + (withExp ? 3 : 0);
+  var cols = (isCat ? 6 : 7) + (showCost ? 1 : 0) + (withExp ? 3 : 0);
   if (!rows.length) return tableShell(head, '<tr><td colspan="' + cols + '"><div class="empty">' + esc(t('noResults')) + '</div></td></tr>', '');
 
   var expSum = 0;
@@ -2167,9 +2103,8 @@ function renderGroupTable(records, view) {
       (isCat ? '' : '<td class="num">' + esc(String(r.catCount)) + '</td>') +
       '<td class="num">' + esc(String(r.productCount)) + '</td>' +
       '<td class="num">' + esc(fmtQty(r.qty)) + '</td>' +
-      (locked ? '' : moneyTd(r.totalCost)) +
-      moneyTd(r.sales) +
-      (locked ? '' : moneyTd(r.profit) + marginTd(r.profit, r.sales)) +
+      (showCost ? moneyTd(r.totalCost) : '') +
+      moneyTd(r.sales) + moneyTd(r.profit) + marginTd(r.profit, r.sales) +
       (withExp ? '<td class="num"><span class="amount">' + esc(fmtMoney(exp)) + '</span></td>' +
                  moneyTd(net) +
                  '<td><span class="badge badge-' +
@@ -2182,11 +2117,10 @@ function renderGroupTable(records, view) {
   var netAll = tt.profit - expSum;
   var foot = '<td>' + esc(t('total')) + '</td>' + (isCat ? '' : '<td></td>') + '<td></td>' +
     '<td class="num">' + esc(fmtQty(tt.qty)) + '</td>' +
-    (locked ? '' : '<td class="num">' + esc(fmtMoney(tt.totalCost)) + '</td>') +
+    (showCost ? '<td class="num">' + esc(fmtMoney(tt.totalCost)) + '</td>' : '') +
     '<td class="num">' + esc(fmtMoney(tt.sales)) + '</td>' +
-    (locked ? '' :
-      '<td class="num"><span class="amount ' + signClass(tt.profit) + '">' + esc(fmtMoney(tt.profit)) + '</span></td>' +
-      '<td class="num">' + esc(fmtPct(margin(tt.profit, tt.sales))) + '</td>') +
+    '<td class="num"><span class="amount ' + signClass(tt.profit) + '">' + esc(fmtMoney(tt.profit)) + '</span></td>' +
+    '<td class="num">' + esc(fmtPct(margin(tt.profit, tt.sales))) + '</td>' +
     (withExp ? '<td class="num">' + esc(fmtMoney(expSum)) + '</td>' +
                '<td class="num"><span class="amount ' + signClass(netAll) + '">' + esc(fmtMoney(netAll)) + '</span></td>' +
                '<td><span class="badge badge-' + (netAll > 0 ? 'green' : (netAll < 0 ? 'red' : 'gray')) + '">' +
@@ -2199,23 +2133,13 @@ function renderCompare(records) {
   var people = personRows(records).sort(function (a, b) { return b.sales - a.sales; });
   if (!people.length) return '<div class="table-wrap"><div class="empty">' + esc(t('noResults')) + '</div></div>';
   var tt = totals(people);
-  var locked = !costsUnlocked;
-
-  var metrics = [
-    { label: t('colSales'), get: function (p) { return fmtMoney(p.sales); }, tot: fmtMoney(tt.sales) },
-    { label: t('colQty'), get: function (p) { return fmtQty(p.qty); }, tot: fmtQty(tt.qty) },
-    { label: t('colItems'), get: function (p) { return String(p.productCount); }, tot: '' },
-    { label: t('colCats'), get: function (p) { return String(p.catCount); }, tot: '' }
-  ];
 
   var expSum = 0;
   people.forEach(function (p) { expSum += expenseTotal(p.name); });
   var netAll = tt.profit - expSum;
 
-  if (!locked) {
-    metrics = [
+  var metrics = [
       { label: t('colSales'), get: function (p) { return fmtMoney(p.sales); }, tot: fmtMoney(tt.sales) },
-      { label: t('colTotalCost'), get: function (p) { return fmtMoney(p.totalCost); }, tot: fmtMoney(tt.totalCost) },
       { label: t('colProfit'), get: function (p) { return fmtMoney(p.profit); }, tot: fmtMoney(tt.profit),
         sign: function (p) { return p.profit; } },
       { label: t('colMargin'), get: function (p) { return fmtPct(margin(p.profit, p.sales)); },
@@ -2229,7 +2153,11 @@ function renderCompare(records) {
       { label: t('colQty'), get: function (p) { return fmtQty(p.qty); }, tot: fmtQty(tt.qty) },
       { label: t('colItems'), get: function (p) { return String(p.productCount); }, tot: '' },
       { label: t('colCats'), get: function (p) { return String(p.catCount); }, tot: '' }
-    ];
+  ];
+
+  if (costsUnlocked) {
+    metrics.splice(1, 0, { label: t('colTotalCost'),
+      get: function (p) { return fmtMoney(p.totalCost); }, tot: fmtMoney(tt.totalCost) });
   }
 
   var head = '<th class="metric">' + esc(t('colPerson')) + '</th>' +
@@ -2255,29 +2183,7 @@ function renderCompare(records) {
   return '<div class="table-wrap cmp-wrap"><table class="cmp-table"><thead><tr>' + head + '</tr></thead><tbody>' + body + '</tbody></table></div>';
 }
 
-function applyLockedChrome() {
-  var locked = !costsUnlocked;
-  $('locked-banner').classList.toggle('show', locked);
-  // Anything that would expose a cost, a profit or let it be exported.
-  ['f-profit', 'f-loss', 'f-nocost', 'btn-expenses', 'btn-export', 'btn-print'].forEach(function (id) {
-    var el = $(id);
-    if (el) el.style.display = locked ? 'none' : '';
-  });
-  if (locked) {
-    state.filters.profit = false; state.filters.loss = false; state.filters.nocost = false;
-    ['f-profit', 'f-loss', 'f-nocost'].forEach(function (id) { $(id).classList.remove('active'); });
-    // A sort on a hidden column would still order by it, so fall back.
-    ['product', 'category', 'person'].forEach(function (v) {
-      var f = state.sort[v] && state.sort[v].f;
-      if (f === 'profit' || f === 'margin' || f === 'totalCost' || f === 'unitCost') {
-        state.sort[v] = { f: 'sales', d: -1 };
-      }
-    });
-  }
-}
-
 function renderView() {
-  applyLockedChrome();
   var records = activeRecords();
 
   if (!selectedPersons().length) {
@@ -2297,7 +2203,7 @@ function renderView() {
   $('view-body').innerHTML = html;
 
   var group = $('f-profit').parentNode;
-  group.style.display = state.view === 'product' && costsUnlocked ? '' : 'none';
+  group.style.display = state.view === 'product' ? '' : 'none';
 }
 
 function renderAll() {
@@ -2331,8 +2237,8 @@ function exportExcel() {
     [t('generated'), new Date().toLocaleString(ar ? 'ar-EG' : 'en-GB')],
     [t('filterLabel'), selectedPersons().join(' , ')],
     ['', ''],
-    [t('stSales'), tt.sales],
-    [t('stCost'), tt.totalCost],
+    [t('stSales'), tt.sales]
+  ].concat(costsUnlocked ? [[t('stCost'), tt.totalCost]] : []).concat([
     [t('stProfit'), tt.profit],
     [t('stMargin'), margin(tt.profit, tt.sales) === null ? '' : Math.round(margin(tt.profit, tt.sales) * 10) / 10],
     [t('stQty'), tt.qty],
@@ -2341,44 +2247,58 @@ function exportExcel() {
     [t('stExpenses'), expAll],
     [t('stNet'), tt.profit - expAll],
     [t('colVerdict'), verdictLabel(tt.profit - expAll)]
-  ];
+  ]);
   XLSX.utils.book_append_sheet(wb, aoaSheet(summary, [28, 40]), ar ? 'الملخص' : 'Summary');
 
   // Products
-  var pHead = [t('colProduct'), t('colCategory'), t('colPerson'), t('colQty'), t('colUnitCost'), t('colTotalCost'), t('colSales'), t('colProfit'), t('colMargin')];
+  var showCost = costsUnlocked;
+  var pHead = [t('colProduct'), t('colCategory'), t('colPerson'), t('colQty')]
+    .concat(showCost ? [t('colUnitCost'), t('colTotalCost')] : [])
+    .concat([t('colSales'), t('colProfit'), t('colMargin')]);
   var pRows = sortRows(productRows(records), 'product').map(function (r) {
     var m = margin(r.profit, r.sales);
     return [
       (r.code ? '[' + r.code + '] ' : '') + r.name,
       r.category,
       r.personCount > 1 ? (r.personCount + ' ' + t('multiPersons')) : r.firstPerson,
-      r.qty, r.matched ? r.unitCost : '', r.totalCost, r.sales, r.profit,
-      m === null ? '' : Math.round(m * 10) / 10
-    ];
+      r.qty
+    ].concat(showCost ? [r.matched ? r.unitCost : '', r.totalCost] : [])
+     .concat([r.sales, r.profit, m === null ? '' : Math.round(m * 10) / 10]);
   });
-  XLSX.utils.book_append_sheet(wb, aoaSheet([pHead].concat(pRows), [46, 20, 24, 10, 13, 15, 15, 15, 10]), ar ? 'المنتجات' : 'Products');
+  XLSX.utils.book_append_sheet(wb, aoaSheet([pHead].concat(pRows),
+    showCost ? [46, 20, 24, 10, 13, 15, 15, 15, 10] : [46, 20, 24, 10, 15, 15, 10]),
+    ar ? 'المنتجات' : 'Products');
 
   // Categories
-  var cHead = [t('colCategory'), t('colItems'), t('colQty'), t('colTotalCost'), t('colSales'), t('colProfit'), t('colMargin')];
+  var cHead = [t('colCategory'), t('colItems'), t('colQty')]
+    .concat(showCost ? [t('colTotalCost')] : [])
+    .concat([t('colSales'), t('colProfit'), t('colMargin')]);
   var cRows = sortRows(categoryRows(records), 'category').map(function (r) {
     var m = margin(r.profit, r.sales);
-    return [r.name, r.productCount, r.qty, r.totalCost, r.sales, r.profit, m === null ? '' : Math.round(m * 10) / 10];
+    return [r.name, r.productCount, r.qty]
+      .concat(showCost ? [r.totalCost] : [])
+      .concat([r.sales, r.profit, m === null ? '' : Math.round(m * 10) / 10]);
   });
-  XLSX.utils.book_append_sheet(wb, aoaSheet([cHead].concat(cRows), [28, 10, 12, 15, 15, 15, 10]), ar ? 'الفئات' : 'Categories');
+  XLSX.utils.book_append_sheet(wb, aoaSheet([cHead].concat(cRows),
+    showCost ? [28, 10, 12, 15, 15, 15, 10] : [28, 10, 12, 15, 15, 10]), ar ? 'الفئات' : 'Categories');
 
   // Salespeople
-  var sHead = [t('colPerson'), t('colCats'), t('colItems'), t('colQty'), t('colTotalCost'),
-               t('colSales'), t('colProfit'), t('colMargin'),
-               t('colExpenses'), t('colNet'), t('colVerdict')];
+  var sHead = [t('colPerson'), t('colCats'), t('colItems'), t('colQty')]
+    .concat(showCost ? [t('colTotalCost')] : [])
+    .concat([t('colSales'), t('colProfit'), t('colMargin'),
+             t('colExpenses'), t('colNet'), t('colVerdict')]);
   var sRows = sortRows(personRows(records), 'person').map(function (r) {
     var m = margin(r.profit, r.sales);
     var exp = expenseTotal(r.name);
     var net = r.profit - exp;
-    return [r.name, r.catCount, r.productCount, r.qty, r.totalCost, r.sales, r.profit,
-            m === null ? '' : Math.round(m * 10) / 10, exp, net, verdictLabel(net)];
+    return [r.name, r.catCount, r.productCount, r.qty]
+      .concat(showCost ? [r.totalCost] : [])
+      .concat([r.sales, r.profit, m === null ? '' : Math.round(m * 10) / 10,
+               exp, net, verdictLabel(net)]);
   });
   XLSX.utils.book_append_sheet(wb, aoaSheet([sHead].concat(sRows),
-    [30, 10, 10, 12, 15, 15, 15, 10, 15, 15, 14]), ar ? 'المندوبون' : 'Salespeople');
+    showCost ? [30, 10, 10, 12, 15, 15, 15, 10, 15, 15, 14]
+             : [30, 10, 10, 12, 15, 15, 10, 15, 15, 14]), ar ? 'المندوبون' : 'Salespeople');
 
   // One sheet per salesperson's running costs, so the figures are auditable.
   var labels = expenseLabels();
@@ -2425,7 +2345,7 @@ function buildPrint() {
 
   var cards = '<div class="print-summary">' +
     '<div class="ps-card"><div class="ps-label">' + esc(t('stSales')) + '</div><div class="ps-val">' + esc(fmtMoney(tt.sales)) + '</div></div>' +
-    '<div class="ps-card"><div class="ps-label">' + esc(t('stCost')) + '</div><div class="ps-val">' + esc(fmtMoney(tt.totalCost)) + '</div></div>' +
+    (costsUnlocked ? '<div class="ps-card"><div class="ps-label">' + esc(t('stCost')) + '</div><div class="ps-val">' + esc(fmtMoney(tt.totalCost)) + '</div></div>' : '') +
     '<div class="ps-card"><div class="ps-label">' + esc(t('stProfit')) + '</div><div class="ps-val ' + (tt.profit >= 0 ? 'pos' : 'neg') + '">' + esc(fmtMoney(tt.profit)) + '</div></div>' +
     '<div class="ps-card"><div class="ps-label">' + esc(t('stMargin')) + '</div><div class="ps-val">' + esc(fmtPct(margin(tt.profit, tt.sales))) + '</div></div>' +
     '<div class="ps-card"><div class="ps-label">' + esc(t('stExpenses')) + '</div><div class="ps-val">' + esc(fmtMoney(expAll)) + '</div></div>' +
@@ -2444,29 +2364,33 @@ function buildPrint() {
   var peopleRows = people.map(function (r) {
     var exp = expenseTotal(r.name);
     var net = r.profit - exp;
-    return ['<td class="bidi">' + esc(r.name) + '</td>', '<td>' + esc(fmtQty(r.qty)) + '</td>',
-      moneyCell(r.totalCost), moneyCell(r.sales), moneyCell(r.profit),
+    return ['<td class="bidi">' + esc(r.name) + '</td>', '<td>' + esc(fmtQty(r.qty)) + '</td>']
+      .concat(costsUnlocked ? [moneyCell(r.totalCost)] : [])
+      .concat([moneyCell(r.sales), moneyCell(r.profit),
       '<td>' + esc(fmtPct(margin(r.profit, r.sales))) + '</td>',
       moneyCell(exp), moneyCell(net),
-      '<td class="' + (net > 0 ? 'pos' : (net < 0 ? 'neg' : '')) + '">' + esc(verdictLabel(net)) + '</td>'];
+      '<td class="' + (net > 0 ? 'pos' : (net < 0 ? 'neg' : '')) + '">' + esc(verdictLabel(net)) + '</td>']);
   });
 
   var cats = sortRows(categoryRows(records), 'category');
   var catRows = cats.map(function (r) {
-    return ['<td class="bidi">' + esc(r.name) + '</td>', '<td>' + esc(fmtQty(r.qty)) + '</td>',
-      moneyCell(r.totalCost), moneyCell(r.sales), moneyCell(r.profit),
-      '<td>' + esc(fmtPct(margin(r.profit, r.sales))) + '</td>'];
+    return ['<td class="bidi">' + esc(r.name) + '</td>', '<td>' + esc(fmtQty(r.qty)) + '</td>']
+      .concat(costsUnlocked ? [moneyCell(r.totalCost)] : [])
+      .concat([moneyCell(r.sales), moneyCell(r.profit),
+      '<td>' + esc(fmtPct(margin(r.profit, r.sales))) + '</td>']);
   });
 
   var prods = sortRows(productRows(records), 'product').slice(0, 300);
   var prodRows = prods.map(function (r) {
     return ['<td class="bidi">' + esc((r.code ? '[' + r.code + '] ' : '') + r.name) + '</td>',
-      '<td class="bidi">' + esc(r.category) + '</td>', '<td>' + esc(fmtQty(r.qty)) + '</td>',
-      moneyCell(r.totalCost), moneyCell(r.sales), moneyCell(r.profit),
-      '<td>' + esc(fmtPct(margin(r.profit, r.sales))) + '</td>'];
+      '<td class="bidi">' + esc(r.category) + '</td>', '<td>' + esc(fmtQty(r.qty)) + '</td>']
+      .concat(costsUnlocked ? [moneyCell(r.totalCost)] : [])
+      .concat([moneyCell(r.sales), moneyCell(r.profit),
+      '<td>' + esc(fmtPct(margin(r.profit, r.sales))) + '</td>']);
   });
 
-  var gh = [t('colQty'), t('colTotalCost'), t('colSales'), t('colProfit'), t('colMargin')];
+  var gh = [t('colQty')].concat(costsUnlocked ? [t('colTotalCost')] : [])
+            .concat([t('colSales'), t('colProfit'), t('colMargin')]);
 
   $('print-content').innerHTML = head + cards +
     sectionTable(t('tabPerson'),
@@ -2500,7 +2424,7 @@ function applyLang() {
     'btn-analyze': 'analyze', 'sp-title': 'spTitle', 'sp-all': 'selAll', 'sp-none': 'selNone',
     'f-profit': 'fProfit', 'f-loss': 'fLoss', 'f-nocost': 'fNoCost', 'f-active': 'fActive',
     'btn-new': 'newFiles', 'btn-export': 'excel', 'btn-print': 'print',
-    'btn-expenses': 'btnExpenses', 'btn-unlock-costs': 'btnShowCosts', 'lb-msg': 'lockedMsg'
+    'btn-expenses': 'btnExpenses'
   };
   Object.keys(text).forEach(function (id) {
     var el = $(id);
@@ -2521,81 +2445,6 @@ function applyLang() {
   if ($('exp-overlay').classList.contains('show')) openExpenses();
 
   try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
-  if (state.records.length) renderAll();
-}
-
-/* =========================  expenses  ========================= */
-
-var expPerson = null;
-
-function expenseLabels() {
-  return {
-    salaryRep: t('expSalaryRep'), bonusRep: t('expBonusRep'),
-    salaryDriver: t('expSalaryDriver'), bonusDriver: t('expBonusDriver'),
-    fuel: t('expFuel'), maintenance: t('expMaint'), other: t('expOther')
-  };
-}
-
-function profitOfPerson(person) {
-  var sum = 0;
-  state.records.forEach(function (r) { if (r.person === person) sum += (r.profit || 0); });
-  return sum;
-}
-
-function renderExpenseBody() {
-  var labels = expenseLabels();
-  var vals = expenseFor(expPerson);
-  $('exp-body').innerHTML = EXPENSE_FIELDS.map(function (f) {
-    var v = vals[f];
-    return '<div class="exp-row">' +
-      '<label class="exp-name" for="exp-f-' + esc(f) + '">' + esc(labels[f]) + '</label>' +
-      '<input class="exp-input' + (v ? ' filled' : '') + '" id="exp-f-' + esc(f) + '" ' +
-        'type="text" inputmode="decimal" data-field="' + esc(f) + '" value="' + esc(v ? fmtMoney(v) : '') + '" ' +
-        'placeholder="0"/>' +
-    '</div>';
-  }).join('');
-  renderExpenseTotals();
-}
-
-function renderExpenseTotals() {
-  var total = expenseTotal(expPerson);
-  var gross = profitOfPerson(expPerson);
-  var net = gross - total;
-
-  $('exp-total-label').textContent = t('expTotal');
-  $('exp-total').textContent = fmtMoney(total);
-  $('exp-net-label').textContent = t('colNet');
-  var netEl = $('exp-net');
-  netEl.textContent = fmtMoney(net);
-  netEl.className = 'exp-net ' + signClass(net);
-
-  var v = $('exp-verdict');
-  v.className = 'exp-verdict ' + verdictOf(net);
-  v.textContent = net > 0 ? t('verdictGoodMsg')
-                : (net < 0 ? t('verdictBadMsg') : t('verdictFlatMsg'));
-  $('exp-hint').textContent = t('expHint');
-  $('exp-sub').textContent = t('expSub');
-}
-
-function openExpenses() {
-  if (!costsUnlocked) { openCostSettings(); return; }
-  var people = state.persons.map(function (p) { return p.name; });
-  if (!people.length) return;
-  if (people.indexOf(expPerson) === -1) expPerson = people[0];
-
-  $('exp-title').textContent = t('expTitle');
-  $('exp-person-label').textContent = t('colPerson');
-  $('exp-clear').textContent = t('expClear');
-  $('exp-person').innerHTML = people.map(function (n) {
-    return '<option value="' + esc(n) + '"' + (n === expPerson ? ' selected' : '') + '>' + esc(n) + '</option>';
-  }).join('');
-
-  renderExpenseBody();
-  $('exp-overlay').classList.add('show');
-}
-
-function closeExpenses() {
-  $('exp-overlay').classList.remove('show');
   if (state.records.length) renderAll();
 }
 
@@ -2676,14 +2525,9 @@ function openCostSettings() {
 
 function applyUnlock() {
   markCostsUnlocked();
-  return openCostTable()
-    .then(loadLocalCosts)
-    .then(loadExpenses)
-    .then(function () {
-      if (state.sales) state.records = costRecords();
-      applyLang();
-      if (state.records.length) renderAll();
-    });
+  applyLang();
+  if (state.records.length) renderAll();
+  return Promise.resolve();
 }
 
 function submitGate(e) {
@@ -2716,13 +2560,7 @@ function closeCostSettings() {
 
 function lockSettingsPanel() {
   lockCosts();
-  builtIn = Object.create(null);
-  builtInOrder = [];
-  localCosts = { overrides: Object.create(null), added: Object.create(null) };
-  expenses = Object.create(null);
-  if (state.sales) state.records = costRecords();
   $('cost-overlay').classList.remove('show');
-  $('exp-overlay').classList.remove('show');
   applyLang();
   if (state.records.length) renderAll();
 }
@@ -2781,6 +2619,108 @@ function importCostFile(file) {
   });
 }
 
+/* =========================  expenses  =========================
+   One editable row per salesperson. Typing only changes a draft; nothing is
+   stored or reflected in the report until Save is pressed. */
+
+var expDraft = null;
+var expDirty = false;
+
+function expenseLabels() {
+  return {
+    salaryRep: t('expSalaryRep'), bonusRep: t('expBonusRep'),
+    salaryDriver: t('expSalaryDriver'), bonusDriver: t('expBonusDriver'),
+    fuel: t('expFuel'), maintenance: t('expMaint'), other: t('expOther')
+  };
+}
+
+function profitOfPerson(person) {
+  var sum = 0;
+  state.records.forEach(function (r) { if (r.person === person) sum += (r.profit || 0); });
+  return sum;
+}
+
+function draftTotal(person) {
+  var row = expDraft[person] || {};
+  var sum = 0;
+  for (var i = 0; i < EXPENSE_FIELDS.length; i++) sum += Number(row[EXPENSE_FIELDS[i]]) || 0;
+  return sum;
+}
+
+function buildDraft() {
+  expDraft = Object.create(null);
+  state.persons.forEach(function (p) {
+    var cur = expenseFor(p.name);
+    var row = Object.create(null);
+    EXPENSE_FIELDS.forEach(function (f) { row[f] = cur[f]; });
+    expDraft[p.name] = row;
+  });
+  expDirty = false;
+}
+
+function renderExpenseTable() {
+  var labels = expenseLabels();
+  var head = '<thead><tr><th class="who">' + esc(t('colPerson')) + '</th>' +
+    EXPENSE_FIELDS.map(function (f) { return '<th>' + esc(labels[f]) + '</th>'; }).join('') +
+    '<th>' + esc(t('expTotal')) + '</th></tr></thead>';
+
+  var body = state.persons.map(function (p, idx) {
+    var row = expDraft[p.name] || {};
+    return '<tr data-person="' + esc(p.name) + '">' +
+      '<td class="who">' + esc(p.name) + '</td>' +
+      EXPENSE_FIELDS.map(function (f) {
+        var v = Number(row[f]) || 0;
+        return '<td><input class="exp-input' + (v ? ' filled' : '') + '" type="text" ' +
+          'inputmode="decimal" data-person-idx="' + idx + '" data-field="' + esc(f) + '" ' +
+          'value="' + esc(v ? fmtMoney(v) : '') + '" placeholder="0"/></td>';
+      }).join('') +
+      '<td><span class="exp-rowtotal" data-total-idx="' + idx + '">' + esc(fmtMoney(draftTotal(p.name))) + '</span></td>' +
+    '</tr>';
+  }).join('');
+
+  $('exp-table').innerHTML = head + '<tbody>' + body + '</tbody>';
+  updateExpMessage();
+}
+
+function updateExpMessage(saved) {
+  var el = $('exp-msg');
+  el.className = 'exp-msg' + (saved ? ' saved' : (expDirty ? ' dirty' : ''));
+  el.textContent = saved ? t('expSaved') : (expDirty ? t('expUnsaved') : t('expSub'));
+}
+
+function openExpenses() {
+  if (!state.persons.length) return;
+  buildDraft();
+  $('exp-title').textContent = t('expTitle');
+  $('exp-clear').textContent = t('expClear');
+  $('exp-save').textContent = t('expSave');
+  renderExpenseTable();
+  $('exp-overlay').classList.add('show');
+}
+
+function closeExpenses() {
+  if (expDirty && !window.confirm(t('expDiscardConfirm'))) return;
+  $('exp-overlay').classList.remove('show');
+  expDirty = false;
+}
+
+/* Save writes the draft through and refreshes the report behind the modal. */
+function saveExpenses_() {
+  state.persons.forEach(function (p) {
+    var row = expDraft[p.name] || {};
+    var any = false;
+    EXPENSE_FIELDS.forEach(function (f) { if (Number(row[f])) any = true; });
+    if (!any) { delete expenses[expenseKey(p.name)]; return; }
+    var target = Object.create(null);
+    EXPENSE_FIELDS.forEach(function (f) { target[f] = Number(row[f]) || 0; });
+    expenses[expenseKey(p.name)] = target;
+  });
+  expDirty = false;
+  saveExpenses();
+  if (state.records.length) renderAll();
+  updateExpMessage(true);
+}
+
 /* =========================  errors  ========================= */
 
 function errorText(err) {
@@ -2815,6 +2755,7 @@ function showUpload() {
   $('cost-note').innerHTML = costsUnlocked
     ? '<b>' + productCount() + '</b> ' + esc(t('costNote'))
     : esc(t('costNoteLocked'));
+  $('btn-settings').textContent = costsUnlocked ? t('settings') : t('settingsLocked');
   window.scrollTo(0, 0);
 }
 
@@ -2845,11 +2786,9 @@ function refreshAnalyzeButton() {
 function analyze() {
   try {
     state.records = costRecords();
-    if (costsUnlocked) {
-      var matched = 0;
-      state.records.forEach(function (r) { if (r.matched) matched++; });
-      if (!matched) throw new Error('NO_OVERLAP');
-    }
+    var matched = 0;
+    state.records.forEach(function (r) { if (r.matched) matched++; });
+    if (!matched) throw new Error('NO_OVERLAP');
 
     var seen = Object.create(null);
     state.persons = [];
@@ -2886,16 +2825,23 @@ function resetUpload() {
 /* =========================  start-up  ========================= */
 
 function boot() {
-  if (wasUnlockedThisSession()) {
-    return applyUnlock().then(function () {
-      showUpload(); refreshAnalyzeButton();
-    }).catch(function () {
-      lockCosts(); showUpload(); refreshAnalyzeButton();
+  // The report shows profit, which needs the cost table, so it is opened at
+  // start-up. The passphrase governs what is *shown*: the unit-cost and
+  // total-cost columns and the Costs panel.
+  return openCostTable()
+    .then(loadLocalCosts)
+    .then(loadExpenses)
+    .then(function () {
+      costsUnlocked = wasUnlockedThisSession();
+      showUpload();
+      refreshAnalyzeButton();
+      applyLang();
+    })
+    .catch(function (err) {
+      var m = err && err.message;
+      renderAlerts('upload-alerts', [{ type: 'err', html: '⛔ ' + esc(
+        m === 'NO_CRYPTO' ? t('lockNoCrypto') : t('lockNoBlob')) }]);
     });
-  }
-  showUpload();
-  refreshAnalyzeButton();
-  return Promise.resolve();
 }
 
 /* =========================  wiring  ========================= */
@@ -2968,52 +2914,38 @@ function init() {
   $('cm-reset').addEventListener('click', resetAllCosts);
   $('cm-lock').addEventListener('click', lockSettingsPanel);
 
-  $('btn-unlock-costs').addEventListener('click', openCostSettings);
   $('btn-expenses').addEventListener('click', openExpenses);
   $('exp-close').addEventListener('click', closeExpenses);
   $('exp-overlay').addEventListener('click', function (e) {
     if (e.target === $('exp-overlay')) closeExpenses();
   });
-  $('exp-person').addEventListener('change', function (e) {
-    expPerson = e.target.value;
-    renderExpenseBody();
-  });
+  $('exp-save').addEventListener('click', saveExpenses_);
   $('exp-clear').addEventListener('click', function () {
     if (!window.confirm(t('expClearConfirm'))) return;
-    clearExpenses(expPerson);
-    renderExpenseBody();
+    state.persons.forEach(function (p) {
+      EXPENSE_FIELDS.forEach(function (f) { expDraft[p.name][f] = 0; });
+    });
+    expDirty = true;
+    renderExpenseTable();
   });
-  $('exp-body').addEventListener('change', function (e) {
+  $('exp-table').addEventListener('input', function (e) {
     var input = e.target.closest ? e.target.closest('.exp-input') : null;
     if (!input) return;
+    var idx = parseInt(input.getAttribute('data-person-idx'), 10);
     var field = input.getAttribute('data-field');
-    if (setExpense(expPerson, field, input.value)) renderExpenseBody();
-    else { input.value = ''; setExpense(expPerson, field, 0); renderExpenseBody(); }
+    var person = state.persons[idx] && state.persons[idx].name;
+    if (!person || EXPENSE_FIELDS.indexOf(field) === -1) return;
+    var v = num(input.value);
+    if (!isFinite(v) || v < 0) v = 0;
+    expDraft[person][field] = v;
+    input.classList.toggle('filled', !!v);
+    var totalEl = $('exp-table').querySelector('[data-total-idx="' + idx + '"]');
+    if (totalEl) totalEl.textContent = fmtMoney(draftTotal(person));
+    expDirty = true;
+    updateExpMessage();
   });
-  $('exp-body').addEventListener('keydown', function (e) {
+  $('exp-table').addEventListener('keydown', function (e) {
     if (e.key === 'Enter' && e.target.classList.contains('exp-input')) { e.preventDefault(); e.target.blur(); }
-  });
-  $('cm-import').addEventListener('click', function () { $('cm-file').click(); });
-  $('cm-file').addEventListener('change', function (e) {
-    if (e.target.files && e.target.files[0]) importCostFile(e.target.files[0]);
-    e.target.value = '';
-  });
-  $('cm-list').addEventListener('change', function (e) {
-    var input = e.target.closest ? e.target.closest('.cm-input') : null;
-    if (!input) return;
-    var key = input.getAttribute('data-key');
-    if (setCost(key, input.value)) renderCostList();
-    else {
-      input.classList.add('edited');
-      renderAlerts('cm-alerts', [{ type: 'err', html: '⛔ ' + esc(t('cmInvalid')) }]);
-    }
-  });
-  $('cm-list').addEventListener('keydown', function (e) {
-    if (e.key === 'Enter' && e.target.classList.contains('cm-input')) { e.preventDefault(); e.target.blur(); }
-  });
-  $('cm-list').addEventListener('click', function (e) {
-    var btn = e.target.closest ? e.target.closest('.cm-undo') : null;
-    if (btn && !btn.disabled) undoCost(btn.getAttribute('data-undo'));
   });
 
   document.addEventListener('keydown', function (e) {
