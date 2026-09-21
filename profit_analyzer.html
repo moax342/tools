@@ -1629,17 +1629,43 @@ function extractEntries(rows, layout) {
 function buildRecords(entries) {
   var i, e;
 
-  // 1. Products are the rows tagged with an internal code; if an export drops
-  //    the brackets, fall back to the deepest indentation level.
-  var coded = 0;
-  for (i = 0; i < entries.length; i++) if (CODE_RE.test(entries[i].label)) coded++;
+  // 1. Products are the deepest rows of the tree. The internal code tells us
+  //    which depth that is, but the test is the depth itself, not the code:
+  //    a sales export also carries un-coded leaf lines at the same level
+  //    (freight and entry charges, for instance). Treating those as group
+  //    headings would add their depth to the group levels and shift the whole
+  //    hierarchy, turning categories into salespeople and dropping the real
+  //    salespeople entirely, as well as losing their amounts from the totals.
+  var codedAtIndent = Object.create(null);
+  var coded = 0, maxIndent = 0;
+  for (i = 0; i < entries.length; i++) {
+    e = entries[i];
+    if (e.indent > maxIndent) maxIndent = e.indent;
+    if (CODE_RE.test(e.label)) {
+      coded++;
+      codedAtIndent[e.indent] = (codedAtIndent[e.indent] || 0) + 1;
+    }
+  }
 
-  var maxIndent = 0;
-  for (i = 0; i < entries.length; i++) if (entries[i].indent > maxIndent) maxIndent = entries[i].indent;
+  // The depth the coded rows sit at, by majority; otherwise the deepest depth.
+  var productIndent = null;
+  if (coded > 0) {
+    var best = -1;
+    for (var key in codedAtIndent) {
+      if (codedAtIndent[key] > best) { best = codedAtIndent[key]; productIndent = parseInt(key, 10); }
+    }
+  }
 
   for (i = 0; i < entries.length; i++) {
     e = entries[i];
-    e.isProduct = coded > 0 ? CODE_RE.test(e.label) : (e.indent === maxIndent && maxIndent > 0);
+    if (maxIndent > 0) {
+      // Indented export: anything at or below the product depth is a leaf.
+      e.isProduct = productIndent === null ? (e.indent === maxIndent)
+                                           : (e.indent >= productIndent);
+    } else {
+      // Indentation was stripped: the code is all we have to go on.
+      e.isProduct = CODE_RE.test(e.label);
+    }
   }
 
   // 2. Drop the grand-total row(s) so they don't get mistaken for a salesperson.
