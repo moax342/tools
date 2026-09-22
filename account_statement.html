@@ -448,10 +448,24 @@ function parseSheet(sheet){
   // Find header row (row where col1 is a known header keyword)
   let fmt = 'A'; // default
   const HDR_KEYWORDS_C1 = ['Date','التاريخ','JRNL','دفتر اليومية'];
-  let hdrRow = rows[0];
+
+  // The header is not always the first row: the General Ledger export prints
+  // the company name and the period above it. Scan the first rows for the one
+  // carrying at least two known column labels and treat that as the header.
+  const HDR_LABELS = ['date','التاريخ','jrnl','دفتر اليومية','account','الحساب',
+    'communication','البيان','partner','الشريك','branch','الفرع',
+    'source document','مستند المصدر','debit','المدين','credit','الدائن',
+    'balance','الرصيد','initial balance','الرصيد الافتتاحي','currency','العملة'];
+  let hdrIdx = 0;
+  for(let i = 0; i < Math.min(rows.length, 15); i++){
+    const hits = (rows[i]||[])
+      .map(v => String(v==null ? '' : v).trim().toLowerCase())
+      .filter(v => HDR_LABELS.includes(v)).length;
+    if(hits >= 2){ hdrIdx = i; break; }
+  }
 
   // Detect by column count and header content
-  const hdr = rows[0] || [];
+  const hdr = rows[hdrIdx] || [];
   const hdrStr = hdr.join('|').toLowerCase();
   const colCount = hdr.filter(v => v !== '').length;
 
@@ -504,7 +518,7 @@ function parseSheet(sheet){
   const SKIP     = ['الإجمالي', 'Total'];
   const HDR_SKIP = ['التاريخ','Date','JRNL','دفتر اليومية'];
 
-  for(let i = 0; i < rows.length; i++){
+  for(let i = hdrIdx + 1; i < rows.length; i++){
     const r  = rows[i];
 
     // For format C/D: date is in col0, customer name also in col0
@@ -512,8 +526,24 @@ function parseSheet(sheet){
     const c0 = (r[0]===null||r[0]===undefined||r[0]==='') ? '' : String(r[0]).trim();
     if(!c0) continue;
 
+    // A customer block in the General Ledger export is closed by a
+    // "Total <id> <name>" row that carries the totals the other exports put on
+    // the customer header row. Use it only when the header row left them empty,
+    // then close the block. The bare "Total" row is the grand total: skip it.
+    const totM = c0.match(/^(?:Total|الإجمالي)\s+(\S.*)$/i);
+    const totIsCur = !!totM && !!cur &&
+      ((cur.id && totM[1].trim().startsWith(cur.id)) || (cur.name && totM[1].includes(cur.name)));
+    if(totIsCur){
+      if(!cur.totalDebit && !cur.totalCredit && !cur.balance){
+        cur.totalDebit  = numVal(r[cm.debit]);
+        cur.totalCredit = numVal(r[cm.credit]);
+        cur.balance     = numVal(r[cm.bal]);
+      }
+      cur = null;
+      continue;
+    }
     // Skip total rows
-    if(SKIP.some(p => c0.startsWith(p))) continue;
+    if(SKIP.some(p => c0.startsWith(p))){ cur = null; continue; }
     // Skip header row
     if(HDR_SKIP.includes(String(r[1]||'').trim())) continue;
     if(HDR_SKIP.includes(String(r[0]||'').trim())) continue;
@@ -557,7 +587,7 @@ function parseSheet(sheet){
         cur.txns.push({
           doc, date:dateObj.display, ts:dateObj.ts,
           desc:   comm || doc,
-          srcDoc: srcDoc !== doc ? srcDoc : '',
+          srcDoc: (srcDoc !== doc && srcDoc !== rawComm && srcDoc !== comm) ? srcDoc : '',
           debit:  numVal(r[cm.debit]),
           credit: numVal(r[cm.credit]),
           bal:    numVal(r[cm.bal]),
@@ -613,6 +643,15 @@ function parseSheet(sheet){
       }
     }
   }
+
+  // Exports that carry the totals neither on the customer header row nor on a
+  // "Total" row leave the summary at zero — rebuild it from the transactions.
+  allC.forEach(c => {
+    if(c.totalDebit || c.totalCredit || c.balance || !c.txns.length) return;
+    c.totalDebit  = c.txns.reduce((s,t) => s + t.debit,  0);
+    c.totalCredit = c.txns.reduce((s,t) => s + t.credit, 0);
+    c.balance     = c.txns[c.txns.length-1].bal;
+  });
 
   if(allC.length === 0){
     toast('⚠️ لم يتم العثور على عملاء في الملف. تأكد من التنسيق.', 'warn');
