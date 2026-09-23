@@ -386,11 +386,15 @@ function parseDate(v){
       const d = new Date(Date.UTC(+iso[1], +iso[2]-1, +iso[3]));
       return { display: iso[3]+'/'+iso[2]+'/'+iso[1], ts: d.getTime() };
     }
-    // dd/mm/yyyy (partner_ledger format)
-    const dmy = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
-    if(dmy){
-      const d = new Date(Date.UTC(+dmy[3], +dmy[2]-1, +dmy[1]));
-      return { display: s.slice(0,10), ts: d.getTime() };
+    // dd/mm/yyyy or mm/dd/yyyy (partner_ledger format — the order follows the
+    // Odoo user's language, so parseSheet() detects it for the whole file)
+    const sl = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if(sl){
+      const day = DATE_ORDER==='MDY' ? +sl[2] : +sl[1];
+      const mon = DATE_ORDER==='MDY' ? +sl[1] : +sl[2];
+      if(mon < 1 || mon > 12 || day < 1 || day > 31) return null;
+      const d = new Date(Date.UTC(+sl[3], mon-1, day));
+      return { display: pad(day)+'/'+pad(mon)+'/'+sl[3], ts: d.getTime() };
     }
     return null;
   }
@@ -403,6 +407,30 @@ function parseDate(v){
   return null;
 }
 function pad(n){ return String(n).padStart(2,'0'); }
+
+// Slash dates are ambiguous: Odoo writes 09/21/2026 (month first) in English
+// and 21/09/2026 (day first) in Arabic. A part above 12 settles it; when every
+// date fits both readings, pick the one in which the ledger runs in date order.
+let DATE_ORDER = 'DMY';
+function detectDateOrder(rows){
+  const parts = [];
+  rows.forEach(r => [r[0], r[1]].forEach(v => {
+    const m = typeof v === 'string' && v.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if(m) parts.push([+m[1], +m[2], +m[3]]);
+  }));
+  if(parts.some(p => p[0] > 12)) return 'DMY';
+  if(parts.some(p => p[1] > 12)) return 'MDY';
+  const backSteps = order => {
+    let n = 0, prev = null;
+    parts.forEach(p => {
+      const ts = order==='MDY' ? Date.UTC(p[2], p[0]-1, p[1]) : Date.UTC(p[2], p[1]-1, p[0]);
+      if(prev !== null && ts < prev) n++;
+      prev = ts;
+    });
+    return n;
+  };
+  return backSteps('MDY') < backSteps('DMY') ? 'MDY' : 'DMY';
+}
 
 function getType(doc, comm){
   const d = String(doc||'').trim();
@@ -443,6 +471,7 @@ function parseSheet(sheet){
   const rows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:'', raw:true});
   allC = [];
   let cur = null;
+  DATE_ORDER = detectDateOrder(rows);
 
   // ── Auto-detect format from header row ──────────────────
   // Find header row (row where col1 is a known header keyword)
