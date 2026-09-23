@@ -714,24 +714,63 @@ function renderGrid(){
 }
 
 // ── Aging ────────────────────────────────────────────────
+// Today's calendar date as a UTC-midnight timestamp, so it lines up with the
+// transaction timestamps from parseDate() and ages come out in whole days.
+function todayTS(){
+  const n = new Date();
+  return Date.UTC(n.getFullYear(), n.getMonth(), n.getDate());
+}
+function daysOld(ts, today){ return Math.max(0, Math.floor((today - ts) / 864e5)); }
+
+// First-in-first-out: payments, returns and credit notes settle the oldest
+// debits first, so the outstanding balance is made up of the most recent
+// debits. Walk the debits from newest to oldest until the balance is used up
+// and age every slice against today's date. Whatever is left after the last
+// debit was carried in before the statement (opening balance) and is aged
+// from the statement's first date.
 function calcAging(txns, balance, today){
-  let lastPayTS = null;
-  txns.forEach(t => { if(t.type==='دفعة' && t.ts) lastPayTS = t.ts; });
-  if(balance <= 0) return {days:0, lastPayDate:'—', d0:0, d30:0, d60:0, d90:0};
+  const zero = {days:0, oldestDate:'—', d0:0, d30:0, d60:0, d90:0};
+  if(!(balance > 0)) return zero;
 
-  const daysSince = lastPayTS ? Math.floor((today - lastPayTS) / 864e5) : null;
-  const lastPayDate = lastPayTS ? tsDisp(lastPayTS) : 'لا يوجد';
-
-  let d0=0, d30=0, d60=0, d90=0, rem = balance;
-  [...txns].filter(t => t.type==='فاتورة').reverse().forEach(inv => {
-    if(rem <= 0) return;
-    const amt = Math.min(inv.debit, rem); rem -= amt;
-    const age = Math.floor((today - inv.ts) / 864e5);
+  const dated = txns.filter(t => t.ts).sort((a,b) => a.ts - b.ts);
+  let d0=0, d30=0, d60=0, d90=0, rem = balance, oldestTS = null;
+  const add = (amt, ts) => {
+    const age = daysOld(ts, today);
     if(age<=30) d0+=amt; else if(age<=60) d30+=amt; else if(age<=90) d60+=amt; else d90+=amt;
-  });
-  if(rem > 0) d90 += rem;
+    oldestTS = ts;
+  };
 
-  return {days:daysSince, lastPayDate, d0, d30, d60, d90};
+  for(let i = dated.length-1; i >= 0 && rem > 0.005; i--){
+    const t = dated[i];
+    if(!(t.debit > 0)) continue;
+    const amt = Math.min(t.debit, rem);
+    rem -= amt;
+    add(amt, t.ts);
+  }
+  if(rem > 0.005){
+    if(dated.length) add(rem, dated[0].ts);
+    else { d90 += rem; oldestTS = null; }
+  }
+
+  return {
+    days: oldestTS === null ? null : daysOld(oldestTS, today),
+    oldestDate: oldestTS === null ? '—' : tsDisp(oldestTS),
+    d0, d30, d60, d90
+  };
+}
+function agingBadge(aging, balance){
+  if(!(balance > 0)) return {label:'مسدد بالكامل', color:'#38a169'};
+  const d = aging.days;
+  const bucket = d===null ? 'أكثر من 90 يوماً'
+    : d<=30 ? 'أقل من 30 يوماً'
+    : d<=60 ? '31-60 يوماً'
+    : d<=90 ? '61-90 يوماً' : 'أكثر من 90 يوماً';
+  const color = d===null ? '#e53e3e'
+    : d<=30 ? '#38a169'
+    : d<=60 ? '#d69e2e'
+    : d<=90 ? '#dd6b20' : '#e53e3e';
+  const label = d===null ? bucket : 'عمر الرصيد '+d+' يوم ('+bucket+')';
+  return {label, color};
 }
 function tsDisp(ts){
   const d = new Date(ts);
@@ -768,7 +807,7 @@ function clearDates(){
 function generate(){
   if(!chosen) return;
   const c     = chosen;
-  const today = Date.now();
+  const today = todayTS();
 
   const dates  = c.txns.map(t => t.date).filter(Boolean);
   const period = getSelectedPeriod() || (dates.length ? dates[0]+' → '+dates[dates.length-1] : '—');
@@ -779,15 +818,7 @@ function generate(){
   });
 
   const aging = calcAging(c.txns, c.balance, today);
-  const agingDays  = aging.days === null ? '∞' : aging.days;
-  const agingLabel = !c.balance ? 'مسدد بالكامل'
-    : aging.days===null ? 'لا توجد دفعات'
-    : aging.days<=30 ? 'أقل من 30 يوماً'
-    : aging.days<=60 ? '31-60 يوماً'
-    : aging.days<=90 ? '61-90 يوماً' : 'أكثر من 90 يوماً';
-  const agingColor = !c.balance||aging.days<=30 ? '#38a169'
-    : aging.days<=60 ? '#d69e2e'
-    : aging.days<=90 ? '#dd6b20' : '#e53e3e';
+  const {label: agingLabel, color: agingColor} = agingBadge(aging, c.balance);
 
   // Opening balance row
   const hasOB = c.openingBalance || c.openingDebit || c.openingCredit;
@@ -988,7 +1019,7 @@ function dlAllPDF(){
   }
   toast('جاري إنشاء PDF لـ ' + outstanding.length + ' عميل...', 'warn');
 
-  const today = Date.now();
+  const today = todayTS();
 
   function buildCustomerHTML(c){
     const dates  = c.txns.map(t=>t.date).filter(Boolean);
@@ -996,8 +1027,7 @@ function dlAllPDF(){
     let lastInv='—', lastPay='—';
     c.txns.forEach(t=>{if(t.type==='فاتورة')lastInv=t.date;if(t.type==='دفعة')lastPay=t.date;});
     const aging = calcAging(c.txns, c.balance, today);
-    const agingLabel = aging.days===null?'لا توجد دفعات':aging.days<=30?'أقل من 30 يوماً':aging.days<=60?'31-60 يوماً':aging.days<=90?'61-90 يوماً':'أكثر من 90 يوماً';
-    const agingColor = aging.days===null||aging.days<=30?'#38a169':aging.days<=60?'#d69e2e':aging.days<=90?'#dd6b20':'#e53e3e';
+    const {label: agingLabel, color: agingColor} = agingBadge(aging, c.balance);
     const hasOB = c.openingBalance||c.openingDebit||c.openingCredit;
     const obRow = hasOB ? '<tr class="ob-tr"><td>—</td><td>—</td><td style="color:#7a6000;font-weight:800;">رصيد افتتاحي</td><td>—</td><td class="desc" style="color:#7a6000;font-weight:700;">الرصيد الافتتاحي</td><td class="deb"></td><td class="crd"></td><td class="bal" style="color:#7a6000;">'+fmt(c.openingBalance)+'</td></tr>' : '';
     let rows='';
