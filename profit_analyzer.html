@@ -588,7 +588,7 @@
   #print-frame.rtl thead th { text-align: right; }
   #print-frame tbody tr:nth-child(even) { background: #f5f6fc; }
   #print-frame tbody td { padding: 8px 10px; border: 1px solid #d0d2e8; color: #222; }
-  #print-frame tfoot td { padding: 9px 10px; border: 1px solid #3f4282; background: #eaecf8; font-weight: 700; }
+  #print-frame tfoot td { padding: 9px 10px; border: 1px solid #3f4282; background: #eaecf8; font-weight: 700; color: #111; }
   #print-frame td.bidi { unicode-bidi: plaintext; }
   #print-frame td:not(.bidi), #print-frame tfoot td { direction: ltr; unicode-bidi: isolate; }
   #print-frame .pos { color: #1a7f4b; font-weight: 700; }
@@ -606,6 +606,15 @@
   #print-frame .ps-label { font-size: 10px; color: #777; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 3px; }
   #print-frame .ps-val { font-size: 17px; font-weight: 700; color: #111; }
   #print-frame .print-section-title { font-size: 14px; font-weight: 700; margin: 18px 0 10px; color: #3f4282; }
+  #print-frame .pp-person { break-inside: avoid; page-break-inside: avoid; margin-bottom: 22px; }
+  #print-frame .pp-name {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap;
+    font-size: 15px; font-weight: 700; color: #3f4282;
+    padding: 8px 2px; margin-bottom: 6px; border-bottom: 2px solid #5B5EA6;
+  }
+  #print-frame .pp-name .bidi { unicode-bidi: plaintext; }
+  #print-frame .pp-name-total { font-size: 13px; color: #444; }
+  #print-frame .pp-name-total span { direction: ltr; unicode-bidi: isolate; }
 
   @media print {
     body > * { display: none !important; }
@@ -688,6 +697,7 @@
         <button class="filter-btn" id="btn-new" type="button">New file</button>
         <button class="filter-btn btn-excel" id="btn-export" type="button">⬇ Excel</button>
         <button class="filter-btn btn-print" id="btn-print" type="button">🖨 Print</button>
+        <button class="filter-btn btn-print" id="btn-print-person" type="button">🖨 Profit per salesperson</button>
       </div>
     </div>
 
@@ -1171,6 +1181,8 @@ var T = {
     search: 'Search product, code or category…',
     fProfit: 'Profitable', fLoss: 'Loss-making', fNoCost: 'No cost', fActive: 'Moved only',
     newFiles: 'New file', excel: '⬇ Excel', print: '🖨 Print',
+    printPerson: '🖨 Profit per salesperson',
+    ppTitle: 'Profit by category per salesperson', ppPersonTotal: 'Total gross profit',
     tabProduct: 'By product', tabCategory: 'By category', tabPerson: 'By salesperson', tabCompare: 'Comparison',
     stSales: 'Sales', stCost: 'Total cost', stProfit: 'Gross profit', stMargin: 'Margin',
     stItems: 'Products', stQty: 'Quantity', stNoCost: 'Without cost',
@@ -1255,6 +1267,8 @@ var T = {
     search: 'ابحث عن منتج أو رمز أو فئة…',
     fProfit: 'رابحة', fLoss: 'خاسرة', fNoCost: 'بدون تكلفة', fActive: 'المتحركة فقط',
     newFiles: 'ملف جديد', excel: '⬇ إكسل', print: '🖨 طباعة',
+    printPerson: '🖨 ربح كل مندوب',
+    ppTitle: 'الربح حسب الفئة لكل مندوب', ppPersonTotal: 'إجمالي الربح',
     tabProduct: 'حسب المنتج', tabCategory: 'حسب الفئة', tabPerson: 'حسب المندوب', tabCompare: 'مقارنة',
     stSales: 'المبيعات', stCost: 'إجمالي التكلفة', stProfit: 'إجمالي الربح', stMargin: 'نسبة الربح',
     stItems: 'المنتجات', stQty: 'الكمية', stNoCost: 'بدون تكلفة',
@@ -2428,6 +2442,62 @@ function buildPrint() {
   $('print-overlay').classList.add('show');
 }
 
+/* Every salesperson in the uploaded file, each followed by their profit per
+   category. Ignores the picker, search and filters on purpose: it is the
+   whole-file handout. */
+function buildPersonPrint() {
+  var records = state.records;
+  var ar = isAr();
+
+  function moneyCell(n) { return '<td class="' + (n > 0 ? 'pos' : (n < 0 ? 'neg' : '')) + '">' + esc(fmtMoney(n)) + '</td>'; }
+
+  var people = personRows(records).sort(function (a, b) { return b.profit - a.profit; });
+  var all = totals(people);
+
+  var frame = $('print-frame');
+  frame.className = ar ? 'rtl' : '';
+
+  var head = '<div class="print-header">' +
+    '<img class="print-logo" src="ec-iq.com.png" alt=""/>' +
+    '<div class="print-header-text">' +
+      '<h2>' + esc(t('ppTitle')) + '</h2>' +
+      '<div class="print-meta">' + esc(t('generated')) + ': ' + esc(new Date().toLocaleString(ar ? 'ar-EG' : 'en-GB')) + '<br/>' +
+      esc(t('filterLabel')) + ': ' + esc(String(people.length)) +
+      (state.salesFile ? ' · ' + esc(state.salesFile.name) : '') + '</div>' +
+    '</div></div>';
+
+  var cards = '<div class="print-summary">' +
+    '<div class="ps-card"><div class="ps-label">' + esc(t('stSales')) + '</div><div class="ps-val">' + esc(fmtMoney(all.sales)) + '</div></div>' +
+    '<div class="ps-card"><div class="ps-label">' + esc(t('stProfit')) + '</div><div class="ps-val ' + (all.profit >= 0 ? 'pos' : 'neg') + '">' + esc(fmtMoney(all.profit)) + '</div></div>' +
+    '<div class="ps-card"><div class="ps-label">' + esc(t('stMargin')) + '</div><div class="ps-val">' + esc(fmtPct(margin(all.profit, all.sales))) + '</div></div>' +
+  '</div>';
+
+  var headers = [t('colCategory'), t('colQty')].concat(costsUnlocked ? [t('colTotalCost')] : [])
+    .concat([t('colSales'), t('colProfit'), t('colMargin')]);
+  var thead = '<thead>' + printRow(headers.map(function (h) { return '<th>' + esc(h) + '</th>'; })) + '</thead>';
+
+  var blocks = people.map(function (p) {
+    var mine = records.filter(function (r) { return r.person === p.name; });
+    var cats = categoryRows(mine).sort(function (a, b) { return b.profit - a.profit; });
+    var body = cats.map(function (c) {
+      return printRow(['<td class="bidi">' + esc(c.name) + '</td>', '<td>' + esc(fmtQty(c.qty)) + '</td>']
+        .concat(costsUnlocked ? [moneyCell(c.totalCost)] : [])
+        .concat([moneyCell(c.sales), moneyCell(c.profit), '<td>' + esc(fmtPct(margin(c.profit, c.sales))) + '</td>']));
+    }).join('');
+    var foot = printRow(['<td>' + esc(t('total')) + '</td>', '<td>' + esc(fmtQty(p.qty)) + '</td>']
+      .concat(costsUnlocked ? [moneyCell(p.totalCost)] : [])
+      .concat([moneyCell(p.sales), moneyCell(p.profit), '<td>' + esc(fmtPct(margin(p.profit, p.sales))) + '</td>']));
+    return '<div class="pp-person">' +
+      '<div class="pp-name"><span class="bidi">' + esc(p.name) + '</span>' +
+        '<span class="pp-name-total">' + esc(t('ppPersonTotal')) + ': <span class="' + (p.profit >= 0 ? 'pos' : 'neg') + '">' + esc(fmtMoney(p.profit)) + '</span></span></div>' +
+      '<table>' + thead + '<tbody>' + body + '</tbody><tfoot>' + foot + '</tfoot></table>' +
+    '</div>';
+  }).join('');
+
+  $('print-content').innerHTML = head + cards + blocks;
+  $('print-overlay').classList.add('show');
+}
+
 /* =========================  language & theme  ========================= */
 
 function applyTheme() {
@@ -2450,6 +2520,7 @@ function applyLang() {
     'btn-analyze': 'analyze', 'sp-title': 'spTitle', 'sp-all': 'selAll', 'sp-none': 'selNone',
     'f-profit': 'fProfit', 'f-loss': 'fLoss', 'f-nocost': 'fNoCost', 'f-active': 'fActive',
     'btn-new': 'newFiles', 'btn-export': 'excel', 'btn-print': 'print',
+    'btn-print-person': 'printPerson',
     'btn-expenses': 'btnExpenses'
   };
   Object.keys(text).forEach(function (id) {
@@ -2914,6 +2985,7 @@ function init() {
   $('btn-back').addEventListener('click', showUpload);
   $('btn-export').addEventListener('click', exportExcel);
   $('btn-print').addEventListener('click', buildPrint);
+  $('btn-print-person').addEventListener('click', buildPersonPrint);
   $('pf-print').addEventListener('click', function () { window.print(); });
   $('pf-close').addEventListener('click', function () { $('print-overlay').classList.remove('show'); });
   $('print-overlay').addEventListener('click', function (e) {
